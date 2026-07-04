@@ -23,6 +23,7 @@ import {
   Settings,
   Shirt,
   ShoppingBag,
+  Smartphone,
   Star,
   TrendingUp,
   Truck,
@@ -334,6 +335,11 @@ const navGroups: NavGroup[] = [
         title: "Cabang",
         url: "/cabang",
         icon: Building2,
+      },
+      {
+        title: "Koneksi WhatsApp",
+        url: "/pengaturan-whatsapp",
+        icon: Smartphone,
       },
       {
         title: "Pengaturan",
