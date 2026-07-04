@@ -1,12 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { toast } from "sonner"
 import { format } from "date-fns"
+import { toast } from "sonner"
 import {
   TrendingUp,
   DollarSign,
@@ -14,10 +9,11 @@ import {
   Users,
   Target,
   BarChart2,
-  Calendar,
-  FileDown,
-  Printer
 } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
+import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatPercentForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -72,63 +68,29 @@ interface GoogleAdsData {
   notes: string | null
 }
 
+interface GoogleAdsReport {
+  summary: Summary
+  campaign_breakdown: CampaignBreakdown[]
+  daily_performance: DailyPerformance[]
+  data: GoogleAdsData[]
+}
+
+function formatNumber(num: number) {
+  return new Intl.NumberFormat("id-ID").format(num)
+}
+
+function formatROAS(roas: number) {
+  return `${roas.toFixed(2)}x`
+}
+
 export default function LaporanGoogleAdsPage() {
-  const [loading, setLoading] = useState(false)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [campaignBreakdown, setCampaignBreakdown] = useState<CampaignBreakdown[]>([])
-  const [dailyPerformance, setDailyPerformance] = useState<DailyPerformance[]>([])
-  const [data, setData] = useState<GoogleAdsData[]>([])
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
+  const report = useReport<GoogleAdsReport>({ endpoint: "/api/reports/google-ads" })
+  const data = report.data
 
-  useEffect(() => {
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    setStartDate(format(firstDay, "yyyy-MM-dd"))
-    setEndDate(format(lastDay, "yyyy-MM-dd"))
-  }, [])
-
-  useEffect(() => {
-    if (startDate && endDate) fetchReport()
-  }, [startDate, endDate])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-      const endTimestamp = Math.floor(new Date(endDate + " 23:59:59").getTime() / 1000)
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/google-ads?start_date=${startTimestamp}&end_date=${endTimestamp}`,
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-      )
-
-      if (!response.ok) throw new Error("Failed")
-      const result = await response.json()
-      setSummary(result.summary)
-      setCampaignBreakdown(result.campaign_breakdown)
-      setDailyPerformance(result.daily_performance)
-      setData(result.data)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal memuat")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(amount)
-  }
-
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat("id-ID").format(num)
-  }
-
-  const formatROAS = (roas: number) => {
-    return `${roas.toFixed(2)}x`
-  }
+  const summary = data?.summary ?? null
+  const campaignBreakdown = data?.campaign_breakdown ?? []
+  const dailyPerformance = data?.daily_performance ?? []
+  const details = data?.data ?? []
 
   const handleExport = () => {
     if (!campaignBreakdown.length) {
@@ -136,7 +98,7 @@ export default function LaporanGoogleAdsPage() {
       return
     }
 
-    const exportData = campaignBreakdown.map(campaign => ({
+    const exportData = campaignBreakdown.map((campaign) => ({
       campaign_name: campaign.campaign_name,
       impressions: campaign.impressions.toString(),
       clicks: campaign.clicks.toString(),
@@ -146,7 +108,7 @@ export default function LaporanGoogleAdsPage() {
       ctr: formatPercentForExport(campaign.ctr),
       cpc: formatCurrencyForExport(campaign.cpc),
       cpa: formatCurrencyForExport(campaign.cpa),
-      roas: formatROAS(campaign.roas)
+      roas: formatROAS(campaign.roas),
     }))
 
     exportTableToExcel(
@@ -161,68 +123,29 @@ export default function LaporanGoogleAdsPage() {
         { key: "ctr", label: "CTR" },
         { key: "cpc", label: "CPC" },
         { key: "cpa", label: "CPA" },
-        { key: "roas", label: "ROAS" }
+        { key: "roas", label: "ROAS" },
       ],
-      `Laporan_Google_Ads_${format(new Date(startDate), "dd-MM-yyyy")}_${format(new Date(endDate), "dd-MM-yyyy")}`
+      `Laporan_Google_Ads_${format(new Date(report.startDate), "dd-MM-yyyy")}_${format(new Date(report.endDate), "dd-MM-yyyy")}`
     )
 
     toast.success("Data berhasil diekspor ke Excel")
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold">Laporan Google Ads</h1>
-          <p className="text-muted-foreground">Google Ads Campaign Performance</p>
-        </div>
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!summary}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!summary}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
-      </div>
-
-      <Card className="print:hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Filter Periode
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Tanggal Mulai</Label>
-              <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label>Tanggal Akhir</Label>
-              <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={fetchReport} disabled={loading} className="w-full">
-                {loading ? "Memuat..." : "Tampilkan"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
-      ) : summary ? (
+    <ReportShell
+      title="Laporan Google Ads"
+      description="Google Ads Campaign Performance"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!summary}
+      emptyMessage="Pilih periode"
+      onExportExcel={handleExport}
+    >
+      {summary && (
         <>
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
             <Card>
@@ -437,9 +360,9 @@ export default function LaporanGoogleAdsPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {data.map((item) => (
+                    {details.map((item) => (
                       <tr key={item.id} className="border-b hover:bg-muted/50">
-                        <td className="p-4 text-xs">{format(new Date(item.date * 1000), "dd MMM yyyy")}</td>
+                        <td className="p-4 text-xs">{formatDate(item.date)}</td>
                         <td className="p-4">
                           <div className="font-medium">{item.campaign_name}</div>
                           {item.campaign_id && (
@@ -462,16 +385,7 @@ export default function LaporanGoogleAdsPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
-        <Card>
-          <CardContent className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Pilih periode</p>
-            </div>
-          </CardContent>
-        </Card>
       )}
-    </div>
+    </ReportShell>
   )
 }

@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
 import { format } from "date-fns"
-import { BarChart2, Calendar, DollarSign, Percent, TrendingUp, FileDown, Printer } from "lucide-react"
+import { toast } from "sonner"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { BarChart2, DollarSign, Percent, TrendingUp } from "lucide-react"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
+import { formatCurrency } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatPercentForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -31,83 +30,30 @@ interface ServiceHpp {
   margin_percent: number
 }
 
+interface HppReport {
+  summary: Summary
+  data: ServiceHpp[]
+}
+
+function getMarginBadge(margin: number) {
+  if (margin >= 50) {
+    return <Badge className="bg-green-600">Excellent ({margin.toFixed(1)}%)</Badge>
+  } else if (margin >= 30) {
+    return <Badge className="bg-blue-600">Good ({margin.toFixed(1)}%)</Badge>
+  } else if (margin >= 15) {
+    return <Badge className="bg-yellow-600">Fair ({margin.toFixed(1)}%)</Badge>
+  } else if (margin > 0) {
+    return <Badge className="bg-orange-600">Low ({margin.toFixed(1)}%)</Badge>
+  } else {
+    return <Badge variant="destructive">Loss ({margin.toFixed(1)}%)</Badge>
+  }
+}
+
 export default function LaporanHppPage() {
-  const [loading, setLoading] = useState(false)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [services, setServices] = useState<ServiceHpp[]>([])
-
-  // Filters
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-
-  useEffect(() => {
-    // Set default to current month
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-
-    setStartDate(format(firstDay, "yyyy-MM-dd"))
-    setEndDate(format(lastDay, "yyyy-MM-dd"))
-  }, [])
-
-  useEffect(() => {
-    if (startDate && endDate) {
-      fetchReport()
-    }
-  }, [startDate, endDate])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-      const endTimestamp = Math.floor(new Date(endDate + " 23:59:59").getTime() / 1000)
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/hpp?start_date=${startTimestamp}&end_date=${endTimestamp}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch report")
-      }
-
-      const data = await response.json()
-      setSummary(data.summary)
-      setServices(data.data)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal memuat laporan")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const getMarginBadge = (margin: number) => {
-    if (margin >= 50) {
-      return <Badge className="bg-green-600">Excellent ({margin.toFixed(1)}%)</Badge>
-    } else if (margin >= 30) {
-      return <Badge className="bg-blue-600">Good ({margin.toFixed(1)}%)</Badge>
-    } else if (margin >= 15) {
-      return <Badge className="bg-yellow-600">Fair ({margin.toFixed(1)}%)</Badge>
-    } else if (margin > 0) {
-      return <Badge className="bg-orange-600">Low ({margin.toFixed(1)}%)</Badge>
-    } else {
-      return <Badge variant="destructive">Loss ({margin.toFixed(1)}%)</Badge>
-    }
-  }
+  const report = useReport<HppReport>({ endpoint: "/api/reports/hpp" })
+  const data = report.data
+  const summary = data?.summary ?? null
+  const services = data?.data ?? []
 
   const handleExport = () => {
     if (!services.length) {
@@ -115,7 +61,7 @@ export default function LaporanHppPage() {
       return
     }
 
-    const exportData = services.map(service => ({
+    const exportData = services.map((service) => ({
       service_name: service.service_name,
       total_sold: service.total_sold.toString(),
       avg_price: formatCurrencyForExport(service.avg_price),
@@ -123,7 +69,7 @@ export default function LaporanHppPage() {
       total_revenue: formatCurrencyForExport(service.total_revenue),
       total_cogs: formatCurrencyForExport(service.total_cogs),
       gross_profit: formatCurrencyForExport(service.gross_profit),
-      margin_percent: formatPercentForExport(service.margin_percent)
+      margin_percent: formatPercentForExport(service.margin_percent),
     }))
 
     exportTableToExcel(
@@ -136,84 +82,28 @@ export default function LaporanHppPage() {
         { key: "total_revenue", label: "Total Revenue" },
         { key: "total_cogs", label: "Total COGS" },
         { key: "gross_profit", label: "Gross Profit" },
-        { key: "margin_percent", label: "Margin" }
+        { key: "margin_percent", label: "Margin" },
       ],
-      `Laporan_HPP_${format(new Date(startDate), "dd-MM-yyyy")}_${format(new Date(endDate), "dd-MM-yyyy")}`
+      `Laporan_HPP_${format(new Date(report.startDate), "dd-MM-yyyy")}_${format(new Date(report.endDate), "dd-MM-yyyy")}`
     )
 
     toast.success("Data berhasil diekspor ke Excel")
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laporan HPP</h1>
-          <p className="text-muted-foreground">
-            Analisis Harga Pokok Penjualan dan Profit Margin per Layanan
-          </p>
-        </div>
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!summary}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!summary}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card className="print:hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Filter Periode
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Tanggal Mulai</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">Tanggal Akhir</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={fetchReport} disabled={loading} className="w-full">
-                {loading ? "Memuat..." : "Tampilkan Laporan"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-500">Memuat laporan...</p>
-          </div>
-        </div>
-      ) : summary ? (
+    <ReportShell
+      title="Laporan HPP"
+      description="Analisis Harga Pokok Penjualan dan Profit Margin per Layanan"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!summary}
+      onExportExcel={handleExport}
+    >
+      {summary && (
         <>
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-4">
@@ -375,16 +265,7 @@ export default function LaporanHppPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
-        <Card>
-          <CardContent className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Pilih periode untuk melihat laporan</p>
-            </div>
-          </CardContent>
-        </Card>
       )}
-    </div>
+    </ReportShell>
   )
 }

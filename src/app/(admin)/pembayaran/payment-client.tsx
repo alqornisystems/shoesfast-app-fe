@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Search, Loader2, Plus, ChevronLeft, ChevronRight, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X } from "lucide-react"
+import { Search, Loader2, Plus, ChevronLeft, ChevronRight, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X, Printer } from "lucide-react"
 import { api } from "@/lib/api"
+import { downloadInvoicePDF } from "@/lib/invoice-utils"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -63,6 +64,36 @@ type Payment = {
   created_at: number
 }
 
+type OrderItemRow = {
+  name?: string | null
+  price?: number | string | null
+  treatments?: { name?: string | null }[]
+}
+
+type PaymentRow = {
+  date: number
+  nominal?: number | string | null
+  note?: string | null
+}
+
+type PaymentHistoryRow = {
+  id?: number
+  date: number
+  nominal: number
+  note?: string | null
+  photo?: string | null
+}
+
+type PaymentListResponse = {
+  data?: Payment[]
+  current_page?: number
+  last_page?: number
+  per_page?: number
+  total?: number
+  from?: number
+  to?: number
+}
+
 type UnpaidOrder = {
   id: number
   code: string
@@ -111,8 +142,60 @@ export function PaymentClient() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const [paymentHistory, setPaymentHistory] = useState<any[]>([])
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryRow[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [printingId, setPrintingId] = useState<number | null>(null)
+
+  async function handlePrintInvoice(order: Payment) {
+    setPrintingId(order.id)
+    try {
+      // Pull order line items + full payment history for the invoice
+      const [itemsRes, historyRes] = await Promise.all([
+        api.get<OrderItemRow[] | { data: OrderItemRow[] }>(`/api/orders/${order.id}/items`),
+        api.get<PaymentRow[] | { data: PaymentRow }>(`/api/payments/order/${order.id}`),
+      ])
+
+      const itemsArr: OrderItemRow[] = Array.isArray(itemsRes) ? itemsRes : itemsRes.data ?? []
+      const items = itemsArr.map((it) => ({
+        name: it.name ?? "-",
+        services: (it.treatments ?? [])
+          .map((t) => t?.name)
+          .filter(Boolean)
+          .join(", "),
+        price: Number(it.price) || 0,
+      }))
+
+      const histArr: PaymentRow[] = Array.isArray(historyRes)
+        ? historyRes
+        : historyRes.data
+        ? [historyRes.data]
+        : []
+      const payments = histArr.map((p) => ({
+        date: p.date,
+        nominal: Number(p.nominal) || 0,
+        note: p.note ?? null,
+      }))
+
+      downloadInvoicePDF({
+        code: order.code,
+        date: order.date,
+        dueDate: order.due_date,
+        status: order.payment_status,
+        branchName: order.project_name,
+        customer: order.customer,
+        items,
+        totalPrice: order.total_price,
+        totalPaid: order.total_paid,
+        credit: order.credit,
+        payments,
+      })
+      toast.success("Invoice berhasil dibuat")
+    } catch {
+      toast.error("Gagal mencetak invoice")
+    } finally {
+      setPrintingId(null)
+    }
+  }
 
   async function fetchPayments(page = 1) {
     setLoading(true)
@@ -132,7 +215,7 @@ export function PaymentClient() {
         params.append('status', statusFilter)
       }
 
-      const res = await api.get<any>(`/api/payments?${params.toString()}`)
+      const res = await api.get<PaymentListResponse>(`/api/payments?${params.toString()}`)
       setPayments(res.data ?? [])
       setPagination({
         current_page: res.current_page ?? 1,
@@ -183,7 +266,7 @@ export function PaymentClient() {
   async function fetchPaymentHistory(orderId: number) {
     setLoadingHistory(true)
     try {
-      const res = await api.get<any>(`/api/payments/order/${orderId}`)
+      const res = await api.get<PaymentHistoryRow[] | { data: PaymentHistoryRow }>(`/api/payments/order/${orderId}`)
       setPaymentHistory(Array.isArray(res) ? res : (res.data ? [res.data] : []))
     } catch (error) {
 
@@ -234,12 +317,12 @@ export function PaymentClient() {
       toast.success("Pembayaran berhasil disimpan!")
       setPaymentDialogOpen(false)
       fetchPayments(pagination.current_page)
-    } catch (err: any) {
-
-      if (err?.errors) {
-        setErrors(err.errors)
+    } catch (err: unknown) {
+      const e = err as { errors?: Record<string, string>; message?: string }
+      if (e?.errors) {
+        setErrors(e.errors)
       }
-      toast.error(err?.message || "Gagal menyimpan pembayaran. Silakan coba lagi.")
+      toast.error(e?.message || "Gagal menyimpan pembayaran. Silakan coba lagi.")
     } finally {
       setSaving(false)
     }
@@ -430,6 +513,21 @@ export function PaymentClient() {
                             <span className="hidden lg:inline">Lihat</span>
                           </Button>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 gap-1.5"
+                          title="Cetak Invoice"
+                          disabled={printingId === payment.id}
+                          onClick={() => handlePrintInvoice(payment)}
+                        >
+                          {printingId === payment.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Printer className="h-3.5 w-3.5" />
+                          )}
+                          <span className="hidden lg:inline">Invoice</span>
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -675,6 +773,21 @@ export function PaymentClient() {
             >
               {selectedOrder?.payment_status === 'paid' ? 'Tutup' : 'Batal'}
             </Button>
+            {selectedOrder && (
+              <Button
+                variant="outline"
+                className="gap-1.5"
+                disabled={printingId === selectedOrder.id}
+                onClick={() => handlePrintInvoice(selectedOrder)}
+              >
+                {printingId === selectedOrder.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Printer className="h-4 w-4" />
+                )}
+                Cetak Invoice
+              </Button>
+            )}
             {selectedOrder?.payment_status !== 'paid' && (
               <Button
                 onClick={handleSavePayment}

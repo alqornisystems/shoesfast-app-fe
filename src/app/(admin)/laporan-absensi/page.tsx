@@ -12,14 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Calendar, Download, FileText, CheckCircle, Clock, XCircle, FileCheck } from "lucide-react"
+import { Calendar, Download, CheckCircle, Clock, XCircle, FileCheck } from "lucide-react"
 import { toast } from "sonner"
-import { format, getDaysInMonth, getDay, startOfMonth } from "date-fns"
+import { format, getDaysInMonth, getDay } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
+import { api } from "@/lib/api"
 
 interface User {
   id: number
   name: string
+  role?: string
 }
 
 interface AttendanceData {
@@ -40,9 +42,36 @@ interface AbsenceData {
   is_approval: number
 }
 
-interface Branch {
+// Raw shapes returned by the backend
+interface RawClockPunch {
+  time: number
+}
+
+interface RawAttendance {
+  user_id: number
+  user_name: string
+  date: string
+  clock_in?: RawClockPunch | null
+  clock_out?: RawClockPunch | null
+}
+
+interface RawAbsence {
+  user_id: number
+  date_start: number
+  date_end: number
+  type: number
+  is_approval: number
+}
+
+interface RawUser {
   id: number
   name: string
+  role?: string
+  is_deleted?: number
+}
+
+interface ListResponse<T> {
+  data?: T[]
 }
 
 export default function LaporanAbsensiPage() {
@@ -50,12 +79,9 @@ export default function LaporanAbsensiPage() {
   const [attendanceData, setAttendanceData] = useState<AttendanceData[]>([])
   const [absences, setAbsences] = useState<AbsenceData[]>([])
   const [users, setUsers] = useState<User[]>([])
-  const [branches, setBranches] = useState<Branch[]>([])
   const [selectedMonth, setSelectedMonth] = useState(format(new Date(), "yyyy-MM"))
   const [selectedRole, setSelectedRole] = useState<string>("")
   const [selectedCompany, setSelectedCompany] = useState<string>("PT. Shoesfast Indonesia")
-
-  const currentUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("sf_user") || "{}") : {}
 
   // Available roles
   const roles = [
@@ -71,35 +97,15 @@ export default function LaporanAbsensiPage() {
   ]
 
   useEffect(() => {
-    fetchBranches()
-  }, [])
-
-  useEffect(() => {
     if (selectedMonth) {
       fetchReport()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedMonth, selectedRole])
-
-  const fetchBranches = async () => {
-    try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/projects`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (response.ok) {
-        const data = await response.json()
-        setBranches(Array.isArray(data) ? data : [])
-      }
-    } catch (error) {
-      console.error("Failed to fetch branches:", error)
-      setBranches([])
-    }
-  }
 
   const fetchReport = async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
       const [year, month] = selectedMonth.split("-")
       const startDate = new Date(parseInt(year), parseInt(month) - 1, 1)
       const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59)
@@ -110,55 +116,40 @@ export default function LaporanAbsensiPage() {
         report_mode: "true", // Enable report mode to get all users
       })
 
-      // Fetch attendances, absences, and users in parallel
-      const [attendancesRes, absencesRes, usersRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/attendances?${params}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/absences?${params}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+      // Fetch attendances, absences, and users in parallel.
+      // Attendances is required; absences/users are tolerated if they fail.
+      const [attendancesData, absencesData, usersData] = await Promise.all([
+        api.get<ListResponse<RawAttendance>>(`/api/attendances?${params}`),
+        api
+          .get<ListResponse<RawAbsence>>(`/api/absences?${params}`)
+          .catch(() => ({ data: [] as RawAbsence[] })),
+        api
+          .get<ListResponse<RawUser> | RawUser[]>(`/api/users`)
+          .catch(() => ({ data: [] as RawUser[] })),
       ])
 
-      if (!attendancesRes.ok) {
-        const errorText = await attendancesRes.text()
-        console.error("Attendances API error:", attendancesRes.status, errorText)
-        throw new Error(`Failed to fetch attendances: ${attendancesRes.status}`)
-      }
-
-      const attendancesData = await attendancesRes.json()
-      const absencesData = absencesRes.ok ? await absencesRes.json() : { data: [] }
-      const usersData = usersRes.ok ? await usersRes.json() : { data: [] }
-
-      console.log("Attendances API response:", attendancesData)
-      console.log("Absences API response:", absencesData)
-      console.log("Users API response:", usersData)
-
       // Get users from users API and filter by selected role if needed
-      let usersFromApi: User[] = (usersData.data || usersData || [])
-        .filter((u: any) => u.is_deleted === 0 || !u.hasOwnProperty('is_deleted'))
-        .map((u: any) => ({
+      const usersArray: RawUser[] = Array.isArray(usersData) ? usersData : usersData.data ?? []
+      let usersFromApi: User[] = usersArray
+        .filter((u) => u.is_deleted === 0 || u.is_deleted === undefined)
+        .map((u) => ({
           id: u.id,
           name: u.name,
-          role: u.role
+          role: u.role,
         }))
 
       // Filter by role if selected
       if (selectedRole) {
-        usersFromApi = usersFromApi.filter((u: any) => u.role === selectedRole)
+        usersFromApi = usersFromApi.filter((u) => u.role === selectedRole)
       }
 
-      console.log("Filtered users:", usersFromApi)
       setUsers(usersFromApi)
 
       // Store absences data
       if (absencesData.data && Array.isArray(absencesData.data)) {
         const transformedAbsences: AbsenceData[] = absencesData.data
-          .filter((a: any) => a.is_approval === 1) // Only approved absences
-          .map((a: any) => ({
+          .filter((a) => a.is_approval === 1) // Only approved absences
+          .map((a) => ({
             user_id: a.user_id,
             date_start: a.date_start,
             date_end: a.date_end,
@@ -172,7 +163,7 @@ export default function LaporanAbsensiPage() {
 
       // Transform attendance data
       if (attendancesData.data && Array.isArray(attendancesData.data)) {
-        const transformedData: AttendanceData[] = attendancesData.data.map((item: any) => {
+        const transformedData: AttendanceData[] = attendancesData.data.map((item) => {
           const itemDate = new Date(item.date)
 
           // Check if late (masuk setelah jam 8:00)
@@ -193,7 +184,7 @@ export default function LaporanAbsensiPage() {
       } else {
         setAttendanceData([])
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching report:", error)
       toast.error("Gagal memuat laporan")
       setAttendanceData([])

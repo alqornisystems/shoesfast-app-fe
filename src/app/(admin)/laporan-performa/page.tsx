@@ -1,15 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Award, TrendingUp, TrendingDown, Users } from "lucide-react"
-import { toast } from "sonner"
-import { format } from "date-fns"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
 
 interface ReportSummary {
   total_employees: number
@@ -39,51 +37,13 @@ interface ReportData {
 }
 
 export default function LaporanPerformaPage() {
-  const [loading, setLoading] = useState(false)
-  const [reportData, setReportData] = useState<ReportData | null>(null)
-  const [filters, setFilters] = useState({
-    start_date: format(new Date(new Date().setDate(1)), "yyyy-MM-dd"),
-    end_date: format(new Date(), "yyyy-MM-dd"),
-    user_id: "",
+  const [userId, setUserId] = useState("")
+
+  const report = useReport<ReportData>({
+    endpoint: "/api/reports/performance",
+    params: { user_id: userId || undefined },
   })
-
-  useEffect(() => {
-    fetchReport()
-  }, [])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const params = new URLSearchParams()
-
-      if (filters.start_date) {
-        params.append("start_date", String(Math.floor(new Date(filters.start_date).getTime() / 1000)))
-      }
-      if (filters.end_date) {
-        params.append("end_date", String(Math.floor(new Date(filters.end_date + " 23:59:59").getTime() / 1000)))
-      }
-      if (filters.user_id) {
-        params.append("user_id", filters.user_id)
-      }
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/performance?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
-      setReportData(data)
-    } catch (error: any) {
-      toast.error("Gagal memuat laporan")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const data = report.data
 
   const getGradeBadge = (grade: string) => {
     const variants: Record<string, string> = {
@@ -101,57 +61,28 @@ export default function LaporanPerformaPage() {
   }
 
   return (
-    <div className="container py-6 space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Laporan Performa Karyawan</h1>
-        <p className="text-muted-foreground">
-          Analisis kinerja dan produktivitas karyawan
-        </p>
-      </div>
-
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Filter Laporan</CardTitle>
-          <CardDescription>Pilih periode dan karyawan</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>Tanggal Mulai</Label>
-              <Input
-                type="date"
-                value={filters.start_date}
-                onChange={(e) => setFilters({ ...filters, start_date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Tanggal Akhir</Label>
-              <Input
-                type="date"
-                value={filters.end_date}
-                onChange={(e) => setFilters({ ...filters, end_date: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Karyawan (Opsional)</Label>
-              <Input
-                type="number"
-                placeholder="User ID"
-                value={filters.user_id}
-                onChange={(e) => setFilters({ ...filters, user_id: e.target.value })}
-              />
-            </div>
-          </div>
-          <div className="flex gap-2 mt-4">
-            <Button onClick={fetchReport} disabled={loading}>
-              {loading ? "Memuat..." : "Tampilkan Laporan"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {reportData && (
+    <ReportShell
+      title="Laporan Performa Karyawan"
+      description="Analisis kinerja dan produktivitas karyawan"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!data}
+      emptyMessage='Klik "Tampilkan Laporan" untuk melihat data'
+      actions={
+        <Input
+          type="number"
+          placeholder="Filter User ID (opsional)"
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+          className="w-48"
+        />
+      }
+    >
+      {data && (
         <>
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-4">
@@ -163,7 +94,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{reportData.summary.total_employees}</div>
+                <div className="text-2xl font-bold">{data.summary.total_employees}</div>
                 <p className="text-xs text-muted-foreground mt-1">Karyawan aktif</p>
               </CardContent>
             </Card>
@@ -176,7 +107,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{reportData.summary.avg_performance_score.toFixed(1)}</div>
+                <div className="text-2xl font-bold">{data.summary.avg_performance_score.toFixed(1)}</div>
                 <p className="text-xs text-muted-foreground mt-1">Dari 100 poin</p>
               </CardContent>
             </Card>
@@ -189,7 +120,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{reportData.summary.top_performers}</div>
+                <div className="text-2xl font-bold text-green-600">{data.summary.top_performers}</div>
                 <p className="text-xs text-muted-foreground mt-1">Skor ≥ 80</p>
               </CardContent>
             </Card>
@@ -202,7 +133,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{reportData.summary.needs_improvement}</div>
+                <div className="text-2xl font-bold text-orange-600">{data.summary.needs_improvement}</div>
                 <p className="text-xs text-muted-foreground mt-1">Skor &lt; 60</p>
               </CardContent>
             </Card>
@@ -234,7 +165,7 @@ export default function LaporanPerformaPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {reportData.data.map((employee) => (
+                    {data.data.map((employee) => (
                       <TableRow key={employee.user_id}>
                         <TableCell className="font-medium">{employee.user_name}</TableCell>
                         <TableCell>
@@ -322,17 +253,6 @@ export default function LaporanPerformaPage() {
           </Card>
         </>
       )}
-
-      {!reportData && !loading && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Award className="h-12 w-12 mx-auto mb-2 opacity-20" />
-            <p className="text-sm text-muted-foreground">
-              Klik "Tampilkan Laporan" untuk melihat data
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    </ReportShell>
   )
 }

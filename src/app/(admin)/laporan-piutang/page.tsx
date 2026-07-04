@@ -1,14 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { DollarSign, AlertCircle, FileText, Filter, FileDown, Printer, Calendar } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { DollarSign, AlertCircle, FileText, Filter } from "lucide-react"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
+import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -32,69 +34,36 @@ interface ReceivableOrder {
   status: "unpaid" | "partial"
 }
 
+interface ReceivablesReport {
+  summary: Summary
+  data: ReceivableOrder[]
+}
+
+type StatusFilter = "all" | "unpaid" | "partial"
+
 export default function LaporanPiutangPage() {
-  const [loading, setLoading] = useState(false)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [orders, setOrders] = useState<ReceivableOrder[]>([])
-  const [filter, setFilter] = useState<"all" | "unpaid" | "partial">("all")
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
+  const [filter, setFilter] = useState<StatusFilter>("all")
 
+  const report = useReport<ReceivablesReport>({
+    endpoint: "/api/reports/receivables",
+    params: { status: filter === "all" ? undefined : filter },
+  })
+
+  const summary = report.data?.summary ?? null
+  const orders = report.data?.data ?? []
+
+  // The status filter lives in `params` (a ref inside the hook), so changing it
+  // doesn't auto-trigger a fetch — re-fetch explicitly. Skip the first render,
+  // which the hook's own autoFetch already covers.
+  const isFirstRender = useRef(true)
   useEffect(() => {
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    setStartDate(format(firstDay, "yyyy-MM-dd"))
-    setEndDate(format(lastDay, "yyyy-MM-dd"))
-  }, [])
-
-  useEffect(() => {
-    if (startDate && endDate) fetchReport()
-  }, [filter, startDate, endDate])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const statusFilter = filter !== "all" ? `status=${filter}` : ""
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-      const endTimestamp = Math.floor(new Date(endDate + " 23:59:59").getTime() / 1000)
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/receivables?start_date=${startTimestamp}&end_date=${endTimestamp}&${statusFilter}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch report")
-      }
-
-      const data = await response.json()
-      setSummary(data.summary)
-      setOrders(data.data)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal memuat laporan")
-    } finally {
-      setLoading(false)
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
     }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatDate = (timestamp: number) => {
-    return format(new Date(timestamp * 1000), "dd MMM yyyy")
-  }
+    report.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter])
 
   const getOverdueBadge = (daysOverdue: number) => {
     if (daysOverdue === 0) {
@@ -152,107 +121,62 @@ export default function LaporanPiutangPage() {
         { key: "days_overdue", label: "Hari Terlambat" },
         { key: "status", label: "Status" }
       ],
-      `Laporan_Piutang${filterLabel}_${format(new Date(startDate), "dd-MM-yyyy")}_${format(new Date(endDate), "dd-MM-yyyy")}`
+      `Laporan_Piutang${filterLabel}_${format(new Date(report.startDate), "dd-MM-yyyy")}_${format(new Date(report.endDate), "dd-MM-yyyy")}`
     )
 
     toast.success("Data berhasil diekspor ke Excel")
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laporan Piutang & Kredit</h1>
-          <p className="text-muted-foreground">Monitoring piutang pelanggan dan penagihan</p>
-        </div>
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!summary}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!summary}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card className="print:hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filter Laporan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {/* Date Range Filter */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Tanggal Mulai</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Tanggal Akhir</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-              <div className="flex items-end">
-                <Button onClick={fetchReport} disabled={loading} className="w-full">
-                  {loading ? "Memuat..." : "Tampilkan"}
-                </Button>
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <div className="space-y-2">
-              <Label>Status Pembayaran</Label>
-              <div className="flex gap-2">
-                <Button
-                  variant={filter === "all" ? "default" : "outline"}
-                  onClick={() => setFilter("all")}
-                >
-                  Semua
-                </Button>
-                <Button
-                  variant={filter === "unpaid" ? "default" : "outline"}
-                  onClick={() => setFilter("unpaid")}
-                >
-                  Belum Bayar
-                </Button>
-                <Button
-                  variant={filter === "partial" ? "default" : "outline"}
-                  onClick={() => setFilter("partial")}
-                >
-                  Cicil
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-500">Memuat laporan...</p>
-          </div>
-        </div>
-      ) : summary ? (
+    <ReportShell
+      title="Laporan Piutang & Kredit"
+      description="Monitoring piutang pelanggan dan penagihan"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!summary}
+      onExportExcel={handleExport}
+    >
+      {summary && (
         <>
+          {/* Status Filter */}
+          <Card className="print:hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Filter className="h-5 w-5" />
+                Status Pembayaran
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Label>Status Pembayaran</Label>
+                <div className="flex gap-2">
+                  <Button
+                    variant={filter === "all" ? "default" : "outline"}
+                    onClick={() => setFilter("all")}
+                  >
+                    Semua
+                  </Button>
+                  <Button
+                    variant={filter === "unpaid" ? "default" : "outline"}
+                    onClick={() => setFilter("unpaid")}
+                  >
+                    Belum Bayar
+                  </Button>
+                  <Button
+                    variant={filter === "partial" ? "default" : "outline"}
+                    onClick={() => setFilter("partial")}
+                  >
+                    Cicil
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
@@ -364,7 +288,7 @@ export default function LaporanPiutangPage() {
             </CardContent>
           </Card>
         </>
-      ) : null}
-    </div>
+      )}
+    </ReportShell>
   )
 }

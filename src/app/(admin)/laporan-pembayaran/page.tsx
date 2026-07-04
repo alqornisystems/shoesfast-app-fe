@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
 import { format } from "date-fns"
-import { DollarSign, Calendar, CreditCard, TrendingUp, FileText, FileDown, Printer } from "lucide-react"
+import { toast } from "sonner"
+import { DollarSign, CreditCard, TrendingUp, FileText } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
+import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -24,7 +23,7 @@ interface DailyPayment {
 }
 
 interface MethodBreakdown {
-  method: string
+  method: string | null
   method_label: string
   count: number
   total_amount: number
@@ -38,96 +37,36 @@ interface Payment {
   customer_phone: string
   branch_name: string
   total: number
-  method: string
+  method: string | null
   method_label: string
   user_name: string
   notes: string | null
 }
 
+interface PaymentReport {
+  summary: Summary
+  daily_payments: DailyPayment[]
+  method_breakdown: MethodBreakdown[]
+  data: Payment[]
+}
+
+function getMethodBadgeColor(method: string | null | undefined) {
+  const methodLower = (method ?? "").toLowerCase()
+  if (methodLower === "cash") return "bg-green-500"
+  if (methodLower === "transfer") return "bg-blue-500"
+  if (methodLower === "qris") return "bg-purple-500"
+  if (methodLower.includes("wallet")) return "bg-orange-500"
+  return "bg-gray-500"
+}
+
 export default function LaporanPembayaranPage() {
-  const [loading, setLoading] = useState(false)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [dailyPayments, setDailyPayments] = useState<DailyPayment[]>([])
-  const [methodBreakdown, setMethodBreakdown] = useState<MethodBreakdown[]>([])
-  const [payments, setPayments] = useState<Payment[]>([])
+  const report = useReport<PaymentReport>({ endpoint: "/api/reports/payments" })
+  const data = report.data
 
-  // Filters
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-
-  useEffect(() => {
-    // Set default to current month
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-
-    setStartDate(format(firstDay, "yyyy-MM-dd"))
-    setEndDate(format(lastDay, "yyyy-MM-dd"))
-  }, [])
-
-  useEffect(() => {
-    if (startDate && endDate) {
-      fetchReport()
-    }
-  }, [startDate, endDate])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-      const endTimestamp = Math.floor(new Date(endDate + " 23:59:59").getTime() / 1000)
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/payments?start_date=${startTimestamp}&end_date=${endTimestamp}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch report")
-      }
-
-      const data = await response.json()
-      setSummary(data.summary)
-      setDailyPayments(data.daily_payments)
-      setMethodBreakdown(data.method_breakdown)
-      setPayments(data.data)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal memuat laporan")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatDate = (timestamp: number) => {
-    return format(new Date(timestamp * 1000), "dd MMM yyyy")
-  }
-
-  const formatDateTime = (timestamp: number) => {
-    return format(new Date(timestamp * 1000), "dd MMM yyyy HH:mm")
-  }
-
-  const getMethodBadgeColor = (method: string) => {
-    const methodLower = method.toLowerCase()
-    if (methodLower === "cash") return "bg-green-500"
-    if (methodLower === "transfer") return "bg-blue-500"
-    if (methodLower === "qris") return "bg-purple-500"
-    if (methodLower.includes("wallet")) return "bg-orange-500"
-    return "bg-gray-500"
-  }
+  const summary = data?.summary ?? null
+  const dailyPayments = data?.daily_payments ?? []
+  const methodBreakdown = data?.method_breakdown ?? []
+  const payments = data?.data ?? []
 
   const handleExport = () => {
     if (!payments.length) {
@@ -135,7 +74,7 @@ export default function LaporanPembayaranPage() {
       return
     }
 
-    const exportData = payments.map(payment => ({
+    const exportData = payments.map((payment) => ({
       date: formatDateForExport(payment.date),
       order_code: payment.order_code,
       customer_name: payment.customer_name,
@@ -143,7 +82,7 @@ export default function LaporanPembayaranPage() {
       branch_name: payment.branch_name,
       total: formatCurrencyForExport(payment.total),
       method_label: payment.method_label,
-      user_name: payment.user_name
+      user_name: payment.user_name,
     }))
 
     exportTableToExcel(
@@ -156,82 +95,28 @@ export default function LaporanPembayaranPage() {
         { key: "branch_name", label: "Cabang" },
         { key: "total", label: "Nominal" },
         { key: "method_label", label: "Metode" },
-        { key: "user_name", label: "Kasir" }
+        { key: "user_name", label: "Kasir" },
       ],
-      `Laporan_Pembayaran_${format(new Date(startDate), "dd-MM-yyyy")}_${format(new Date(endDate), "dd-MM-yyyy")}`
+      `Laporan_Pembayaran_${format(new Date(report.startDate), "dd-MM-yyyy")}_${format(new Date(report.endDate), "dd-MM-yyyy")}`
     )
 
     toast.success("Data berhasil diekspor ke Excel")
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laporan Pembayaran</h1>
-          <p className="text-muted-foreground">Analisis dan monitoring transaksi pembayaran</p>
-        </div>
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!summary}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!summary}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card className="print:hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Filter Periode
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Tanggal Mulai</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">Tanggal Akhir</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={fetchReport} disabled={loading} className="w-full">
-                {loading ? "Memuat..." : "Tampilkan Laporan"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-500">Memuat laporan...</p>
-          </div>
-        </div>
-      ) : summary ? (
+    <ReportShell
+      title="Laporan Pembayaran"
+      description="Analisis dan monitoring transaksi pembayaran"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!summary}
+      onExportExcel={handleExport}
+    >
+      {summary && (
         <>
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
@@ -383,7 +268,7 @@ export default function LaporanPembayaranPage() {
                         <tr key={payment.id} className="border-b transition-colors hover:bg-muted/50">
                           <td className="p-4 align-middle">
                             <div className="text-xs text-muted-foreground">
-                              {formatDateTime(payment.date)}
+                              {formatDate(payment.date, "dd MMM yyyy HH:mm")}
                             </div>
                           </td>
                           <td className="p-4 align-middle">
@@ -414,16 +299,7 @@ export default function LaporanPembayaranPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
-        <Card>
-          <CardContent className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Pilih periode untuk melihat laporan</p>
-            </div>
-          </CardContent>
-        </Card>
       )}
-    </div>
+    </ReportShell>
   )
 }

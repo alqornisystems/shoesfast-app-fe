@@ -1,15 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { CircleDollarSign, Calendar, TrendingDown, Layers, PieChart, FileDown, Printer } from "lucide-react"
+import { CircleDollarSign, TrendingDown, Layers, PieChart } from "lucide-react"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
+import { formatCurrency, formatDate } from "@/lib/utils"
+
+type ExpenseType = "all" | "general" | "operational"
 
 interface Summary {
   total_expenses: number
@@ -42,83 +44,39 @@ interface Expense {
   type: "general" | "operational"
 }
 
+interface ExpenseReport {
+  summary: Summary
+  category_breakdown: CategoryBreakdown[]
+  daily_expenses: DailyExpense[]
+  data: Expense[]
+}
+
 export default function LaporanPengeluaranPage() {
-  const [loading, setLoading] = useState(false)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [categoryBreakdown, setCategoryBreakdown] = useState<CategoryBreakdown[]>([])
-  const [dailyExpenses, setDailyExpenses] = useState<DailyExpense[]>([])
-  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [typeFilter, setTypeFilter] = useState<ExpenseType>("all")
 
-  // Filters
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-  const [typeFilter, setTypeFilter] = useState<"all" | "general" | "operational">("all")
+  const report = useReport<ExpenseReport>({
+    endpoint: "/api/reports/expenses",
+    params: { type: typeFilter === "all" ? undefined : typeFilter },
+  })
+  const data = report.data
 
+  // The `type` filter is passed through useReport's `params`, which the hook
+  // reads from a ref at fetch time — so a change won't auto-refetch. Trigger it
+  // here, skipping the initial mount (useReport already fetches once on mount).
+  // `refetchRef` is kept current via an effect (refetch's identity changes with
+  // the date range), so the typeFilter effect can stay keyed only on typeFilter.
+  const refetchRef = useRef(report.refetch)
   useEffect(() => {
-    // Set default to current month
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-
-    setStartDate(format(firstDay, "yyyy-MM-dd"))
-    setEndDate(format(lastDay, "yyyy-MM-dd"))
-  }, [])
-
+    refetchRef.current = report.refetch
+  })
+  const isFirstRender = useRef(true)
   useEffect(() => {
-    if (startDate && endDate) {
-      fetchReport()
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
     }
-  }, [startDate, endDate, typeFilter])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-      const endTimestamp = Math.floor(new Date(endDate + " 23:59:59").getTime() / 1000)
-
-      const typeParam = typeFilter !== "all" ? `&type=${typeFilter}` : ""
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/expenses?start_date=${startTimestamp}&end_date=${endTimestamp}${typeParam}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch report")
-      }
-
-      const data = await response.json()
-      setSummary(data.summary)
-      setCategoryBreakdown(data.category_breakdown)
-      setDailyExpenses(data.daily_expenses)
-      setExpenses(data.data)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal memuat laporan")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatDate = (timestamp: number) => {
-    return format(new Date(timestamp * 1000), "dd MMM yyyy")
-  }
-
-  const formatDateTime = (timestamp: number) => {
-    return format(new Date(timestamp * 1000), "dd MMM yyyy HH:mm")
-  }
+    refetchRef.current()
+  }, [typeFilter])
 
   const getTypeBadge = (type: string) => {
     if (type === "general") {
@@ -128,19 +86,20 @@ export default function LaporanPengeluaranPage() {
   }
 
   const handleExport = () => {
+    const expenses = data?.data ?? []
     if (!expenses.length) {
       toast.error("Tidak ada data untuk diekspor")
       return
     }
 
-    const exportData = expenses.map(expense => ({
+    const exportData = expenses.map((expense) => ({
       date: formatDateForExport(expense.date),
       branch_name: expense.branch_name,
       category: expense.category,
       description: expense.description,
       total: formatCurrencyForExport(expense.total),
       type: expense.type === "general" ? "Umum" : "Operasional",
-      user_name: expense.user_name
+      user_name: expense.user_name,
     }))
 
     const typeLabel = typeFilter !== "all" ? `_${typeFilter}` : ""
@@ -153,95 +112,43 @@ export default function LaporanPengeluaranPage() {
         { key: "description", label: "Deskripsi" },
         { key: "total", label: "Nominal" },
         { key: "type", label: "Jenis" },
-        { key: "user_name", label: "User" }
+        { key: "user_name", label: "User" },
       ],
-      `Laporan_Pengeluaran${typeLabel}_${format(new Date(startDate), "dd-MM-yyyy")}_${format(new Date(endDate), "dd-MM-yyyy")}`
+      `Laporan_Pengeluaran${typeLabel}_${format(new Date(report.startDate), "dd-MM-yyyy")}_${format(new Date(report.endDate), "dd-MM-yyyy")}`
     )
 
     toast.success("Data berhasil diekspor ke Excel")
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
+  const typeSelector = (
+    <select
+      id="type_filter"
+      aria-label="Jenis Pengeluaran"
+      value={typeFilter}
+      onChange={(e) => setTypeFilter(e.target.value as ExpenseType)}
+      className="flex h-9 w-full sm:w-auto rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <option value="all">Semua Jenis</option>
+      <option value="general">Pengeluaran Umum</option>
+      <option value="operational">Pengeluaran Operasional</option>
+    </select>
+  )
 
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laporan Pengeluaran</h1>
-          <p className="text-muted-foreground">Monitoring dan analisis pengeluaran usaha</p>
-        </div>
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!summary}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!summary}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card className="print:hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Filter Laporan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Tanggal Mulai</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">Tanggal Akhir</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="type_filter">Jenis Pengeluaran</Label>
-              <select
-                id="type_filter"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value as any)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="all">Semua</option>
-                <option value="general">Pengeluaran Umum</option>
-                <option value="operational">Pengeluaran Operasional</option>
-              </select>
-            </div>
-            <div className="flex items-end">
-              <Button onClick={fetchReport} disabled={loading} className="w-full">
-                {loading ? "Memuat..." : "Tampilkan Laporan"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-500">Memuat laporan...</p>
-          </div>
-        </div>
-      ) : summary ? (
+    <ReportShell
+      title="Laporan Pengeluaran"
+      description="Monitoring dan analisis pengeluaran usaha"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!data?.summary}
+      onExportExcel={handleExport}
+      actions={typeSelector}
+    >
+      {data?.summary && (
         <>
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
@@ -252,10 +159,10 @@ export default function LaporanPengeluaranPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-red-600">
-                  {formatCurrency(summary.total_expenses)}
+                  {formatCurrency(data.summary.total_expenses)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {summary.count_general + summary.count_operational} transaksi
+                  {data.summary.count_general + data.summary.count_operational} transaksi
                 </p>
               </CardContent>
             </Card>
@@ -266,8 +173,8 @@ export default function LaporanPengeluaranPage() {
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(summary.total_general)}</div>
-                <p className="text-xs text-muted-foreground">{summary.count_general} transaksi</p>
+                <div className="text-2xl font-bold">{formatCurrency(data.summary.total_general)}</div>
+                <p className="text-xs text-muted-foreground">{data.summary.count_general} transaksi</p>
               </CardContent>
             </Card>
 
@@ -278,17 +185,17 @@ export default function LaporanPengeluaranPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {formatCurrency(summary.total_operational)}
+                  {formatCurrency(data.summary.total_operational)}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {summary.count_operational} transaksi
+                  {data.summary.count_operational} transaksi
                 </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Category Breakdown */}
-          {categoryBreakdown.length > 0 && (
+          {(data.category_breakdown ?? []).length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -299,7 +206,7 @@ export default function LaporanPengeluaranPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categoryBreakdown.map((item, index) => (
+                  {data.category_breakdown.map((item, index) => (
                     <div
                       key={index}
                       className="flex items-center justify-between p-4 border rounded-lg"
@@ -341,14 +248,14 @@ export default function LaporanPengeluaranPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {dailyExpenses.length === 0 ? (
+                    {(data.daily_expenses ?? []).length === 0 ? (
                       <tr>
                         <td colSpan={3} className="h-24 text-center text-muted-foreground">
                           Tidak ada pengeluaran pada periode ini
                         </td>
                       </tr>
                     ) : (
-                      dailyExpenses.map((daily, index) => (
+                      data.daily_expenses.map((daily, index) => (
                         <tr key={index} className="border-b transition-colors hover:bg-muted/50">
                           <td className="p-4 align-middle">
                             {format(new Date(daily.expense_date), "dd MMM yyyy")}
@@ -387,21 +294,21 @@ export default function LaporanPengeluaranPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {expenses.length === 0 ? (
+                    {(data.data ?? []).length === 0 ? (
                       <tr>
                         <td colSpan={7} className="h-24 text-center text-muted-foreground">
                           Tidak ada transaksi pengeluaran
                         </td>
                       </tr>
                     ) : (
-                      expenses.map((expense) => (
+                      data.data.map((expense) => (
                         <tr
                           key={`${expense.type}-${expense.id}`}
                           className="border-b transition-colors hover:bg-muted/50"
                         >
                           <td className="p-4 align-middle">
                             <div className="text-xs text-muted-foreground">
-                              {formatDateTime(expense.date)}
+                              {formatDate(expense.date, "dd MMM yyyy HH:mm")}
                             </div>
                           </td>
                           <td className="p-4 align-middle text-xs">{expense.branch_name}</td>
@@ -425,16 +332,7 @@ export default function LaporanPengeluaranPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
-        <Card>
-          <CardContent className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Pilih periode untuk melihat laporan</p>
-            </div>
-          </CardContent>
-        </Card>
       )}
-    </div>
+    </ReportShell>
   )
 }

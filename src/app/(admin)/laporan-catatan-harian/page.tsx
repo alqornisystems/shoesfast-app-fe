@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input"
 import { FileText, Calendar as CalendarIcon, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
-import { id as idLocale } from "date-fns/locale"
+import { api } from "@/lib/api"
+import { formatDate } from "@/lib/utils"
 
 interface NoteDetail {
   id: number
@@ -42,6 +43,14 @@ interface User {
   name: string
   phone: string
   role: string
+}
+
+interface SearchUsersResponse {
+  data: User[]
+}
+
+interface CreateNoteResponse {
+  message?: string
 }
 
 export default function LaporanCatatanHarianPage() {
@@ -83,19 +92,11 @@ export default function LaporanCatatanHarianPage() {
   const fetchMatrix = async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/daily-notes-matrix?month=${currentMonth}&year=${currentYear}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const data = await api.get<MatrixData>(
+        `/api/reports/daily-notes-matrix?month=${currentMonth}&year=${currentYear}`
       )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
       setMatrixData(data)
-    } catch (error: any) {
+    } catch {
       toast.error("Gagal memuat laporan")
     } finally {
       setLoading(false)
@@ -104,19 +105,11 @@ export default function LaporanCatatanHarianPage() {
 
   const searchUsers = async (search: string) => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes/search-users?search=${search}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const data = await api.get<SearchUsersResponse>(
+        `/api/daily-notes/search-users?search=${encodeURIComponent(search)}`
       )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
       setUsers(data.data || [])
-    } catch (error: any) {
+    } catch {
       toast.error("Gagal mencari karyawan")
     }
   }
@@ -143,37 +136,20 @@ export default function LaporanCatatanHarianPage() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            user_id: parseInt(formData.user_id),
-            date: formData.date,
-            note: formData.note,
-            activities: formData.activities || null,
-          }),
-        }
-      )
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        toast.error(data.message || "Gagal membuat catatan")
-        return
-      }
+      await api.post<CreateNoteResponse>("/api/daily-notes", {
+        user_id: parseInt(formData.user_id),
+        date: formData.date,
+        note: formData.note,
+        activities: formData.activities || null,
+      })
 
       toast.success("Catatan berhasil dibuat!")
       setDialogOpen(false)
       resetForm()
       await fetchMatrix()
-    } catch (error: any) {
-      toast.error("Terjadi kesalahan")
+    } catch (error) {
+      const e = error as CreateNoteResponse
+      toast.error(e?.message || "Gagal membuat catatan")
     } finally {
       setLoading(false)
     }
@@ -269,8 +245,8 @@ export default function LaporanCatatanHarianPage() {
               Laporan Catatan Harian
             </CardTitle>
             <CardDescription>
-              Periode: {format(new Date(matrixData.period.start_date * 1000), "dd MMM yyyy", { locale: idLocale })} -{" "}
-              {format(new Date(matrixData.period.end_date * 1000), "dd MMM yyyy", { locale: idLocale })}
+              Periode: {formatDate(matrixData.period.start_date)} -{" "}
+              {formatDate(matrixData.period.end_date)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -340,7 +316,7 @@ export default function LaporanCatatanHarianPage() {
           <CardContent className="text-center py-12">
             <FileText className="h-12 w-12 mx-auto mb-2 opacity-20" />
             <p className="text-sm text-muted-foreground">
-              Klik "Tampilkan" untuk melihat laporan
+              Klik &quot;Tampilkan&quot; untuk melihat laporan
             </p>
           </CardContent>
         </Card>

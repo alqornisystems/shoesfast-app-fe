@@ -1,14 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
 import { format } from "date-fns"
-import { ShoppingBag, Calendar, Package, TrendingUp, BarChart3, FileDown, Printer } from "lucide-react"
+import { toast } from "sonner"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { ShoppingBag, Package, TrendingUp, BarChart3 } from "lucide-react"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
+import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -45,85 +44,29 @@ interface OrderItem {
   net_price: number
 }
 
+interface OrdersReport {
+  summary: Summary
+  service_breakdown: ServiceBreakdown[]
+  status_breakdown: StatusBreakdown[]
+  data: OrderItem[]
+}
+
+function getStatusBadgeVariant(status: string) {
+  if (status === "Pending") return "outline"
+  if (status === "Process") return "default"
+  if (status === "Done") return "secondary"
+  if (status === "Canceled") return "destructive"
+  return "outline"
+}
+
 export default function LaporanPesananPage() {
-  const [loading, setLoading] = useState(false)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [serviceBreakdown, setServiceBreakdown] = useState<ServiceBreakdown[]>([])
-  const [statusBreakdown, setStatusBreakdown] = useState<StatusBreakdown[]>([])
-  const [items, setItems] = useState<OrderItem[]>([])
+  const report = useReport<OrdersReport>({ endpoint: "/api/reports/orders" })
+  const data = report.data
 
-  // Filters
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-
-  useEffect(() => {
-    // Set default to current month
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-
-    setStartDate(format(firstDay, "yyyy-MM-dd"))
-    setEndDate(format(lastDay, "yyyy-MM-dd"))
-  }, [])
-
-  useEffect(() => {
-    if (startDate && endDate) {
-      fetchReport()
-    }
-  }, [startDate, endDate])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-      const endTimestamp = Math.floor(new Date(endDate + " 23:59:59").getTime() / 1000)
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/orders?start_date=${startTimestamp}&end_date=${endTimestamp}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch report")
-      }
-
-      const data = await response.json()
-      setSummary(data.summary)
-      setServiceBreakdown(data.service_breakdown)
-      setStatusBreakdown(data.status_breakdown)
-      setItems(data.data)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal memuat laporan")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
-
-  const formatDate = (timestamp: number) => {
-    return format(new Date(timestamp * 1000), "dd MMM yyyy")
-  }
-
-  const getStatusBadgeVariant = (status: string) => {
-    if (status === "Pending") return "outline"
-    if (status === "Process") return "default"
-    if (status === "Done") return "secondary"
-    if (status === "Canceled") return "destructive"
-    return "outline"
-  }
+  const summary = data?.summary ?? null
+  const serviceBreakdown = data?.service_breakdown ?? []
+  const statusBreakdown = data?.status_breakdown ?? []
+  const items = data?.data ?? []
 
   const handleExport = () => {
     if (!items.length) {
@@ -131,7 +74,7 @@ export default function LaporanPesananPage() {
       return
     }
 
-    const exportData = items.map(item => ({
+    const exportData = items.map((item) => ({
       order_date: formatDateForExport(item.order_date),
       order_code: item.order_code,
       customer_name: item.customer_name,
@@ -140,7 +83,7 @@ export default function LaporanPesananPage() {
       price: formatCurrencyForExport(item.price),
       discount: formatCurrencyForExport(item.discount),
       net_price: formatCurrencyForExport(item.net_price),
-      order_status: item.order_status
+      order_status: item.order_status,
     }))
 
     exportTableToExcel(
@@ -154,84 +97,28 @@ export default function LaporanPesananPage() {
         { key: "price", label: "Harga" },
         { key: "discount", label: "Diskon" },
         { key: "net_price", label: "Total" },
-        { key: "order_status", label: "Status" }
+        { key: "order_status", label: "Status" },
       ],
-      `Laporan_Pesanan_${format(new Date(startDate), "dd-MM-yyyy")}_${format(new Date(endDate), "dd-MM-yyyy")}`
+      `Laporan_Pesanan_${format(new Date(report.startDate), "dd-MM-yyyy")}_${format(new Date(report.endDate), "dd-MM-yyyy")}`
     )
 
     toast.success("Data berhasil diekspor ke Excel")
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laporan Pesanan & Item</h1>
-          <p className="text-muted-foreground">
-            Analisis detail pesanan dan breakdown per layanan
-          </p>
-        </div>
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!summary}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!summary}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <Card className="print:hidden">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Filter Periode
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">Tanggal Mulai</Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">Tanggal Akhir</Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button onClick={fetchReport} disabled={loading} className="w-full">
-                {loading ? "Memuat..." : "Tampilkan Laporan"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-sm text-gray-500">Memuat laporan...</p>
-          </div>
-        </div>
-      ) : summary ? (
+    <ReportShell
+      title="Laporan Pesanan & Item"
+      description="Analisis detail pesanan dan breakdown per layanan"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!summary}
+      onExportExcel={handleExport}
+    >
+      {summary && (
         <>
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-3">
@@ -422,16 +309,7 @@ export default function LaporanPesananPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
-        <Card>
-          <CardContent className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">Pilih periode untuk melihat laporan</p>
-            </div>
-          </CardContent>
-        </Card>
       )}
-    </div>
+    </ReportShell>
   )
 }

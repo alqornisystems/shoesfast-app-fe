@@ -1,14 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
 import { format } from "date-fns"
-import { Wrench, Calendar, Clock, AlertCircle, CheckCircle2, Users, FileDown, Printer } from "lucide-react"
+import { toast } from "sonner"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Wrench, Clock, AlertCircle, CheckCircle2, Users } from "lucide-react"
+import { useReport } from "@/hooks/use-report"
+import { ReportShell } from "@/components/report-shell"
 import { exportTableToExcel, formatPercentForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -30,47 +28,16 @@ interface TechnicianStat {
   completion_rate: number
 }
 
+interface TreatmentReport {
+  summary: Summary
+  technician_stats: TechnicianStat[]
+}
+
 export default function LaporanPengerjaanPage() {
-  const [loading, setLoading] = useState(false)
-  const [summary, setSummary] = useState<Summary | null>(null)
-  const [technicianStats, setTechnicianStats] = useState<TechnicianStat[]>([])
-  const [startDate, setStartDate] = useState("")
-  const [endDate, setEndDate] = useState("")
-
-  useEffect(() => {
-    const now = new Date()
-    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-    setStartDate(format(firstDay, "yyyy-MM-dd"))
-    setEndDate(format(lastDay, "yyyy-MM-dd"))
-  }, [])
-
-  useEffect(() => {
-    if (startDate && endDate) fetchReport()
-  }, [startDate, endDate])
-
-  const fetchReport = async () => {
-    setLoading(true)
-    try {
-      const token = localStorage.getItem("sf_token")
-      const startTimestamp = Math.floor(new Date(startDate).getTime() / 1000)
-      const endTimestamp = Math.floor(new Date(endDate + " 23:59:59").getTime() / 1000)
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/reports/treatments?start_date=${startTimestamp}&end_date=${endTimestamp}`,
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch report")
-      const data = await response.json()
-      setSummary(data.summary)
-      setTechnicianStats(data.technician_stats)
-    } catch (error: any) {
-      toast.error(error.message || "Gagal memuat laporan")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const report = useReport<TreatmentReport>({ endpoint: "/api/reports/treatments" })
+  const data = report.data
+  const summary = data?.summary
+  const technicianStats = data?.technician_stats ?? []
 
   const handleExport = () => {
     if (!technicianStats.length) {
@@ -95,51 +62,26 @@ export default function LaporanPengerjaanPage() {
         { key: "in_progress", label: "Dalam Proses" },
         { key: "completion_rate", label: "Completion Rate" }
       ],
-      `Laporan_Pengerjaan_${format(new Date(startDate), "dd-MM-yyyy")}_${format(new Date(endDate), "dd-MM-yyyy")}`
+      `Laporan_Pengerjaan_${format(new Date(report.startDate), "dd-MM-yyyy")}_${format(new Date(report.endDate), "dd-MM-yyyy")}`
     )
 
     toast.success("Data berhasil diekspor ke Excel")
   }
 
-  const handlePrint = () => {
-    window.print()
-  }
-
   return (
-    <div className="container py-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Laporan Pengerjaan</h1>
-          <p className="text-muted-foreground">Analisis produktivitas & durasi treatment</p>
-        </div>
-        <div className="flex gap-2 print:hidden">
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!summary}>
-            <FileDown className="h-4 w-4 mr-2" />
-            Export Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} disabled={!summary}>
-            <Printer className="h-4 w-4 mr-2" />
-            Print
-          </Button>
-        </div>
-      </div>
-
-      <Card className="print:hidden">
-        <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />Filter Periode</CardTitle></CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2"><Label>Tanggal Mulai</Label><Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Tanggal Akhir</Label><Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} /></div>
-            <div className="flex items-end"><Button onClick={fetchReport} disabled={loading} className="w-full">{loading ? "Memuat..." : "Tampilkan"}</Button></div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {loading ? (
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-        </div>
-      ) : summary ? (
+    <ReportShell
+      title="Laporan Pengerjaan"
+      description="Analisis produktivitas & durasi treatment"
+      startDate={report.startDate}
+      endDate={report.endDate}
+      setStartDate={report.setStartDate}
+      setEndDate={report.setEndDate}
+      refetch={report.refetch}
+      loading={report.loading}
+      hasData={!!summary}
+      onExportExcel={handleExport}
+    >
+      {summary && (
         <>
           <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
             <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Total</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{summary.total_treatments}</div></CardContent></Card>
@@ -185,9 +127,7 @@ export default function LaporanPengerjaanPage() {
             </CardContent>
           </Card>
         </>
-      ) : (
-        <Card><CardContent className="flex items-center justify-center min-h-[400px]"><div className="text-center"><Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" /><p className="text-muted-foreground">Pilih periode</p></div></CardContent></Card>
       )}
-    </div>
+    </ReportShell>
   )
 }

@@ -113,7 +113,7 @@ export function LoginForm() {
           htmlFor="remember"
           className="text-sm font-normal cursor-pointer"
         >
-          Ingat saya selama 3 hari
+          Ingat saya selama 30 hari
         </Label>
       </div>
 
