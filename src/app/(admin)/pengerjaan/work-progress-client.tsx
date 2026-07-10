@@ -37,6 +37,9 @@ import {
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
 
+const STORAGE_KEY_SEARCH = "work_progress_list_search"
+const STORAGE_KEY_PAGE = "work_progress_list_page"
+
 type Treatment = {
   id: number
   orders_id: number
@@ -84,6 +87,7 @@ export function WorkProgressClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   function getImageUrl(photo: string | null): string | null {
     if (!photo) return null
@@ -132,6 +136,7 @@ export function WorkProgressClient() {
         from: res.from ?? 0,
         to: res.to ?? 0,
       })
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(res.current_page ?? 1))
     } catch {
       setTreatments([])
     } finally {
@@ -140,10 +145,16 @@ export function WorkProgressClient() {
   }
 
   useEffect(() => {
-    fetchTreatments()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ""
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || "1", 10)
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchTreatments(savedPage)
   }, [])
 
   useEffect(() => {
+    if (!initialized) return
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
     const timer = setTimeout(() => {
       fetchTreatments(1)
     }, 300)

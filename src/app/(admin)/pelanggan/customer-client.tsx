@@ -120,6 +120,9 @@ type PaginationData = {
   to: number
 }
 
+const STORAGE_KEY_SEARCH = 'customer_list_search'
+const STORAGE_KEY_PAGE = 'customer_list_page'
+
 export function CustomerClient() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [projects, setProjects] = useState<Project[]>([])
@@ -133,6 +136,7 @@ export function CustomerClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Customer | null>(null)
@@ -163,6 +167,9 @@ export function CustomerClient() {
         from: json.from ?? 0,
         to: json.to ?? 0,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(json.current_page ?? 1))
     } catch {
       setCustomers([])
     } finally {
@@ -179,13 +186,23 @@ export function CustomerClient() {
     }
   }
 
+  // Restore state from sessionStorage on mount
   useEffect(() => {
-    fetchCustomers()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchCustomers(savedPage, savedSearch)
     fetchProjects()
   }, [])
 
-  // Search with debounce
+  // Save search to sessionStorage and reset to page 1 (debounced)
   useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchCustomers(1, search)
     }, 500)

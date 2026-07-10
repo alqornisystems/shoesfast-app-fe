@@ -107,6 +107,9 @@ type PaginationData = {
   to: number
 }
 
+const STORAGE_KEY_SEARCH = 'user_list_search'
+const STORAGE_KEY_PAGE = 'user_list_page'
+
 export function UserClient() {
   const router = useRouter()
   const { branch } = useAuth()
@@ -123,6 +126,7 @@ export function UserClient() {
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
@@ -154,6 +158,9 @@ export function UserClient() {
       })
       setRoles(rolesRes.data ?? [])
       setProjects(projectsRes.data ?? [])
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(usersRes.current_page ?? 1))
     } catch {
       setUsers([])
       setRoles([])
@@ -163,7 +170,21 @@ export function UserClient() {
     }
   }
 
-  useEffect(() => { fetchUsers() }, [])
+  // Restore state from sessionStorage on mount
+  useEffect(() => {
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchUsers(savedPage)
+  }, [])
+
+  // Persist search to sessionStorage (search is client-side; no server refetch)
+  useEffect(() => {
+    if (!initialized) return
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+  }, [search])
 
   function openAdd() {
     setEditTarget(null)

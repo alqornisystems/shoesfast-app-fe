@@ -69,6 +69,9 @@ type PaginationData = {
   total: number
 }
 
+const STORAGE_KEY_SEARCH = "broadcast_template_list_search"
+const STORAGE_KEY_PAGE = "broadcast_template_list_page"
+
 export function TemplateClient() {
   const [templates, setTemplates] = useState<BroadcastTemplate[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -79,6 +82,7 @@ export function TemplateClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<BroadcastTemplate | null>(null)
@@ -101,12 +105,14 @@ export function TemplateClient() {
       }
       const json = await api.get<any>(`/api/broadcasts/templates?${params.toString()}`)
       setTemplates(json.data ?? [])
-      setPagination(json.pagination ?? {
+      const pag: PaginationData = json.pagination ?? {
         current_page: 1,
         total_pages: 1,
         per_page: 20,
         total: 0,
-      })
+      }
+      setPagination(pag)
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(pag.current_page ?? 1))
     } catch {
       setTemplates([])
     } finally {
@@ -115,11 +121,18 @@ export function TemplateClient() {
   }
 
   useEffect(() => {
-    fetchTemplates()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ""
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || "1", 10)
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchTemplates(savedPage, savedSearch)
   }, [])
 
   // Search with debounce
   useEffect(() => {
+    if (!initialized) return
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchTemplates(1, search)
     }, 500)

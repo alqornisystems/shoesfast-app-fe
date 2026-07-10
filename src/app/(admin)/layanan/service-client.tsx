@@ -79,6 +79,9 @@ type PaginationData = {
   to: number
 }
 
+const STORAGE_KEY_SEARCH = 'service_list_search'
+const STORAGE_KEY_PAGE = 'service_list_page'
+
 export function ServiceClient() {
   const router = useRouter()
   const [services, setServices] = useState<Service[]>([])
@@ -92,6 +95,7 @@ export function ServiceClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Service | null>(null)
@@ -122,6 +126,9 @@ export function ServiceClient() {
         from: json.from ?? 0,
         to: json.to ?? 0,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(json.current_page ?? 1))
     } catch {
       setServices([])
     } finally {
@@ -129,12 +136,22 @@ export function ServiceClient() {
     }
   }
 
+  // Restore state from sessionStorage on mount
   useEffect(() => {
-    fetchServices()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchServices(savedPage, savedSearch)
   }, [])
 
-  // Search with debounce
+  // Save search to sessionStorage and reset to page 1 (debounced)
   useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchServices(1, search)
     }, 500)

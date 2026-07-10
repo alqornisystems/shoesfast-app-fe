@@ -86,8 +86,13 @@ type PaginationData = {
   total: number
 }
 
+const STORAGE_KEY_SEARCH = 'broadcast_send_list_search'
+const STORAGE_KEY_PAGE = 'broadcast_send_list_page'
+const STORAGE_KEY_TAB = 'broadcast_send_list_tab'
+
 export function SendClient() {
   const [activeTab, setActiveTab] = useState("send")
+  const [initialized, setInitialized] = useState(false)
 
   // History state
   const [history, setHistory] = useState<BroadcastHistory[]>([])
@@ -134,6 +139,9 @@ export function SendClient() {
         per_page: 20,
         total: 0,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(json.pagination?.current_page ?? 1))
     } catch {
       setHistory([])
     } finally {
@@ -159,10 +167,30 @@ export function SendClient() {
     }
   }
 
+  // Restore state from sessionStorage on mount
   useEffect(() => {
-    fetchHistory()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+    const savedTab = sessionStorage.getItem(STORAGE_KEY_TAB) || 'send'
+
+    setSearchRecipient(savedSearch)
+    setActiveTab(savedTab)
+    setInitialized(true)
+    fetchHistory(savedPage)
     fetchTemplates()
   }, [])
+
+  // Persist active tab
+  useEffect(() => {
+    if (!initialized) return
+    sessionStorage.setItem(STORAGE_KEY_TAB, activeTab)
+  }, [activeTab])
+
+  // Persist recipient search (client-side filter, no server fetch)
+  useEffect(() => {
+    if (!initialized) return
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, searchRecipient)
+  }, [searchRecipient])
 
   useEffect(() => {
     if (recipientType === "selected") {

@@ -49,6 +49,9 @@ type PaginationData = {
   to: number
 }
 
+const STORAGE_KEY_SEARCH = "expense_op_list_search"
+const STORAGE_KEY_PAGE = "expense_op_list_page"
+
 export function ExpenseOperationalClient() {
   const [expenses, setExpenses] = useState<ExpenseOperational[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -60,6 +63,7 @@ export function ExpenseOperationalClient() {
     to: 0,
   })
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -76,11 +80,22 @@ export function ExpenseOperationalClient() {
   })
   const [nominalDisplay, setNominalDisplay] = useState("")
 
+  // Restore state from sessionStorage on mount
   useEffect(() => {
-    fetchExpenses()
-  }, [pagination.current_page])
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ""
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || "1", 10)
 
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchExpenses(savedPage)
+  }, [])
+
+  // Save search to sessionStorage and reset to page 1 (debounced)
   useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchExpenses(1)
     }, 300)
@@ -107,6 +122,9 @@ export function ExpenseOperationalClient() {
         from: result.from,
         to: result.to,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(result.current_page ?? 1))
     } catch (error) {
       toast.error("Gagal memuat data pengeluaran operasional")
 
@@ -457,7 +475,7 @@ export function ExpenseOperationalClient() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPagination((prev) => ({ ...prev, current_page: prev.current_page - 1 }))}
+                onClick={() => fetchExpenses(pagination.current_page - 1)}
                 disabled={pagination.current_page === 1 || isLoading}
                 className="h-8 gap-1"
               >
@@ -470,7 +488,7 @@ export function ExpenseOperationalClient() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPagination((prev) => ({ ...prev, current_page: prev.current_page + 1 }))}
+                onClick={() => fetchExpenses(pagination.current_page + 1)}
                 disabled={pagination.current_page === pagination.last_page || isLoading}
                 className="h-8 gap-1"
               >

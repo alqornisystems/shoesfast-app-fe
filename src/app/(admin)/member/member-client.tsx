@@ -62,6 +62,9 @@ type Project = {
   name: string
 }
 
+const STORAGE_KEY_SEARCH = 'member_list_search'
+const STORAGE_KEY_PAGE = 'member_list_page'
+
 type PaginationData = {
   current_page: number
   last_page: number
@@ -86,6 +89,7 @@ export function MemberClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false)
   const [promoting, setPromoting] = useState(false)
@@ -116,6 +120,9 @@ export function MemberClient() {
         from: json.from ?? 0,
         to: json.to ?? 0,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(json.current_page ?? 1))
     } catch {
       setCustomers([])
     } finally {
@@ -204,13 +211,23 @@ export function MemberClient() {
     setAddMemberDialogOpen(true)
   }
 
+  // Restore state from sessionStorage on mount
   useEffect(() => {
-    fetchCustomers()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchCustomers(savedPage, savedSearch)
     fetchProjects()
   }, [])
 
   // Search with debounce (for member list)
   useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchCustomers(1, search)
     }, 500)

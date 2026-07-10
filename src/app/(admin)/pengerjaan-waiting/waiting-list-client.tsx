@@ -79,6 +79,9 @@ type PaginationData = {
   to: number
 }
 
+const STORAGE_KEY_SEARCH = 'waiting_list_search'
+const STORAGE_KEY_PAGE = 'waiting_list_page'
+
 export function WaitingListClient() {
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -91,6 +94,7 @@ export function WaitingListClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
@@ -125,6 +129,9 @@ export function WaitingListClient() {
         from: res.from ?? 0,
         to: res.to ?? 0,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(res.current_page ?? 1))
     } catch {
       setTreatments([])
     } finally {
@@ -150,11 +157,22 @@ export function WaitingListClient() {
     }
   }
 
+  // Restore state from sessionStorage on mount
   useEffect(() => {
-    fetchTreatments()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchTreatments(savedPage)
   }, [])
 
+  // Save search to sessionStorage and reset to page 1
   useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchTreatments(1)
     }, 300)

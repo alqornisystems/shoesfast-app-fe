@@ -42,6 +42,9 @@ type Role = {
   name: string
 }
 
+const STORAGE_KEY_SEARCH = "role_list_search"
+const STORAGE_KEY_PAGE = "role_list_page"
+
 type FormState = { name: string }
 type ErrorState = { name?: string }
 
@@ -66,6 +69,7 @@ export function RoleClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -92,6 +96,7 @@ export function RoleClient() {
         from: json.from ?? 0,
         to: json.to ?? 0,
       })
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(json.current_page ?? 1))
     } catch {
       setRoles([])
     } finally {
@@ -99,7 +104,21 @@ export function RoleClient() {
     }
   }
 
-  useEffect(() => { fetchRoles() }, [])
+  // Restore persisted list position on mount (exactly one initial fetch)
+  useEffect(() => {
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ""
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || "1", 10)
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchRoles(savedPage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Persist search text (client-side only — no server fetch on this page)
+  useEffect(() => {
+    if (!initialized) return
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+  }, [search, initialized])
 
   // Open add dialog
   function openAdd() {

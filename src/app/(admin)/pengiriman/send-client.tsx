@@ -85,6 +85,10 @@ const STATUS_LABELS: Record<number, { label: string; variant: "default" | "secon
   1: { label: "Selesai", variant: "outline" },
 }
 
+const STORAGE_KEY_SEARCH = 'send_list_search'
+const STORAGE_KEY_PAGE = 'send_list_page'
+const STORAGE_KEY_TAB = 'send_list_tab'
+
 export function SendClient() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"pickup" | "delivery">("pickup")
@@ -99,6 +103,7 @@ export function SendClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
   const [deleteTarget, setDeleteTarget] = useState<Send | null>(null)
@@ -135,6 +140,9 @@ export function SendClient() {
         from: res.from ?? 0,
         to: res.to ?? 0,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(res.current_page ?? 1))
     } catch {
       setSends([])
     } finally {
@@ -142,11 +150,32 @@ export function SendClient() {
     }
   }
 
+  // Restore state from sessionStorage on mount (single initial fetch)
   useEffect(() => {
-    fetchSends()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedTab = (sessionStorage.getItem(STORAGE_KEY_TAB) as "pickup" | "delivery") || "pickup"
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+
+    setSearch(savedSearch)
+    setActiveTab(savedTab)
+    setInitialized(true)
+    fetchSends(savedPage)
+  }, [])
+
+  // Refetch on tab change and persist active tab (skips the mount run)
+  useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_TAB, activeTab)
+    fetchSends(1)
   }, [activeTab])
 
+  // Save search to sessionStorage and reset to page 1 (debounced)
   useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchSends(1)
     }, 300)

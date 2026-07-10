@@ -57,6 +57,9 @@ const STATUS_LABELS: Record<number, { label: string; variant: "default" | "secon
   3: { label: "Dibatalkan", variant: "destructive" },
 }
 
+const STORAGE_KEY_SEARCH = "work_history_list_search"
+const STORAGE_KEY_PAGE = "work_history_list_page"
+
 export function WorkHistoryClient() {
   const [treatments, setTreatments] = useState<Treatment[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -69,6 +72,7 @@ export function WorkHistoryClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [initialized, setInitialized] = useState(false)
 
   function getImageUrl(photo: string | null): string | null {
     if (!photo) return null
@@ -103,6 +107,7 @@ export function WorkHistoryClient() {
         from: res.from ?? 0,
         to: res.to ?? 0,
       })
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(res.current_page ?? 1))
     } catch {
       setTreatments([])
     } finally {
@@ -111,14 +116,22 @@ export function WorkHistoryClient() {
   }
 
   useEffect(() => {
-    fetchTreatments()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ""
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || "1", 10)
+    setSearch(savedSearch)
+    setInitialized(true)
+    fetchTreatments(savedPage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
+    if (!initialized) return
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
     const timer = setTimeout(() => {
       fetchTreatments(1)
     }, 300)
     return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
   function formatDate(timestamp: number): string {

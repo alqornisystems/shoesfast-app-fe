@@ -114,6 +114,10 @@ type PaginationData = {
   to: number
 }
 
+const STORAGE_KEY_SEARCH = 'payment_list_search'
+const STORAGE_KEY_PAGE = 'payment_list_page'
+const STORAGE_KEY_STATUS = 'payment_list_status'
+
 export function PaymentClient() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -127,6 +131,7 @@ export function PaymentClient() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("unpaid_partial")
+  const [initialized, setInitialized] = useState(false)
 
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<Payment | null>(null)
@@ -225,6 +230,9 @@ export function PaymentClient() {
         from: res.from ?? 0,
         to: res.to ?? 0,
       })
+
+      // Save current page to sessionStorage
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(res.current_page ?? 1))
     } catch {
       setPayments([])
     } finally {
@@ -232,11 +240,32 @@ export function PaymentClient() {
     }
   }
 
+  // Restore state from sessionStorage on mount (single initial fetch)
   useEffect(() => {
-    fetchPayments()
+    const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
+    const savedStatus = sessionStorage.getItem(STORAGE_KEY_STATUS) || 'unpaid_partial'
+    const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
+
+    setSearch(savedSearch)
+    setStatusFilter(savedStatus)
+    setInitialized(true)
+    fetchPayments(savedPage)
+  }, [])
+
+  // Refetch when the status filter changes, and persist it
+  useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_STATUS, statusFilter)
+    fetchPayments(1)
   }, [statusFilter])
 
+  // Save search to sessionStorage and reset to page 1 (debounced)
   useEffect(() => {
+    if (!initialized) return
+
+    sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
+
     const timer = setTimeout(() => {
       fetchPayments(1)
     }, 300)
