@@ -36,8 +36,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+import { api } from "@/lib/api"
 
 type Expense = {
   id: number
@@ -116,7 +115,6 @@ export function ExpenseClient() {
   const fetchExpenses = async (page?: number) => {
     setIsLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
       const params = new URLSearchParams({
         page: (page || pagination.current_page).toString(),
         per_page: pagination.per_page.toString(),
@@ -125,16 +123,7 @@ export function ExpenseClient() {
 
       if (search) params.append("search", search)
 
-      const response = await fetch(`${API_URL}/api/expenses?${params}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      })
-
-      if (!response.ok) throw new Error("Failed to fetch expenses")
-
-      const result = await response.json()
+      const result = await api.get<any>(`/api/expenses?${params}`)
       setExpenses(result.data || [])
       setPagination({
         current_page: result.current_page,
@@ -245,29 +234,20 @@ export function ExpenseClient() {
     setSaving(true)
 
     try {
-      const token = localStorage.getItem("sf_token")
-
       // Save each expense item
-      const promises = expenseItems.map((item) =>
-        fetch(`${API_URL}/api/expenses`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
+      const results = await Promise.allSettled(
+        expenseItems.map((item) =>
+          api.post("/api/expenses", {
             date,
             note: item.note,
             nominal: item.nominal,
             category: "other",
             photo: item.photo || null,
-          }),
-        })
+          })
+        )
       )
 
-      const results = await Promise.all(promises)
-      const failedRequests = results.filter((r) => !r.ok)
+      const failedRequests = results.filter((r) => r.status === "rejected")
 
       if (failedRequests.length > 0) {
         throw new Error(`${failedRequests.length} pengeluaran gagal disimpan`)
@@ -298,24 +278,13 @@ export function ExpenseClient() {
     setSaving(true)
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${API_URL}/api/expenses/${editingExpense.id}`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          date: editForm.date,
-          note: editForm.note,
-          nominal: editForm.nominal,
-          category: "other",
-          photo: editForm.photo || null,
-        }),
+      await api.put(`/api/expenses/${editingExpense.id}`, {
+        date: editForm.date,
+        note: editForm.note,
+        nominal: editForm.nominal,
+        category: "other",
+        photo: editForm.photo || null,
       })
-
-      if (!response.ok) throw new Error("Failed to update expense")
 
       toast.success("Pengeluaran berhasil diperbarui")
       setShowForm(false)
@@ -347,16 +316,7 @@ export function ExpenseClient() {
     setIsLoading(true)
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${API_URL}/api/expenses/${deleteId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      })
-
-      if (!response.ok) throw new Error("Failed to delete expense")
+      await api.delete(`/api/expenses/${deleteId}`)
 
       toast.success("Pengeluaran berhasil dihapus")
       setIsDeleteDialogOpen(false)

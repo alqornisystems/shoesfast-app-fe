@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { ClipboardCheck, Clock, LogIn, LogOut, MapPin, Calendar, AlertCircle, Navigation } from "lucide-react"
 import { toast } from "sonner"
+import { api } from "@/lib/api"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
@@ -77,19 +78,10 @@ export default function AbsensiPage() {
 
   const fetchBranchLocation = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
       const user = JSON.parse(localStorage.getItem("sf_user") || "{}")
       const projectId = user.projects_id || 1
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects/${projectId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch branch location")
-      const result = await response.json()
+      const result = await api.get<any>(`/api/projects/${projectId}`)
       const branch = result.data
 
       if (branch && branch.latitude && branch.longitude) {
@@ -106,7 +98,6 @@ export default function AbsensiPage() {
 
   const fetchTodayHoliday = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
       const today = format(new Date(), "yyyy-MM-dd")
 
       const params = new URLSearchParams({
@@ -114,16 +105,7 @@ export default function AbsensiPage() {
         end_date: today,
       })
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/holidays?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<any>(`/api/holidays?${params}`)
       if (data.data && data.data.length > 0) {
         setTodayHoliday(data.data[0])
       }
@@ -161,12 +143,7 @@ export default function AbsensiPage() {
 
   const fetchTodayStatus = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/attendances/today`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!response.ok) throw new Error("Failed to fetch")
-      const data = await response.json()
+      const data = await api.get<any>(`/api/attendances/today`)
       setStatus(data)
     } catch (error: any) {
       console.error(error)
@@ -175,12 +152,7 @@ export default function AbsensiPage() {
 
   const fetchHistory = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/attendances`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!response.ok) throw new Error("Failed to fetch")
-      const data = await response.json()
+      const data = await api.get<any>(`/api/attendances`)
       setHistory(data.data || [])
     } catch (error: any) {
       console.error(error)
@@ -253,46 +225,36 @@ export default function AbsensiPage() {
       // Get user location first
       const location = await getUserLocation()
 
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/attendances/clock-in`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      try {
+        const data = await api.post<any>(`/api/attendances/clock-in`, {
           latitude: location.lat,
           longitude: location.lng,
           is_wfa: 0,
-        }),
-      })
+        })
 
-      const data = await response.json()
+        const distanceM = data.distance
+        const distanceKm = (distanceM / 1000).toFixed(2)
+        toast.success(
+          `Berhasil absen masuk!\nJarak dari kantor: ${distanceKm} km`,
+          { duration: 3000 }
+        )
 
-      if (!response.ok) {
+        await fetchTodayStatus()
+        await fetchHistory()
+      } catch (err) {
+        const e = err as { message?: string; distance?: number; max_distance?: number }
         // Show detailed error message
-        if (data.distance && data.max_distance) {
-          const distanceKm = (data.distance / 1000).toFixed(2)
-          const maxDistanceKm = (data.max_distance / 1000).toFixed(2)
+        if (e.distance && e.max_distance) {
+          const distanceKm = (e.distance / 1000).toFixed(2)
+          const maxDistanceKm = (e.max_distance / 1000).toFixed(2)
           toast.error(
-            `${data.message}\n\nJarak Anda: ${distanceKm} km\nRadius maksimal: ${maxDistanceKm} km`,
+            `${e.message}\n\nJarak Anda: ${distanceKm} km\nRadius maksimal: ${maxDistanceKm} km`,
             { duration: 5000 }
           )
         } else {
-          toast.error(data.message || "Gagal absen masuk")
+          toast.error(e.message || "Gagal absen masuk")
         }
-        return
       }
-
-      const distanceM = data.distance
-      const distanceKm = (distanceM / 1000).toFixed(2)
-      toast.success(
-        `Berhasil absen masuk!\nJarak dari kantor: ${distanceKm} km`,
-        { duration: 3000 }
-      )
-
-      await fetchTodayStatus()
-      await fetchHistory()
     } catch (error: any) {
       toast.error(error.message || "Terjadi kesalahan saat absen masuk")
     } finally {
@@ -318,46 +280,36 @@ export default function AbsensiPage() {
       // Get user location first
       const location = await getUserLocation()
 
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/attendances/clock-out`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      try {
+        const data = await api.post<any>(`/api/attendances/clock-out`, {
           latitude: location.lat,
           longitude: location.lng,
           is_wfa: 0,
-        }),
-      })
+        })
 
-      const data = await response.json()
+        const distanceM = data.distance
+        const distanceKm = (distanceM / 1000).toFixed(2)
+        toast.success(
+          `Berhasil absen pulang!\nJarak dari kantor: ${distanceKm} km`,
+          { duration: 3000 }
+        )
 
-      if (!response.ok) {
+        await fetchTodayStatus()
+        await fetchHistory()
+      } catch (err) {
+        const e = err as { message?: string; distance?: number; max_distance?: number }
         // Show detailed error message
-        if (data.distance && data.max_distance) {
-          const distanceKm = (data.distance / 1000).toFixed(2)
-          const maxDistanceKm = (data.max_distance / 1000).toFixed(2)
+        if (e.distance && e.max_distance) {
+          const distanceKm = (e.distance / 1000).toFixed(2)
+          const maxDistanceKm = (e.max_distance / 1000).toFixed(2)
           toast.error(
-            `${data.message}\n\nJarak Anda: ${distanceKm} km\nRadius maksimal: ${maxDistanceKm} km`,
+            `${e.message}\n\nJarak Anda: ${distanceKm} km\nRadius maksimal: ${maxDistanceKm} km`,
             { duration: 5000 }
           )
         } else {
-          toast.error(data.message || "Gagal absen pulang")
+          toast.error(e.message || "Gagal absen pulang")
         }
-        return
       }
-
-      const distanceM = data.distance
-      const distanceKm = (distanceM / 1000).toFixed(2)
-      toast.success(
-        `Berhasil absen pulang!\nJarak dari kantor: ${distanceKm} km`,
-        { duration: 3000 }
-      )
-
-      await fetchTodayStatus()
-      await fetchHistory()
     } catch (error: any) {
       toast.error(error.message || "Terjadi kesalahan saat absen pulang")
     } finally {

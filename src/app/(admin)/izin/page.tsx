@@ -15,6 +15,7 @@ import { toast } from "sonner"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { useAuth } from "@/contexts/auth-context"
+import { api } from "@/lib/api"
 
 interface Absence {
   id: number
@@ -60,12 +61,7 @@ export default function IzinPage() {
 
   const fetchAbsences = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/absences`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!response.ok) throw new Error("Failed to fetch")
-      const data = await response.json()
+      const data = await api.get<any>(`/api/absences`)
       setAbsences(data.data || [])
     } catch (error: any) {
       console.error(error)
@@ -74,7 +70,6 @@ export default function IzinPage() {
 
   const fetchTodayHoliday = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
       const today = format(new Date(), "yyyy-MM-dd")
 
       const params = new URLSearchParams({
@@ -82,16 +77,7 @@ export default function IzinPage() {
         end_date: today,
       })
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/holidays?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<any>(`/api/holidays?${params}`)
       if (data.data && data.data.length > 0) {
         setTodayHoliday(data.data[0])
       }
@@ -135,26 +121,16 @@ export default function IzinPage() {
 
     // Fetch holidays for the date range
     try {
-      const token = localStorage.getItem("sf_token")
       const params = new URLSearchParams({
         start_date: formData.date_start,
         end_date: formData.date_end,
       })
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/holidays?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.data && data.data.length > 0) {
-          const holidayNames = data.data.map((h: Holiday) => h.name).join(", ")
-          toast.error(`Tidak dapat mengajukan izin di hari libur: ${holidayNames}`)
-          return
-        }
+      const data = await api.get<any>(`/api/holidays?${params}`)
+      if (data.data && data.data.length > 0) {
+        const holidayNames = data.data.map((h: Holiday) => h.name).join(", ")
+        toast.error(`Tidak dapat mengajukan izin di hari libur: ${holidayNames}`)
+        return
       }
     } catch (error) {
       console.error("Error checking holidays:", error)
@@ -162,29 +138,15 @@ export default function IzinPage() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/absences`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        toast.error(data.message || "Gagal mengajukan izin")
-        return
-      }
+      await api.post(`/api/absences`, formData)
 
       toast.success("Pengajuan izin berhasil dibuat!")
       setDialogOpen(false)
       setFormData({ type: "1", date_start: "", date_end: "", note: "", photo: "" })
       await fetchAbsences()
-    } catch (error: any) {
-      toast.error("Terjadi kesalahan")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal mengajukan izin")
     } finally {
       setLoading(false)
     }
@@ -192,35 +154,25 @@ export default function IzinPage() {
 
   const handleApprove = async (id: number) => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/absences/${id}/approve`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!response.ok) throw new Error("Failed")
+      await api.put(`/api/absences/${id}/approve`)
 
       toast.success("Pengajuan disetujui")
       await fetchAbsences()
-    } catch (error: any) {
-      toast.error("Gagal menyetujui")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal menyetujui")
     }
   }
 
   const handleReject = async (id: number) => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/absences/${id}/reject`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!response.ok) throw new Error("Failed")
+      await api.put(`/api/absences/${id}/reject`)
 
       toast.success("Pengajuan ditolak")
       await fetchAbsences()
-    } catch (error: any) {
-      toast.error("Gagal menolak")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal menolak")
     }
   }
 
@@ -228,18 +180,13 @@ export default function IzinPage() {
     if (!confirm("Hapus pengajuan ini?")) return
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/absences/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!response.ok) throw new Error("Failed")
+      await api.delete(`/api/absences/${id}`)
 
       toast.success("Pengajuan dihapus")
       await fetchAbsences()
-    } catch (error: any) {
-      toast.error("Gagal menghapus")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal menghapus")
     }
   }
 

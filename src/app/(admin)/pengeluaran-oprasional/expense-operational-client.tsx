@@ -28,8 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+import { api } from "@/lib/api"
 
 type ExpenseOperational = {
   id: number
@@ -91,7 +90,6 @@ export function ExpenseOperationalClient() {
   const fetchExpenses = async (page?: number) => {
     setIsLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
       const params = new URLSearchParams({
         page: (page || pagination.current_page).toString(),
         per_page: pagination.per_page.toString(),
@@ -99,19 +97,7 @@ export function ExpenseOperationalClient() {
 
       if (search) params.append("search", search)
 
-      const response = await fetch(
-        `${API_URL}/api/expense-operationals?${params}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch expenses")
-
-      const result = await response.json()
+      const result = await api.get<any>(`/api/expense-operationals?${params}`)
       setExpenses(result.data || [])
       setPagination({
         current_page: result.current_page,
@@ -151,7 +137,6 @@ export function ExpenseOperationalClient() {
     setSaving(true)
 
     try {
-      const token = localStorage.getItem("sf_token")
       const payload = {
         name: formData.name,
         note: formData.note || null,
@@ -159,21 +144,15 @@ export function ExpenseOperationalClient() {
         nominal: formData.nominal,
       }
 
-      const url = editingExpense
-        ? `${API_URL}/api/expense-operationals/${editingExpense.id}`
-        : `${API_URL}/api/expense-operationals`
+      const path = editingExpense
+        ? `/api/expense-operationals/${editingExpense.id}`
+        : `/api/expense-operationals`
 
-      const response = await fetch(url, {
-        method: editingExpense ? "PUT" : "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) throw new Error("Failed to save expense")
+      if (editingExpense) {
+        await api.put(path, payload)
+      } else {
+        await api.post(path, payload)
+      }
 
       toast.success(
         editingExpense
@@ -184,8 +163,9 @@ export function ExpenseOperationalClient() {
       setEditingExpense(null)
       resetForm()
       fetchExpenses()
-    } catch (error) {
-      toast.error("Gagal menyimpan pengeluaran operasional")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal menyimpan pengeluaran operasional")
 
     } finally {
       setSaving(false)
@@ -209,26 +189,15 @@ export function ExpenseOperationalClient() {
     setIsLoading(true)
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${API_URL}/api/expense-operationals/${deleteId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: "application/json",
-          },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to delete expense")
+      await api.delete(`/api/expense-operationals/${deleteId}`)
 
       toast.success("Pengeluaran operasional berhasil dihapus")
       setIsDeleteDialogOpen(false)
       setDeleteId(null)
       fetchExpenses()
-    } catch (error) {
-      toast.error("Gagal menghapus pengeluaran operasional")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal menghapus pengeluaran operasional")
 
     } finally {
       setIsLoading(false)

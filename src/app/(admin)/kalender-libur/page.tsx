@@ -12,6 +12,7 @@ import { toast } from "sonner"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, fromUnixTime, addMonths, subMonths } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { api } from "@/lib/api"
 
 interface Holiday {
   id: number
@@ -50,17 +51,7 @@ export default function KalenderLiburPage() {
 
   const fetchBranches = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/projects`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<any>(`/api/projects`)
       setBranches(data.data || [])
     } catch (error: any) {
       console.error("Error fetching branches:", error)
@@ -69,7 +60,6 @@ export default function KalenderLiburPage() {
 
   const fetchHolidays = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
       const monthStart = startOfMonth(currentMonth)
       const monthEnd = endOfMonth(currentMonth)
 
@@ -78,16 +68,7 @@ export default function KalenderLiburPage() {
         end_date: format(monthEnd, "yyyy-MM-dd"),
       })
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/holidays?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<any>(`/api/holidays?${params}`)
       setHolidays(data.data || [])
     } catch (error: any) {
       toast.error("Gagal memuat kalender libur")
@@ -104,40 +85,26 @@ export default function KalenderLiburPage() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
-      const url = editMode
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/holidays/${formData.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/holidays`
-
-      const body: any = {
+      const payload: any = {
         date: formData.date,
         name: formData.name,
         description: formData.description || null,
         branch_id: formData.branch_id || null,
       }
 
-      const response = await fetch(url, {
-        method: editMode ? "PUT" : "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        toast.error(data.message || `Gagal ${editMode ? "mengupdate" : "membuat"} hari libur`)
-        return
+      if (formData.id) {
+        await api.put<any>(`/api/holidays/${formData.id}`, payload)
+      } else {
+        await api.post<any>(`/api/holidays`, payload)
       }
 
       toast.success(`Hari libur berhasil ${editMode ? "diupdate" : "ditambahkan"}!`)
       setDialogOpen(false)
       resetForm()
       await fetchHolidays()
-    } catch (error: any) {
-      toast.error("Terjadi kesalahan")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || `Gagal ${editMode ? "mengupdate" : "membuat"} hari libur`)
     } finally {
       setLoading(false)
     }
@@ -159,16 +126,7 @@ export default function KalenderLiburPage() {
     if (!confirm("Hapus hari libur ini?")) return
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/holidays/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed")
+      await api.delete<any>(`/api/holidays/${id}`)
 
       toast.success("Hari libur berhasil dihapus")
       await fetchHolidays()

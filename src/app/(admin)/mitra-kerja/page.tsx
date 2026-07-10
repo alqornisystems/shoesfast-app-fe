@@ -13,8 +13,7 @@ import { UserCheck, Plus, Search, Edit, Trash2, Phone, MapPin, CreditCard } from
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL
+import { api } from "@/lib/api"
 
 interface Partnership {
   id: number
@@ -61,23 +60,18 @@ export default function MitraKerjaPage() {
   const fetchPartnerships = async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
       const params = new URLSearchParams({
         page: String(pagination.current_page),
         per_page: String(pagination.per_page),
       })
       if (searchQuery) params.append("search", searchQuery)
 
-      const response = await fetch(`${API_URL}/api/partnerships?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<{ data: Partnership[]; pagination: typeof pagination }>(
+        `/api/partnerships?${params}`
+      )
       setPartnerships(data.data)
       setPagination(data.pagination)
-    } catch (error: any) {
+    } catch (error) {
       toast.error("Gagal memuat data mitra kerja")
     } finally {
       setLoading(false)
@@ -88,31 +82,19 @@ export default function MitraKerjaPage() {
     e.preventDefault()
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const url = editMode
-        ? `${API_URL}/api/partnerships/${formData.id}`
-        : `${API_URL}/api/partnerships`
-
-      const response = await fetch(url, {
-        method: editMode ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to save")
+      if (editMode) {
+        await api.put(`/api/partnerships/${formData.id}`, formData)
+      } else {
+        await api.post(`/api/partnerships`, formData)
       }
 
       toast.success(editMode ? "Mitra kerja berhasil diperbarui" : "Mitra kerja berhasil ditambahkan")
       setDialogOpen(false)
       resetForm()
       fetchPartnerships()
-    } catch (error: any) {
-      toast.error(error.message || "Gagal menyimpan data")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal menyimpan data")
     }
   }
 
@@ -132,21 +114,13 @@ export default function MitraKerjaPage() {
     if (!confirm("Yakin ingin menghapus mitra kerja ini?")) return
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${API_URL}/api/partnerships/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Failed to delete")
-      }
+      await api.delete(`/api/partnerships/${id}`)
 
       toast.success("Mitra kerja berhasil dihapus")
       fetchPartnerships()
-    } catch (error: any) {
-      toast.error(error.message || "Gagal menghapus data")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal menghapus data")
     }
   }
 

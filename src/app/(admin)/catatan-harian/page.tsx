@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, fromUnixTime, addMonths, subMonths } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
+import { api } from "@/lib/api"
 
 interface DailyNote {
   id: number
@@ -64,7 +65,6 @@ export default function CatatanHarianPage() {
 
   const fetchCurrentUser = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
       const userStr = localStorage.getItem("sf_user")
       if (userStr) {
         const user = JSON.parse(userStr)
@@ -77,17 +77,7 @@ export default function CatatanHarianPage() {
 
   const fetchTodayNote = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes/today`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<any>(`/api/daily-notes/today`)
       setTodayNote(data.data)
     } catch (error: any) {
       // Silent error - today note might not exist
@@ -96,7 +86,6 @@ export default function CatatanHarianPage() {
 
   const fetchNotes = async () => {
     try {
-      const token = localStorage.getItem("sf_token")
       const monthStart = startOfMonth(currentMonth)
       const monthEnd = endOfMonth(currentMonth)
 
@@ -105,16 +94,7 @@ export default function CatatanHarianPage() {
         end_date: format(monthEnd, "yyyy-MM-dd"),
       })
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<any>(`/api/daily-notes?${params}`)
       setNotes(data.data || [])
     } catch (error: any) {
       toast.error("Gagal memuat catatan")
@@ -124,7 +104,6 @@ export default function CatatanHarianPage() {
   const fetchHolidays = async () => {
     setLoadingHolidays(true)
     try {
-      const token = localStorage.getItem("sf_token")
       const monthStart = startOfMonth(currentMonth)
       const monthEnd = endOfMonth(currentMonth)
 
@@ -133,16 +112,7 @@ export default function CatatanHarianPage() {
         end_date: format(monthEnd, "yyyy-MM-dd"),
       })
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/holidays?${params}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed to fetch")
-
-      const data = await response.json()
+      const data = await api.get<any>(`/api/holidays?${params}`)
       setHolidays(data.data || [])
     } catch (error: any) {
       // Silent error - holidays are optional
@@ -187,31 +157,16 @@ export default function CatatanHarianPage() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem("sf_token")
-      const url = editMode
-        ? `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes/${formData.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes`
-
-      const body: any = {
+      const payload: any = {
         date: formData.date,
         note: formData.note,
         activities: formData.activities || null,
       }
 
-      const response = await fetch(url, {
-        method: editMode ? "PUT" : "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(body),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        toast.error(data.message || `Gagal ${editMode ? "mengupdate" : "membuat"} catatan`)
-        return
+      if (editMode) {
+        await api.put(`/api/daily-notes/${formData.id}`, payload)
+      } else {
+        await api.post(`/api/daily-notes`, payload)
       }
 
       toast.success(`Catatan berhasil ${editMode ? "diupdate" : "dibuat"}!`)
@@ -219,8 +174,9 @@ export default function CatatanHarianPage() {
       resetForm()
       await fetchTodayNote()
       await fetchNotes()
-    } catch (error: any) {
-      toast.error("Terjadi kesalahan")
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || `Gagal ${editMode ? "mengupdate" : "membuat"} catatan`)
     } finally {
       setLoading(false)
     }
@@ -242,16 +198,7 @@ export default function CatatanHarianPage() {
     if (!confirm("Hapus catatan ini?")) return
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed")
+      await api.delete(`/api/daily-notes/${id}`)
 
       toast.success("Catatan berhasil dihapus")
       await fetchTodayNote()
@@ -263,22 +210,9 @@ export default function CatatanHarianPage() {
 
   const handleToggleDone = async (note: DailyNote) => {
     try {
-      const token = localStorage.getItem("sf_token")
       const newStatus = note.status === 1 ? 0 : 1
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/daily-notes/${note.id}/toggle-status`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      )
-
-      if (!response.ok) throw new Error("Failed")
+      await api.put(`/api/daily-notes/${note.id}/toggle-status`, { status: newStatus })
 
       toast.success(newStatus === 1 ? "Catatan ditandai selesai" : "Catatan ditandai belum selesai")
       await fetchTodayNote()

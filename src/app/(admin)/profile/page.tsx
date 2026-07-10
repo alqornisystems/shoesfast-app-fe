@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
 import { User, Lock, Building2 } from "lucide-react"
+import { api } from "@/lib/api"
 
 interface UserData {
   id: number
@@ -57,18 +58,7 @@ export default function ProfilePage() {
         return
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch profile")
-      }
-
-      const data = await response.json()
+      const data = await api.get<any>("/api/auth/me")
       setUser(data.user)
       setBranch(data.branch)
       setName(data.user.name)
@@ -87,25 +77,11 @@ export default function ProfilePage() {
     setSaving(true)
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/profile`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          email,
-          photo: photo || null,
-        }),
+      const data = await api.put<any>("/api/auth/profile", {
+        name,
+        email,
+        photo: photo || null,
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Gagal memperbarui profil")
-      }
 
       // Update localStorage
       const storedUser = JSON.parse(localStorage.getItem("sf_user") || "{}")
@@ -113,8 +89,9 @@ export default function ProfilePage() {
 
       setUser(data.user)
       toast.success(data.message)
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal memperbarui profil")
     } finally {
       setSaving(false)
     }
@@ -136,25 +113,11 @@ export default function ProfilePage() {
     setSaving(true)
 
     try {
-      const token = localStorage.getItem("sf_token")
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/change-password`, {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          current_password: currentPassword,
-          new_password: newPassword,
-          new_password_confirmation: confirmPassword,
-        }),
+      const data = await api.put<any>("/api/auth/change-password", {
+        current_password: currentPassword,
+        new_password: newPassword,
+        new_password_confirmation: confirmPassword,
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Gagal mengubah password")
-      }
 
       toast.success(data.message)
 
@@ -169,8 +132,9 @@ export default function ProfilePage() {
         localStorage.removeItem("sf_user")
         router.push("/login")
       }, 2000)
-    } catch (error: any) {
-      toast.error(error.message)
+    } catch (err) {
+      const e = err as { message?: string; errors?: Record<string, string[]> }
+      toast.error(e.message || "Gagal mengubah password")
     } finally {
       setSaving(false)
     }
