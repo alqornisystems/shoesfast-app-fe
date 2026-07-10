@@ -11,6 +11,12 @@ full annotated templates.
 | **Report** (`laporan-*`, date range + export) | [`report-page.md`](./report-page.md) | `app/(admin)/laporan-penjualan/page.tsx` |
 | **Form** (create / edit — dialog or full-page) | [`form.md`](./form.md) | `app/(admin)/pelanggan/customer-client.tsx` |
 
+The layer underneath all three — how they talk to the backend:
+
+| Concern | Pattern doc | Source |
+|---|---|---|
+| **Data layer** (API client, auth/session, response shapes, utils) | [`data-layer.md`](./data-layer.md) | `lib/api.ts`, `contexts/auth-context.tsx`, `lib/*` |
+
 Cross-cutting rules that apply to **every** archetype:
 
 - Thin `page.tsx` server component → co-located `"use client"` `*-client.tsx` for interactive logic.

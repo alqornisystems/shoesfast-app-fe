@@ -34,6 +34,8 @@ The single gateway to the backend. `api.get/post/put/delete<T>(path, ...)` wrap 
 - On any non-OK response it throws `{ status, ...json }` — catch and read `error.status` (see `auth-context` for the pattern; only treat 401 as "logged out", keep the session on 500/network errors).
 - Paths must include the `/api` prefix (e.g. `api.get("/api/auth/me")`) — the client does not add it.
 
+Full data-layer pattern (calling conventions, response shapes — paginator / single / 422 — `useAuth`, and the `lib/*` util libs) is in **`docs/patterns/data-layer.md`**.
+
 ### Auth & branch context — `src/contexts/auth-context.tsx`
 
 `AuthProvider` (wired in `src/app/layout.tsx`) is the single source of truth for the session. Use the `useAuth()` hook to get `{ user, branch, loading, login, logout, switchBranch, refreshBranch }`.
@@ -60,6 +62,8 @@ Every page belongs to one of three archetypes. When adding or editing a page, ma
 - **List / master** → `docs/patterns/list-page.md` (canonical `pesanan/order-client.tsx`) — see the next section.
 - **Report** (`laporan-*`) → `docs/patterns/report-page.md` (canonical `laporan-penjualan/page.tsx`) — see "Reports pattern" below.
 - **Form** (create/edit) → `docs/patterns/form.md` (canonical `pelanggan/customer-client.tsx`) — see "Form pattern" below.
+
+All three sit on the shared **data layer** (API client + auth + utils) → `docs/patterns/data-layer.md`.
 
 ### UI & styling
 
