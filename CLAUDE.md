@@ -65,6 +65,8 @@ Every page belongs to one of three archetypes. When adding or editing a page, ma
 
 All three sit on the shared **data layer** (API client + auth + utils) → `docs/patterns/data-layer.md`.
 
+Building-block idioms (index in `docs/patterns/README.md`): **navigation** — register a new page so it's reachable (`docs/patterns/navigation.md`); **image upload** as base64 (`docs/patterns/image-upload.md`); **status badge** integer→label maps (`docs/patterns/status-badge.md`); **branch scoping · tabs · map picker** (`docs/patterns/branch-tabs-map.md`). **A new page isn't reachable until it's added to `navGroups` in `app-sidebar.tsx`** — don't skip that step.
+
 ### UI & styling
 
 - **shadcn/ui** (`components.json`, "new-york" style, `neutral` base, RSC on) with primitives in `src/components/ui`. Add components with the shadcn CLI; import via the `@/components/ui/*` alias.

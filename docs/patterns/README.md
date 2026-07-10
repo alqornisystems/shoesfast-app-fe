@@ -17,6 +17,15 @@ The layer underneath all three — how they talk to the backend:
 |---|---|---|
 | **Data layer** (API client, auth/session, response shapes, utils) | [`data-layer.md`](./data-layer.md) | `lib/api.ts`, `contexts/auth-context.tsx`, `lib/*` |
 
+Building-block idioms a new page reaches for:
+
+| Idiom | Pattern doc | Source |
+|---|---|---|
+| **Navigation & routes** — make a new page reachable (sidebar, roles, folders) | [`navigation.md`](./navigation.md) | `components/app-sidebar.tsx` |
+| **Image upload** (base64 data URL in the payload) | [`image-upload.md`](./image-upload.md) | `pelanggan/customer-client.tsx` |
+| **Status badge** (integer status → label/color map) | [`status-badge.md`](./status-badge.md) | `pesanan/order-client.tsx` |
+| **Branch scoping · Tabs · Map picker** | [`branch-tabs-map.md`](./branch-tabs-map.md) | `send-client.tsx`, `map-picker.tsx` |
+
 Cross-cutting rules that apply to **every** archetype:
 
 - Thin `page.tsx` server component → co-located `"use client"` `*-client.tsx` for interactive logic.
