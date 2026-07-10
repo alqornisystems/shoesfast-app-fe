@@ -316,7 +316,7 @@ export function OrderClient() {
                       <div className="min-w-0">
                         <div className="font-semibold">{order.code}</div>
                         <div className="text-xs text-muted-foreground lg:hidden truncate">
-                          {order.customer.name}
+                          {order.customer?.name ?? "-"}
                         </div>
                         <div className="text-xs text-muted-foreground sm:hidden mt-1">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${STATUS_LABELS[order.status]?.color || "bg-gray-100 text-gray-700 border-gray-200"}`}>
@@ -328,8 +328,8 @@ export function OrderClient() {
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="max-w-[200px]">
-                      <div className="font-medium truncate">{order.customer.name}</div>
-                      <div className="text-xs text-muted-foreground truncate">{order.customer.phone}</div>
+                      <div className="font-medium truncate">{order.customer?.name ?? "-"}</div>
+                      <div className="text-xs text-muted-foreground truncate">{order.customer?.phone ?? "-"}</div>
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">

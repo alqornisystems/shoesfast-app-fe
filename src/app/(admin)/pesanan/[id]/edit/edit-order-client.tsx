@@ -552,9 +552,9 @@ export function EditOrderClient() {
         </CardHeader>
         <CardContent>
           <div className="space-y-1">
-            <p className="font-medium">{order.customer.name}</p>
-            <p className="text-sm text-muted-foreground">{order.customer.phone}</p>
-            <p className="text-sm text-muted-foreground">{order.customer.address}</p>
+            <p className="font-medium">{order.customer?.name ?? "-"}</p>
+            <p className="text-sm text-muted-foreground">{order.customer?.phone ?? "-"}</p>
+            <p className="text-sm text-muted-foreground">{order.customer?.address ?? "-"}</p>
           </div>
         </CardContent>
       </Card>

@@ -469,8 +469,8 @@ export function PaymentClient() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="max-w-[200px]">
-                        <div className="font-medium text-sm truncate">{payment.customer.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">{payment.customer.phone}</div>
+                        <div className="font-medium text-sm truncate">{payment.customer?.name ?? "-"}</div>
+                        <div className="text-xs text-muted-foreground truncate">{payment.customer?.phone ?? "-"}</div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
@@ -592,7 +592,7 @@ export function PaymentClient() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm">{selectedOrder.code}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{selectedOrder.customer.name}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{selectedOrder.customer?.name ?? "-"}</div>
                   </div>
                   <Badge variant="secondary" className="shrink-0">
                     {formatDate(selectedOrder.date)}
