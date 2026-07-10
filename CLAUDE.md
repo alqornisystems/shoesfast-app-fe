@@ -53,12 +53,32 @@ The single gateway to the backend. `api.get/post/put/delete<T>(path, ...)` wrap 
 
 Most feature routes split into two files, e.g. `pelanggan/page.tsx` (a trivial server component) that renders `pelanggan/customer-client.tsx` (the `"use client"` component holding all state, data-fetching, and CRUD). **Follow this pattern** when adding a feature: keep `page.tsx` a one-line wrapper and put interactive logic in a co-located `*-client.tsx`.
 
+### Page archetypes — reuse the documented pattern
+
+Every page belongs to one of three archetypes. When adding or editing a page, match its pattern instead of inventing a new shape. Summaries below; **full annotated templates + copy-paste skeletons live in `docs/patterns/`** (index: `docs/patterns/README.md`):
+
+- **List / master** → `docs/patterns/list-page.md` (canonical `pesanan/order-client.tsx`) — see the next section.
+- **Report** (`laporan-*`) → `docs/patterns/report-page.md` (canonical `laporan-penjualan/page.tsx`) — see "Reports pattern" below.
+- **Form** (create/edit) → `docs/patterns/form.md` (canonical `pelanggan/customer-client.tsx`) — see "Form pattern" below.
+
 ### UI & styling
 
 - **shadcn/ui** (`components.json`, "new-york" style, `neutral` base, RSC on) with primitives in `src/components/ui`. Add components with the shadcn CLI; import via the `@/components/ui/*` alias.
 - **Tailwind CSS v4** (config-less, `@tailwindcss/postcss`); global styles + theme tokens in `src/app/globals.css`. `cn()` merge helper lives in `src/lib/utils.ts`.
 - Icons: **lucide-react**. Toasts: **sonner**. Dialogs/alerts: **sweetalert2**. Path alias `@/*` → `src/*`.
 - Shared app components in `src/components` (non-`ui/`): `app-sidebar`, `branch-switcher`, `map-picker` / `attendance-map` (Leaflet), `report-export-buttons`, `report-pagination`, `error-boundary`, `fullscreen-loader`, `under-construction`.
+
+### List / master page pattern (canonical: `pesanan`)
+
+Every list/master page (`pelanggan`, `layanan`, `karyawan`, `jabatan`, `cabang`, `member`, `pembayaran`, `pengeluaran`, `pengerjaan-*`, `pengiriman`, `broadcasts-*`, …) follows the shape of **`pesanan/order-client.tsx`**. When adding or editing one, match it — full annotated template + copy-paste skeleton in **`docs/patterns/list-page.md`**. The essentials:
+
+- **Chrome:** header (`<h1>` title + muted description + `Plus` action button) → card wrapper `rounded-xl border bg-card shadow-sm` → toolbar (search `Input` with `Search` icon `pl-8 h-9` + total `<Badge>` pinned `ml-auto`) → `<Table>` → pagination footer (`Menampilkan {from} - {to} dari {total}` + prev/page/next).
+- **Three table states:** `loading` → 5 `<Skeleton>` rows matching the columns; empty → one `colSpan` row with a centered icon + Indonesian message; else the mapped rows. Show the running number with `{pagination.from + idx}` and hide secondary columns progressively (`hidden sm:/md:/lg:/xl:table-cell`).
+- **Data:** fetch via the `api` client (`/api/…?page=&per_page=&search=`), read the Laravel paginator shape (`res.data`, `res.current_page`, `res.last_page`, `res.per_page`, `res.total`, `res.from`, `res.to`) into a `PaginationData` state.
+- **Persist list position in `sessionStorage`** (keys `<entity>_list_search` / `<entity>_list_page`): restore on mount, save the page after each fetch, save search on change. Search is **debounced 300 ms and resets to page 1**, guarded by an `initialized` flag so it doesn't fire during the mount restore. *This is the piece most existing pages still lack — always include it.*
+- **Null-safe relations:** render `entity.customer?.name ?? "-"`, never `entity.customer.name` — a null relation (walk-in / soft-deleted row) otherwise crashes the whole `.map`.
+- **Actions:** right-aligned ghost icon buttons (`Pencil` edit, `Trash2` delete, `h-8 w-8`, each with `title`); delete opens an `AlertDialog` that names the record, uses the destructive style, and shows a `Loader2` spinner while deleting.
+- Indonesian copy throughout; `formatCurrency`/`formatDate` from `@/lib/utils` (don't re-declare per page).
 
 ### Reports pattern (`laporan-*`)
 
@@ -67,7 +87,16 @@ New report pages should be built from two reusable primitives instead of re-impl
 - **`useReport<T>({ endpoint })`** (`src/hooks/use-report.ts`) — owns the start/end date range (defaults to the current month), converts it to the query params the backend expects (`dateParam: "timestamp"` unix seconds by default, or `"date"`), fetches through the **`api` client** (auth token + base-URL fallback + 401 handling — do NOT use raw `fetch`/`process.env` here), and returns `{ data, loading, startDate, endDate, setStartDate, setEndDate, refetch }`.
 - **`<ReportShell>`** (`src/components/report-shell.tsx`) — the standard chrome: header + auto-wired export (`onExportExcel`/`onExportPDF` → `<ReportExportButtons>`) + Print button, the date-range filter card, and loading/empty states around `children`. Spread the `useReport` result into it and pass `hasData`.
 
-Canonical example: **`laporan-penjualan/page.tsx`** (went from ~300 lines of boilerplate to a thin page). Export helpers stay in `src/lib/export-utils.ts` (Excel) and `src/lib/pdf-utils.ts` (jsPDF); `<ReportPagination>` for paging; `formatCurrency`/`formatDate` from `src/lib/utils.ts`. The other `laporan-*` pages still use the old raw-`fetch` style and can be migrated to this pattern incrementally.
+Canonical example: **`laporan-penjualan/page.tsx`** (went from ~300 lines of boilerplate to a thin page). Export helpers stay in `src/lib/export-utils.ts` (Excel) and `src/lib/pdf-utils.ts` (jsPDF); `<ReportPagination>` for paging; `formatCurrency`/`formatDate` from `src/lib/utils.ts`. The other `laporan-*` pages still use the old raw-`fetch` style and can be migrated to this pattern incrementally. Full template: **`docs/patterns/report-page.md`**.
+
+### Form pattern (create / edit)
+
+Forms use **plain `useState`** — there is no `react-hook-form`. Two shapes, same contract: a **dialog form** on the list page for simple master data (canonical `pelanggan/customer-client.tsx`) and a **full-page form** for complex entities (canonical `pesanan/create/order-form-client.tsx`). Full template: **`docs/patterns/form.md`**. The contract:
+
+- One `form` state object + one `errors` map. `openAdd()` resets to `emptyForm` with `editTarget = null`; `openEdit(row)` seeds each field with `?? ""` fallbacks and sets `editTarget = row` (null vs row is what distinguishes create from edit).
+- `handleSave` client-validates required fields first (bail with `setErrors`), then builds a **clean payload** (trim strings, empties → `null`, coerce numbers/unix dates) and calls `api.put(\`/api/x/${editTarget.id}\`)` or `api.post("/api/x")` branching on `editTarget`.
+- Map Laravel **422** errors back to fields in `catch`: `e.errors` is `Record<string, string[]>` → `errors[key] = e.errors[key][0]`.
+- On success close the dialog (or `router.push` back) and re-fetch the list; clear `saving` in `finally`; `Loader2` spinner on the submit button while saving.
 
 ## Conventions
 
