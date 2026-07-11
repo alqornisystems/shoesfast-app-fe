@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, waLink } from "@/lib/utils"
 
 type Customer = {
   id: number
@@ -406,7 +406,19 @@ export function CustomerClient() {
                       </Avatar>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{customer.name}</span>
+                          {customer.phone ? (
+                            <a
+                              href={waLink(customer.phone)!}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-medium capitalize text-primary hover:underline"
+                              title="Chat via WhatsApp"
+                            >
+                              {customer.name}
+                            </a>
+                          ) : (
+                            <span className="font-medium capitalize">{customer.name}</span>
+                          )}
                           {customer.is_member === 1 && (
                             <Badge variant="default" className="text-xs py-0 h-5">
                               Member

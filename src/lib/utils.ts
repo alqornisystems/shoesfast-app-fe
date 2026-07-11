@@ -24,3 +24,17 @@ export function formatCurrency(amount: number): string {
 export function formatDate(timestamp: number, formatStr: string = 'dd MMM yyyy'): string {
   return format(fromUnixTime(timestamp), formatStr, { locale: id })
 }
+
+/**
+ * Build a wa.me chat link from a phone number.
+ * Normalizes to international format (62xxx, no leading 0/+).
+ * Returns null when there's no usable number.
+ */
+export function waLink(phone?: string | null): string | null {
+  if (!phone) return null
+  let p = phone.replace(/\D/g, '')
+  if (!p) return null
+  p = p.replace(/^0+/, '')
+  if (!p.startsWith('62')) p = '62' + p
+  return `https://wa.me/${p}`
+}
