@@ -5,13 +5,12 @@ import {
   Smartphone,
   QrCode,
   RefreshCw,
-  LogOut,
-  Power,
   CheckCircle2,
   XCircle,
   AlertTriangle,
   Loader2,
   Save,
+  ExternalLink,
 } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
@@ -22,47 +21,30 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 
-type WaMe = { id?: string; pushName?: string } | null
-
 type WaStatus = {
+  driver: string
   enabled: boolean
   configured: boolean
   base_url: string
-  session: string
   ok: boolean
   reason: string | null
   message: string | null
-  status: string | null // WORKING | SCAN_QR_CODE | STARTING | STOPPED | FAILED
+  status: string | null // "connected" | "disconnected" | ...
   connected: boolean
-  needs_scan: boolean
-  me: WaMe
 }
 
-type WaSettings = { enabled: boolean; base_url: string; session: string; api_key_set: boolean }
-type QrResp = { ok: boolean; qr?: string | null }
-
-const STATUS_META: Record<string, { label: string; className: string }> = {
-  WORKING: { label: "Terhubung", className: "bg-green-100 text-green-700 border-green-200" },
-  SCAN_QR_CODE: { label: "Menunggu Scan", className: "bg-amber-100 text-amber-700 border-amber-200" },
-  STARTING: { label: "Memulai...", className: "bg-blue-100 text-blue-700 border-blue-200" },
-  STOPPED: { label: "Berhenti", className: "bg-gray-100 text-gray-600 border-gray-200" },
-  FAILED: { label: "Gagal", className: "bg-red-100 text-red-700 border-red-200" },
-}
-
-function phoneFromId(id?: string): string {
-  if (!id) return "-"
-  return "+" + id.replace(/@c\.us$/, "").replace(/@s\.whatsapp\.net$/, "")
-}
+type WaSettings = { driver: string; enabled: boolean; base_url: string; token_set: boolean; secret_set: boolean }
+type QrResp = { ok: boolean; scan_url?: string | null; message?: string | null }
 
 export default function PengaturanWhatsAppPage() {
   const [status, setStatus] = useState<WaStatus | null>(null)
-  const [qr, setQr] = useState<string | null>(null)
+  const [scanUrl, setScanUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [acting, setActing] = useState<string | null>(null)
 
   // Editable config form
-  const [form, setForm] = useState({ enabled: false, base_url: "", session: "", api_key: "" })
-  const [apiKeySet, setApiKeySet] = useState(false)
+  const [form, setForm] = useState({ enabled: false, base_url: "", token: "", secret: "" })
+  const [tokenSet, setTokenSet] = useState(false)
+  const [secretSet, setSecretSet] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -81,8 +63,9 @@ export default function PengaturanWhatsAppPage() {
   const loadSettings = useCallback(async () => {
     try {
       const s = await api.get<WaSettings>("/api/whatsapp/settings")
-      setForm({ enabled: s.enabled, base_url: s.base_url ?? "", session: s.session ?? "", api_key: "" })
-      setApiKeySet(s.api_key_set)
+      setForm({ enabled: s.enabled, base_url: s.base_url ?? "", token: "", secret: "" })
+      setTokenSet(s.token_set)
+      setSecretSet(s.secret_set)
     } catch {
       /* keep defaults */
     }
@@ -91,51 +74,29 @@ export default function PengaturanWhatsAppPage() {
   const loadQr = useCallback(async () => {
     try {
       const res = await api.get<QrResp>("/api/whatsapp/qr")
-      setQr(res.ok ? res.qr ?? null : null)
+      setScanUrl(res.ok ? res.scan_url ?? null : null)
     } catch {
-      setQr(null)
+      setScanUrl(null)
     }
   }, [])
 
   useEffect(() => {
-    Promise.all([loadStatus(), loadSettings()]).finally(() => setLoading(false))
-  }, [loadStatus, loadSettings])
+    Promise.all([loadStatus(), loadSettings(), loadQr()]).finally(() => setLoading(false))
+  }, [loadStatus, loadSettings, loadQr])
 
-  // Poll while enabled+configured and not yet connected; fetch QR when scanning.
+  // Poll status while enabled+configured and not yet connected.
   useEffect(() => {
     if (pollRef.current) clearInterval(pollRef.current)
-    if (!status?.enabled || !status?.configured || status?.connected) {
-      if (status?.connected) setQr(null)
-      return
-    }
-    if (status.needs_scan) loadQr()
-    pollRef.current = setInterval(async () => {
-      const fresh = await loadStatus()
-      if (fresh?.needs_scan) loadQr()
-    }, 5000)
+    if (!status?.enabled || !status?.configured || status?.connected) return
+    pollRef.current = setInterval(() => loadStatus(), 6000)
     return () => {
       if (pollRef.current) clearInterval(pollRef.current)
     }
-  }, [status?.enabled, status?.configured, status?.connected, status?.needs_scan, loadStatus, loadQr])
-
-  async function runAction(action: "start" | "restart" | "logout", label: string) {
-    setActing(action)
-    try {
-      const res = await api.post<{ ok: boolean; message?: string }>(`/api/whatsapp/${action}`)
-      if (res.ok) toast.success(`${label} berhasil`)
-      else toast.error(res.message || `${label} gagal`)
-      if (action === "logout") setQr(null)
-      await loadStatus()
-    } catch {
-      toast.error(`${label} gagal`)
-    } finally {
-      setActing(null)
-    }
-  }
+  }, [status?.enabled, status?.configured, status?.connected, loadStatus])
 
   async function saveSettings() {
     if (form.enabled && !form.base_url.trim()) {
-      toast.error("Server WAHA (base URL) wajib diisi.")
+      toast.error("Server Wablas (base URL) wajib diisi.")
       return
     }
     setSaving(true)
@@ -143,12 +104,12 @@ export default function PengaturanWhatsAppPage() {
       await api.put("/api/whatsapp/settings", {
         enabled: form.enabled,
         base_url: form.base_url.trim() || null,
-        session: form.session.trim() || null,
-        api_key: form.api_key.trim() || null, // blank = keep existing
+        token: form.token.trim() || null, // blank = keep existing
+        secret: form.secret.trim() || null, // blank = keep existing
       })
       toast.success("Pengaturan disimpan")
-      setForm((f) => ({ ...f, api_key: "" }))
-      await Promise.all([loadStatus(), loadSettings()])
+      setForm((f) => ({ ...f, token: "", secret: "" }))
+      await Promise.all([loadStatus(), loadSettings(), loadQr()])
     } catch (err) {
       const e = err as { message?: string }
       toast.error(e?.message || "Gagal menyimpan pengaturan")
@@ -158,9 +119,13 @@ export default function PengaturanWhatsAppPage() {
   }
 
   const s = status
-  const statusMeta = s?.status
-    ? STATUS_META[s.status] ?? { label: s.status, className: "bg-gray-100 text-gray-600 border-gray-200" }
-    : null
+  const statusBadge = !s?.enabled
+    ? { label: "Nonaktif", className: "bg-gray-100 text-gray-600 border-gray-200" }
+    : !s?.configured
+      ? { label: "Belum dikonfigurasi", className: "bg-amber-100 text-amber-700 border-amber-200" }
+      : s?.connected
+        ? { label: "Terhubung", className: "bg-green-100 text-green-700 border-green-200" }
+        : { label: "Belum terhubung", className: "bg-amber-100 text-amber-700 border-amber-200" }
 
   return (
     <div className="container py-6 space-y-6 max-w-3xl">
@@ -170,7 +135,7 @@ export default function PengaturanWhatsAppPage() {
             <Smartphone className="h-7 w-7" />
             Koneksi WhatsApp
           </h1>
-          <p className="text-muted-foreground">Hubungkan nomor WhatsApp untuk notifikasi &amp; broadcast (via WAHA).</p>
+          <p className="text-muted-foreground">Hubungkan nomor WhatsApp untuk notifikasi &amp; broadcast (via Wablas).</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => loadStatus()} disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
@@ -191,14 +156,12 @@ export default function PengaturanWhatsAppPage() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
               <div>
                 <CardTitle className="text-base">Status Koneksi</CardTitle>
-                <CardDescription>Sesi: {s?.session || form.session || "-"}</CardDescription>
+                <CardDescription>{s?.base_url || form.base_url || "Wablas"}</CardDescription>
               </div>
-              {s?.enabled && s?.configured && statusMeta && (
-                <Badge variant="outline" className={statusMeta.className}>
-                  {s?.connected && <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
-                  {statusMeta.label}
-                </Badge>
-              )}
+              <Badge variant="outline" className={statusBadge.className}>
+                {s?.connected && <CheckCircle2 className="h-3.5 w-3.5 mr-1" />}
+                {statusBadge.label}
+              </Badge>
             </CardHeader>
             <CardContent>
               {!s?.enabled ? (
@@ -209,70 +172,52 @@ export default function PengaturanWhatsAppPage() {
               ) : !s?.configured ? (
                 <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
                   <XCircle className="h-5 w-5 text-red-500 shrink-0" />
-                  Belum dikonfigurasi. Isi Server WAHA &amp; API Key pada form di bawah.
-                </div>
-              ) : !s?.ok && s?.reason === "unreachable" ? (
-                <div className="flex items-center gap-3 text-sm text-muted-foreground py-4">
-                  <XCircle className="h-5 w-5 text-red-500 shrink-0" />
-                  {s?.message ?? "Tidak dapat terhubung ke server WAHA."}
+                  Belum dikonfigurasi. Isi Server Wablas, Token &amp; Secret pada form di bawah.
                 </div>
               ) : s?.connected ? (
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
-                      <CheckCircle2 className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">{s?.me?.pushName || "WhatsApp terhubung"}</p>
-                      <p className="text-sm text-muted-foreground">{phoneFromId(s?.me?.id)}</p>
-                    </div>
+                <div className="flex items-center gap-3 py-2">
+                  <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle2 className="h-6 w-6 text-green-600" />
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => runAction("restart", "Restart sesi")} disabled={acting !== null}>
-                      {acting === "restart" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                      Restart
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => runAction("logout", "Putuskan koneksi")} disabled={acting !== null}>
-                      {acting === "logout" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <LogOut className="h-4 w-4 mr-2" />}
-                      Putuskan
-                    </Button>
+                  <div>
+                    <p className="font-semibold">WhatsApp terhubung</p>
+                    <p className="text-sm text-muted-foreground">
+                      Device Wablas aktif. Kelola/putuskan koneksi dari dashboard Wablas.
+                    </p>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col items-center gap-4 py-4">
-                  {s?.needs_scan ? (
-                    <>
-                      <div className="rounded-xl border bg-white p-3">
-                        {qr ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={qr} alt="QR WhatsApp" className="h-56 w-56" />
-                        ) : (
-                          <div className="h-56 w-56 flex items-center justify-center">
-                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                          </div>
-                        )}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <QrCode className="h-4 w-4" /> Scan QR untuk menghubungkan
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Buka WhatsApp di HP → <b>Perangkat Tertaut</b> → <b>Tautkan Perangkat</b>, lalu scan QR di bawah.
+                    Klik <b>Generate Qr Code</b> bila QR belum muncul.
+                  </p>
+                  {scanUrl ? (
+                    <div className="space-y-2">
+                      <div className="overflow-hidden rounded-lg border bg-white">
+                        <iframe
+                          src={scanUrl}
+                          title="Scan QR WhatsApp (Wablas)"
+                          className="w-full h-[540px]"
+                        />
                       </div>
-                      <div className="text-center text-sm text-muted-foreground max-w-sm">
-                        <p className="font-medium text-foreground mb-1 flex items-center justify-center gap-1.5">
-                          <QrCode className="h-4 w-4" /> Scan untuk menghubungkan
-                        </p>
-                        Buka WhatsApp di HP → <b>Perangkat Tertaut</b> → <b>Tautkan Perangkat</b>, lalu arahkan kamera ke QR ini.
-                      </div>
-                      <Button variant="ghost" size="sm" onClick={() => loadQr()}>
-                        <RefreshCw className="h-4 w-4 mr-2" /> Perbarui QR
-                      </Button>
-                    </>
+                      <a
+                        href={scanUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        Buka halaman scan di tab baru
+                      </a>
+                    </div>
                   ) : (
-                    <>
-                      <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
-                        <Power className="h-7 w-7 text-muted-foreground" />
-                      </div>
-                      <p className="text-sm text-muted-foreground text-center">Sesi belum aktif. Mulai sesi untuk menampilkan QR code.</p>
-                      <Button onClick={() => runAction("start", "Mulai sesi")} disabled={acting !== null}>
-                        {acting === "start" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Power className="h-4 w-4 mr-2" />}
-                        Mulai Sesi
-                      </Button>
-                    </>
+                    <div className="flex h-40 items-center justify-center rounded-lg border">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
                   )}
                 </div>
               )}
@@ -282,7 +227,7 @@ export default function PengaturanWhatsAppPage() {
           {/* ---- Editable configuration ---- */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Konfigurasi WAHA</CardTitle>
+              <CardTitle className="text-base">Konfigurasi Wablas</CardTitle>
               <CardDescription>Tersimpan di database — bisa diubah tanpa menyentuh file .env server.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -300,37 +245,42 @@ export default function PengaturanWhatsAppPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="wa-base">Server WAHA (Base URL)</Label>
+                <Label htmlFor="wa-base">Server Wablas (Base URL)</Label>
                 <Input
                   id="wa-base"
-                  placeholder="https://wapi.contoh.id"
+                  placeholder="https://bdg.wablas.com"
                   value={form.base_url}
                   onChange={(e) => setForm((f) => ({ ...f, base_url: e.target.value }))}
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="wa-session">Nama Sesi</Label>
+                <Label htmlFor="wa-token">Token</Label>
                 <Input
-                  id="wa-session"
-                  placeholder="default"
-                  value={form.session}
-                  onChange={(e) => setForm((f) => ({ ...f, session: e.target.value }))}
+                  id="wa-token"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder={tokenSet ? "•••••••• (biarkan kosong untuk tetap)" : "Masukkan token Wablas"}
+                  value={form.token}
+                  onChange={(e) => setForm((f) => ({ ...f, token: e.target.value }))}
                 />
+                <p className="text-xs text-muted-foreground">
+                  {tokenSet ? "Token sudah tersimpan. Isi hanya bila ingin menggantinya." : "Belum ada token tersimpan."}
+                </p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="wa-key">API Key</Label>
+                <Label htmlFor="wa-secret">Secret Key</Label>
                 <Input
-                  id="wa-key"
+                  id="wa-secret"
                   type="password"
                   autoComplete="new-password"
-                  placeholder={apiKeySet ? "•••••••• (biarkan kosong untuk tetap)" : "Masukkan API key WAHA"}
-                  value={form.api_key}
-                  onChange={(e) => setForm((f) => ({ ...f, api_key: e.target.value }))}
+                  placeholder={secretSet ? "•••••••• (biarkan kosong untuk tetap)" : "Masukkan secret key Wablas"}
+                  value={form.secret}
+                  onChange={(e) => setForm((f) => ({ ...f, secret: e.target.value }))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  {apiKeySet ? "API key sudah tersimpan. Isi hanya bila ingin menggantinya." : "Belum ada API key tersimpan."}
+                  {secretSet ? "Secret sudah tersimpan. Isi hanya bila ingin menggantinya." : "Diperlukan untuk mode secure Wablas (Authorization: token.secret)."}
                 </p>
               </div>
 
