@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Plus, Pencil, Trash2, Search, Loader2, ChevronLeft, ChevronRight, Calendar, Package, Truck } from "lucide-react"
 import { api } from "@/lib/api"
-import { waLink } from "@/lib/utils"
+import { waLink, titleCase } from "@/lib/utils"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -319,7 +319,7 @@ export function OrderClient() {
                         <div className="text-xs text-muted-foreground lg:hidden truncate capitalize">
                           {order.customer?.phone ? (
                             <a
-                              href={waLink(order.customer.phone)!}
+                              href={waLink(order.customer.phone, `Halo kak ${titleCase(order.customer.name)} 👋`)!}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="hover:underline"

@@ -26,15 +26,26 @@ export function formatDate(timestamp: number, formatStr: string = 'dd MMM yyyy')
 }
 
 /**
- * Build a wa.me chat link from a phone number.
+ * Title-case a string (capitalize each word). Safe for empty/undefined.
+ */
+export function titleCase(value?: string | null): string {
+  if (!value) return ''
+  return value
+    .toLowerCase()
+    .replace(/\b\p{L}/gu, (c) => c.toUpperCase())
+}
+
+/**
+ * Build a wa.me chat link from a phone number, with an optional prefilled text.
  * Normalizes to international format (62xxx, no leading 0/+).
  * Returns null when there's no usable number.
  */
-export function waLink(phone?: string | null): string | null {
+export function waLink(phone?: string | null, text?: string | null): string | null {
   if (!phone) return null
   let p = phone.replace(/\D/g, '')
   if (!p) return null
   p = p.replace(/^0+/, '')
   if (!p.startsWith('62')) p = '62' + p
-  return `https://wa.me/${p}`
+  const base = `https://wa.me/${p}`
+  return text ? `${base}?text=${encodeURIComponent(text)}` : base
 }

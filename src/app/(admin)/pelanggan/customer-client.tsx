@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn, waLink } from "@/lib/utils"
+import { cn, waLink, titleCase } from "@/lib/utils"
 
 type Customer = {
   id: number
@@ -408,7 +408,7 @@ export function CustomerClient() {
                         <div className="flex items-center gap-2">
                           {customer.phone ? (
                             <a
-                              href={waLink(customer.phone)!}
+                              href={waLink(customer.phone, `Halo kak ${titleCase(customer.name)} 👋`)!}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-medium capitalize text-primary hover:underline"
