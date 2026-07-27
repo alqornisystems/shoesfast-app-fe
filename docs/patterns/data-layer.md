@@ -14,6 +14,12 @@ How every page talks to the Laravel backend. This is the layer under the
    centralizes the base URL, JSON headers, the bearer token, and 401 handling; raw `fetch` bypasses
    all of it (this is the bug behind the ~24 legacy report pages that fetch `undefined/api/...`).
 
+   **The one sanctioned exception** is `src/app/invoice/[token]/page.tsx`, the public invoice page.
+   It is a server component with no logged-in user, so the `api` client is actively wrong there:
+   it reads `localStorage` (absent on the server) and hard-redirects to `/login` on 401. It uses
+   plain `fetch` with `cache: "no-store"`, and the reason is written as a comment in the file.
+   Do not "fix" it. Every other call — including the admin "Salin Link" button — uses `api`.
+
 2. **Paths include the `/api` prefix** and are passed whole: `api.get("/api/orders?page=1")`. The
    client does **not** add it.
 
@@ -37,7 +43,7 @@ How every page talks to the Laravel backend. This is the layer under the
    `null` → render null-safe. Money is integer rupiah.
 
 8. **Format with shared helpers**, never re-declare: `formatCurrency`, `formatDate`, `cn` from
-   `@/lib/utils`; export/print via `@/lib/export-utils`, `@/lib/pdf-utils`, `@/lib/invoice-utils`.
+   `@/lib/utils`; export/print via `@/lib/export-utils`, `@/lib/pdf-utils`.
 
 ---
 
@@ -113,7 +119,6 @@ const { user, branch, loading, login, logout, switchBranch, refreshBranch } = us
 | `@/lib/utils` | `formatCurrency(amount)` (IDR), `formatDate(unixSeconds, fmt?)`, `cn(...)` class merge |
 | `@/lib/export-utils` | `exportTableToExcel(rows, columns, filename)`, `handlePrint(title)`, `formatCurrencyForExport` / `formatDateForExport` / `formatPercentForExport` |
 | `@/lib/pdf-utils` | `downloadReportPDF(...)`, `generateReportPDFWithSummary(...)` / `downloadReportPDFWithSummary(...)` (jsPDF + autotable) |
-| `@/lib/invoice-utils` | `generateInvoicePDF(data)`, `downloadInvoicePDF(data)` for order invoices |
 
 For report pages, the `useReport` hook already wraps the `api` client + date-range → query-param
 conversion — use it instead of calling `api.get` in a report by hand (see

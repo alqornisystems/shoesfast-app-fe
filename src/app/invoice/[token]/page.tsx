@@ -57,9 +57,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
  *
  * Klien itu membaca token dari localStorage dan hard-redirect ke /login pada tiap 401 —
  * dua-duanya salah untuk halaman publik tanpa login, dan localStorage tidak ada sama sekali
- * di server. Ini SATU-SATUNYA pengecualian dari aturan "semua panggilan lewat `api`" di
- * CLAUDE.md; alasannya ditulis di sini supaya tidak dikira kelalaian. Tombol "Salin Link" di
- * halaman admin tetap lewat klien `api` biasa.
+ * di server. Ini SATU-SATUNYA pengecualian yang SENGAJA disahkan dari aturan "semua panggilan
+ * lewat `api`" di CLAUDE.md / docs/patterns/data-layer.md — bukan berarti satu-satunya raw
+ * `fetch` di repo ini: ~24 halaman laporan lama masih melakukannya sebagai utang migrasi, bukan
+ * preseden. Alasan pengecualian ini ditulis di sini supaya tidak dikira kelalaian. Tombol "Salin
+ * Link" di halaman admin tetap lewat klien `api` biasa.
  *
  * `cache: "no-store"` supaya status pembayaran selalu mutakhir; `cache()` dari React membuat
  * generateMetadata dan komponen halaman berbagi satu panggilan, bukan dua.
