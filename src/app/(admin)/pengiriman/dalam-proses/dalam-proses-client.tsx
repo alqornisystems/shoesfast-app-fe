@@ -403,7 +403,7 @@ export function DalamProsesClient() {
                             onClick={() => bukaDetail(send)}
                             className="text-left text-sm font-semibold text-blue-600 underline underline-offset-2 hover:text-blue-700"
                           >
-                            {send.item_name || "-"}
+                            {titleCase(send.item_name) || "-"}
                           </button>
                           <div className="text-xs text-muted-foreground">{send.order_code || "-"}</div>
                         </>
@@ -411,7 +411,7 @@ export function DalamProsesClient() {
                         <>
                           <div className="text-sm font-semibold">{send.order_code || "-"}</div>
                           {send.item_name && (
-                            <div className="text-xs text-muted-foreground">{send.item_name}</div>
+                            <div className="text-xs text-muted-foreground">{titleCase(send.item_name)}</div>
                           )}
                         </>
                       )}
@@ -494,7 +494,7 @@ export function DalamProsesClient() {
                   <img src={detail.item_photo} alt={detail.item_name ?? ""} className="h-20 w-20 rounded-lg border object-cover" />
                 ) : null}
                 <div className="min-w-0">
-                  <div className="font-semibold">{detail.item_name ?? "-"}</div>
+                  <div className="font-semibold">{titleCase(detail.item_name) || "-"}</div>
                   <div className="text-sm text-muted-foreground">{detail.order_code ?? "-"} · {detail.customer_name ?? "-"}</div>
                   {detail.item_note ? (
                     <div className="mt-1 text-xs text-muted-foreground">Catatan: {detail.item_note}</div>

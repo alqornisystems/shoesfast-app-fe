@@ -503,7 +503,7 @@ export function WaitingListClient() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <div className="font-bold text-base">{treatment.orders_items_name}</div>
+                        <div className="font-bold text-base">{titleCase(treatment.orders_items_name)}</div>
                         <div className="text-xs text-muted-foreground truncate">
                           {treatment.orders_code}
                         </div>

@@ -525,7 +525,7 @@ export function WorkProgressClient() {
                           </div>
                         )}
                         <div className="min-w-0 space-y-1">
-                          <div className="font-bold text-sm">{treatment.orders_items_name}</div>
+                          <div className="font-bold text-sm">{titleCase(treatment.orders_items_name)}</div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {treatment.orders_code}

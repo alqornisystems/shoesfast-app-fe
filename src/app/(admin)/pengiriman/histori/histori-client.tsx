@@ -245,7 +245,7 @@ export function HistoriClient() {
                   <TableCell>
                     <div className="font-semibold text-sm">{send.order_code || "-"}</div>
                     {send.item_name && (
-                      <div className="text-xs text-muted-foreground">{send.item_name}</div>
+                      <div className="text-xs text-muted-foreground">{titleCase(send.item_name)}</div>
                     )}
                   </TableCell>
                   <TableCell>
