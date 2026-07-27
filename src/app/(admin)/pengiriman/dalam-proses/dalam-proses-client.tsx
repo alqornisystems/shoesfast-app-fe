@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, Loader2, CheckCircle2, Package, MapPin, Phone, Truck, User, Filter } from "lucide-react"
+import { Search, Loader2, CheckCircle2, Package, MapPin, Phone, Truck, User, Filter, Route } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
+import { bacaKoordinat, posisiSekarang, tautanRute, urutkanTerdekat, MAKS_TITIK, type Titik } from "@/lib/route-utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -55,6 +56,7 @@ type Send = {
 
 export function DalamProsesClient() {
   const [sends, setSends] = useState<Send[]>([])
+  const [menyusunRute, setMenyusunRute] = useState(false)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
@@ -96,6 +98,64 @@ export function DalamProsesClient() {
       setSelectedIds([])
     } else {
       setSelectedIds(filteredSends.map(s => s.id))
+    }
+  }
+
+
+  /**
+   * Susun rute dari pengiriman yang dicentang, lalu buka Google Maps.
+   *
+   * Urutan dihitung di sini (tetangga-terdekat dari posisi kurir) karena Google memakai
+   * waypoint persis sesuai urutan yang dikirim lewat tautan. Jendela dibuka SEBELUM menunggu
+   * lokasi: Safari di iOS memblokir window.open yang dipanggil setelah await.
+   */
+  async function handleGenerateRute() {
+    const dipilih = sends.filter(s => selectedIds.includes(s.id))
+    const titik: Titik[] = []
+    const tanpaKoordinat: string[] = []
+
+    for (const s of dipilih) {
+      const koordinat = bacaKoordinat(s.customer_maps)
+      if (koordinat) {
+        titik.push({ id: s.id, label: s.customer_name ?? "-", ...koordinat })
+      } else {
+        tanpaKoordinat.push(s.customer_name ?? "-")
+      }
+    }
+
+    if (titik.length === 0) {
+      toast.error("Tidak ada titik yang bisa dirutekan", {
+        description: "Pengiriman yang dipilih belum punya lokasi peta pelanggan.",
+      })
+      return
+    }
+
+    const jendela = window.open("", "_blank")
+    setMenyusunRute(true)
+    try {
+      const awal = await posisiSekarang()
+      const urutan = urutkanTerdekat(awal, titik).slice(0, MAKS_TITIK - 1)
+      const url = tautanRute(awal, urutan)
+
+      if (jendela) jendela.location.href = url
+      else window.location.href = url
+
+      const catatan: string[] = []
+      if (titik.length > urutan.length) {
+        catatan.push(`${titik.length - urutan.length} titik tidak muat (batas Google Maps ${MAKS_TITIK} titik)`)
+      }
+      if (tanpaKoordinat.length > 0) {
+        catatan.push(`${tanpaKoordinat.length} pelanggan tanpa lokasi peta: ${tanpaKoordinat.join(", ")}`)
+      }
+      toast.success(`Rute ${urutan.length} titik dibuka`, {
+        description: catatan.length > 0 ? catatan.join(". ") : "Diurutkan dari yang terdekat.",
+        duration: catatan.length > 0 ? 8000 : 4000,
+      })
+    } catch (e) {
+      jendela?.close()
+      toast.error(e instanceof Error ? e.message : "Gagal menyusun rute")
+    } finally {
+      setMenyusunRute(false)
     }
   }
 
@@ -167,10 +227,22 @@ export function DalamProsesClient() {
           </p>
         </div>
         {selectedIds.length > 0 && (
+          <div className="flex items-center gap-2">
+          <Button
+            onClick={handleGenerateRute}
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={menyusunRute}
+          >
+            {menyusunRute ? <Loader2 className="h-4 w-4 animate-spin" /> : <Route className="h-4 w-4" />}
+            Generate Rute
+          </Button>
           <Button onClick={openCompleteDialog} size="sm" className="gap-1.5">
             <CheckCircle2 className="h-4 w-4" />
             Selesaikan ({selectedIds.length})
           </Button>
+          </div>
         )}
       </div>
 
