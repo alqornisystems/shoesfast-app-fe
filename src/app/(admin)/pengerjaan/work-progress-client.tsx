@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Search, Loader2, ChevronLeft, ChevronRight, Package, CheckCircle2, Clock, AlertCircle, XCircle, Calendar, Timer, CheckSquare, Pencil, Play, User } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+import { cn, titleCase, waLink } from "@/lib/utils"
 
 const STORAGE_KEY_SEARCH = "work_progress_list_search"
 const STORAGE_KEY_PAGE = "work_progress_list_page"
@@ -100,6 +101,10 @@ export function WorkProgressClient() {
   }
 
   const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const { user } = useAuth()
+  // Cerminan pagar backend (TreatmentController@updateStatus + route force-complete):
+  // teknisi hanya mengantar pekerjaan sampai meja QC, keputusan QC milik admin.
+  const isAdmin = user?.role === "Admin Super" || user?.role === "Admin"
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null)
   const [reviewNote, setReviewNote] = useState("")
@@ -181,6 +186,24 @@ export function WorkProgressClient() {
     setReviewAction(action)
     setReviewNote("")
     setReviewDialogOpen(true)
+  }
+
+  // Non-admin: antar sekaligus pekerjaan yang dicentang ke meja QC (status 0 -> 1).
+  // Bukan "selesai" — meluluskan QC tetap wewenang admin, dan backend menolak kalau dicoba.
+  async function handleBulkMarkQC() {
+    if (selectedIds.length === 0) return
+    try {
+      await Promise.all(
+        selectedIds.map(id => api.put(`/api/treatments/${id}/status`, { status: 1 }))
+      )
+      toast.success(`${selectedIds.length} pekerjaan dikirim ke QC`, {
+        description: "Menunggu pemeriksaan admin.",
+      })
+      setSelectedIds([])
+      fetchTreatments(pagination.current_page)
+    } catch {
+      toast.error("Gagal mengirim ke QC")
+    }
   }
 
   async function handleMarkComplete(treatmentId: number) {
@@ -356,7 +379,12 @@ export function WorkProgressClient() {
             Monitor dan review treatment yang sedang dikerjakan
           </p>
         </div>
-        {selectedIds.length > 0 && (
+        {selectedIds.length > 0 && !isAdmin && (
+          <Button onClick={handleBulkMarkQC} className="gap-2">
+            QC-kan ({selectedIds.length})
+          </Button>
+        )}
+        {isAdmin && selectedIds.length > 0 && (
           <Button onClick={handleBulkForceDone} variant="destructive" className="gap-2">
             <AlertCircle className="h-4 w-4" />
             Done Paksa ({selectedIds.length})
@@ -475,6 +503,7 @@ export function WorkProgressClient() {
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedIds.includes(treatment.id)}
+                        disabled={!isAdmin && treatment.status !== 0}
                         onCheckedChange={() => toggleSelection(treatment.id)}
                       />
                     </TableCell>
@@ -496,7 +525,7 @@ export function WorkProgressClient() {
                           </div>
                         )}
                         <div className="min-w-0 space-y-1">
-                          <div className="font-bold text-sm">{treatment.orders_items_name}</div>
+                          <div className="font-bold text-sm">{titleCase(treatment.orders_items_name)}</div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {treatment.orders_code}
@@ -516,7 +545,11 @@ export function WorkProgressClient() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="max-w-[160px]">
-                        <div className="font-medium text-sm truncate">{treatment.customers_name}</div>
+                        {waLink(treatment.customers_phone) ? (
+                        <a href={waLink(treatment.customers_phone, `Halo ${titleCase(treatment.customers_name)}, saya dari kurir Shoesfast mau konfirmasi beberapa hal.`) ?? "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline underline-offset-2 hover:text-green-800 truncate block">{titleCase(treatment.customers_name) || "-"}</a>
+                      ) : (
+                        <div className="font-medium text-sm truncate">{titleCase(treatment.customers_name) || "-"}</div>
+                      )}
                         <div className="text-xs text-muted-foreground truncate">{treatment.customers_phone}</div>
                       </div>
                     </TableCell>
@@ -566,6 +599,10 @@ export function WorkProgressClient() {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </>
+                        ) : !isAdmin ? (
+                          /* Sudah masuk QC: bagi teknisi tidak ada lagi yang bisa dilakukan.
+                             Keputusan QC Pass/Fail wewenang admin. */
+                          <span className="text-xs text-muted-foreground">Menunggu QC</span>
                         ) : (
                           <>
                             {/* Status 1: Siap QC */}

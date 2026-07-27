@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Search, Loader2, Plus, ChevronLeft, ChevronRight, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X, Printer } from "lucide-react"
+import { Search, Loader2, Plus, ChevronLeft, ChevronRight, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X, Link2 } from "lucide-react"
 import { api } from "@/lib/api"
-import { downloadInvoicePDF } from "@/lib/invoice-utils"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -62,18 +61,6 @@ type Payment = {
   } | null
   project_name: string | null
   created_at: number
-}
-
-type OrderItemRow = {
-  name?: string | null
-  price?: number | string | null
-  treatments?: { name?: string | null }[]
-}
-
-type PaymentRow = {
-  date: number
-  nominal?: number | string | null
-  note?: string | null
 }
 
 type PaymentHistoryRow = {
@@ -149,56 +136,25 @@ export function PaymentClient() {
 
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryRow[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
-  const [printingId, setPrintingId] = useState<number | null>(null)
+  const [copyingId, setCopyingId] = useState<number | null>(null)
 
-  async function handlePrintInvoice(order: Payment) {
-    setPrintingId(order.id)
+  async function handleCopyInvoiceLink(order: Payment) {
+    setCopyingId(order.id)
     try {
-      // Pull order line items + full payment history for the invoice
-      const [itemsRes, historyRes] = await Promise.all([
-        api.get<OrderItemRow[] | { data: OrderItemRow[] }>(`/api/orders/${order.id}/items`),
-        api.get<PaymentRow[] | { data: PaymentRow }>(`/api/payments/order/${order.id}`),
-      ])
-
-      const itemsArr: OrderItemRow[] = Array.isArray(itemsRes) ? itemsRes : itemsRes.data ?? []
-      const items = itemsArr.map((it) => ({
-        name: it.name ?? "-",
-        services: (it.treatments ?? [])
-          .map((t) => t?.name)
-          .filter(Boolean)
-          .join(", "),
-        price: Number(it.price) || 0,
-      }))
-
-      const histArr: PaymentRow[] = Array.isArray(historyRes)
-        ? historyRes
-        : historyRes.data
-        ? [historyRes.data]
-        : []
-      const payments = histArr.map((p) => ({
-        date: p.date,
-        nominal: Number(p.nominal) || 0,
-        note: p.note ?? null,
-      }))
-
-      downloadInvoicePDF({
-        code: order.code,
-        date: order.date,
-        dueDate: order.due_date,
-        status: order.payment_status,
-        branchName: order.project_name,
-        customer: order.customer,
-        items,
-        totalPrice: order.total_price,
-        totalPaid: order.total_paid,
-        credit: order.credit,
-        payments,
-      })
-      toast.success("Invoice berhasil dibuat")
-    } catch {
-      toast.error("Gagal mencetak invoice")
+      const res = await api.post<{ url: string; expires_at: number }>(
+        `/api/orders/${order.id}/invoice-link`,
+      )
+      // ponytail: navigator.clipboard hanya tersedia di HTTPS atau localhost. Frontend
+      // dideploy ke Vercel yang selalu HTTPS, jadi aman. Kalau kelak panel admin dibuka
+      // lewat HTTP polos, panggilan ini melempar dan tombolnya cuma memunculkan toast gagal;
+      // fallback document.execCommand("copy") ditambahkan hanya kalau itu benar-benar terjadi.
+      await navigator.clipboard.writeText(res.url)
+      toast.success("Link invoice disalin")
+    } catch (err: unknown) {
+      const e = err as { message?: string }
+      toast.error(e?.message || "Gagal membuat link invoice")
     } finally {
-      setPrintingId(null)
+      setCopyingId(null)
     }
   }
 
@@ -546,16 +502,16 @@ export function PaymentClient() {
                           variant="ghost"
                           size="sm"
                           className="h-8 gap-1.5"
-                          title="Cetak Invoice"
-                          disabled={printingId === payment.id}
-                          onClick={() => handlePrintInvoice(payment)}
+                          title="Salin Link Invoice"
+                          disabled={copyingId === payment.id}
+                          onClick={() => handleCopyInvoiceLink(payment)}
                         >
-                          {printingId === payment.id ? (
+                          {copyingId === payment.id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <Printer className="h-3.5 w-3.5" />
+                            <Link2 className="h-3.5 w-3.5" />
                           )}
-                          <span className="hidden lg:inline">Invoice</span>
+                          <span className="hidden lg:inline">Salin Link</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -806,15 +762,15 @@ export function PaymentClient() {
               <Button
                 variant="outline"
                 className="gap-1.5"
-                disabled={printingId === selectedOrder.id}
-                onClick={() => handlePrintInvoice(selectedOrder)}
+                disabled={copyingId === selectedOrder.id}
+                onClick={() => handleCopyInvoiceLink(selectedOrder)}
               >
-                {printingId === selectedOrder.id ? (
+                {copyingId === selectedOrder.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Printer className="h-4 w-4" />
+                  <Link2 className="h-4 w-4" />
                 )}
-                Cetak Invoice
+                Salin Link
               </Button>
             )}
             {selectedOrder?.payment_status !== 'paid' && (

@@ -103,16 +103,20 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // OPERASIONAL - Admin Super, Admin, Supervisor, Teknisi
+  // OPERASIONAL - Admin, plus Teknisi dan Kurir dengan tampilan yang sama: teknisi di lapangan
+  // juga merangkap mengantar, jadi keduanya butuh Pengerjaan DAN Pengiriman sekaligus.
+  // Kurir HARUS ada di grup ini: penyaringan grup jalan sebelum penyaringan menu, jadi tanpa
+  // ini menu Pengiriman yang sudah mengizinkan Kurir tidak pernah sempat dirender dan kurir
+  // hanya melihat Dashboard.
   {
     label: "Operasional",
-    roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Teknisi'],
+    roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir'],
     items: [
       {
         title: "Pesanan",
         url: "/pesanan",
         icon: ShoppingBag,
-        roles: ['Admin Super', 'Admin', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin'],
       },
       {
         title: "Layanan",
@@ -128,25 +132,28 @@ const navGroups: NavGroup[] = [
             title: "Waiting List",
             url: "/pengerjaan-waiting",
             icon: ClipboardList,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead']
+            // Dibuka untuk lapangan: dari sinilah teknisi/kurir mengajukan diri mengambil
+            // pekerjaan. Pengajuannya tetap menunggu persetujuan admin — lihat
+            // POST /api/treatments/claim di backend.
+            roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir']
           },
           {
             title: "Dalam Proses",
             url: "/pengerjaan",
             icon: Wrench,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Teknisi']
+            roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir']
           },
           {
             title: "Pengerjaan Mitra",
             url: "/pengerjaan-mitra",
             icon: UserCheck,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead']
+            roles: ['Admin Super', 'Admin']
           },
           {
             title: "Histori",
             url: "/pengerjaan-histori",
             icon: History,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Teknisi']
+            roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir']
           },
         ],
       },
@@ -159,7 +166,7 @@ const navGroups: NavGroup[] = [
       {
         title: "Pengiriman",
         icon: Truck,
-        roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Kurir'],
+        roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir'],
         children: [
           {
             title: "Pickup Waiting",
@@ -189,7 +196,7 @@ const navGroups: NavGroup[] = [
   // PELANGGAN & CRM - Admin Super, Admin, Admin CRM, Admin Sosmed
   {
     label: "Pelanggan & CRM",
-    roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed', 'Supervisor / Lead'],
+    roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed'],
     items: [
       {
         title: "Data Pelanggan",
@@ -216,7 +223,7 @@ const navGroups: NavGroup[] = [
   // KEUANGAN - Admin Super, Admin, Finance
   {
     label: "Keuangan",
-    roles: ['Admin Super', 'Admin', 'Finance', 'Supervisor / Lead'],
+    roles: ['Admin Super', 'Admin', 'Finance'],
     items: [
       {
         title: "Pembayaran",
@@ -234,20 +241,23 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // SDM - Admin Super, Admin, HRD
+  // SDM - grupnya sengaja TANPA `roles`: absen, izin, dan catatan harian adalah urusan setiap
+  // karyawan apa pun jabatannya, jadi semua role melihatnya. Yang dikunci per-menu hanya Data
+  // Karyawan dan Jabatan — tanpa itu staf ikut melihat data seluruh karyawan.
   {
     label: "Sumber Daya Manusia",
-    roles: ['Admin Super', 'Admin', 'HRD', 'Supervisor / Lead'],
     items: [
       {
         title: "Data Karyawan",
         url: "/karyawan",
         icon: Users,
+        roles: ['Admin Super', 'Admin', 'HRD'],
       },
       {
         title: "Jabatan",
         url: "/jabatan",
         icon: ClipboardCheck,
+        roles: ['Admin Super', 'Admin', 'HRD'],
       },
       {
         title: "Absensi",
@@ -270,24 +280,24 @@ const navGroups: NavGroup[] = [
   // LAPORAN - Admin Super, Admin, Finance, HRD, Supervisor, Admin Sosmed, Admin CRM
   {
     label: "Laporan",
-    roles: ['Admin Super', 'Admin', 'Finance', 'HRD', 'Supervisor / Lead', 'Admin Sosmed', 'Admin Crm'],
+    roles: ['Admin Super', 'Admin', 'Finance', 'HRD', 'Admin Sosmed', 'Admin Crm'],
     items: [
       {
         title: "Laporan Pengerjaan",
         url: "/laporan-pengerjaan",
         icon: Wrench,
-        roles: ['Admin Super', 'Admin', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin'],
       },
       {
         title: "Laporan Pelanggan",
         url: "/laporan-pelanggan",
         icon: Users,
-        roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed'],
       },
       {
         title: "Laporan Iklan",
         icon: Megaphone,
-        roles: ['Admin Super', 'Admin', 'Admin Sosmed', 'Admin Crm', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'Admin Sosmed', 'Admin Crm'],
         children: [
           { title: "Google Ads", url: "/laporan-google-ads", icon: BarChart2 },
           { title: "Meta Ads", url: "/laporan-meta-ads", icon: BarChart2 },
@@ -296,7 +306,7 @@ const navGroups: NavGroup[] = [
       {
         title: "Laporan Keuangan",
         icon: CircleDollarSign,
-        roles: ['Admin Super', 'Admin', 'Finance', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'Finance'],
         children: [
           { title: "Laporan Penjualan", url: "/laporan-penjualan", icon: TrendingUp },
           { title: "Laporan Pembayaran", url: "/laporan-pembayaran", icon: HandCoins },
@@ -312,7 +322,7 @@ const navGroups: NavGroup[] = [
       {
         title: "Laporan SDM",
         icon: ClipboardCheck,
-        roles: ['Admin Super', 'Admin', 'HRD', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'HRD'],
         children: [
           { title: "Laporan Absensi", url: "/laporan-absensi", icon: ClipboardCheck },
           { title: "Laporan Catatan Harian", url: "/laporan-catatan-harian", icon: ScrollText },
@@ -360,8 +370,14 @@ export function AppSidebar() {
     // If no roles specified, accessible to all
     if (!roles || roles.length === 0) return true
 
-    // Super admin has access to everything
-    if (user?.is_super_admin) return true
+    // TIDAK ada bypass di sini. `is_super_admin` dulu dipakai untuk itu, dan itu keliru:
+    // backend menghitungnya sebagai `projects_id === null`, yang artinya "tidak ditugaskan ke
+    // cabang mana pun" — bukan "administrator tertinggi". 13 dari 16 teknisi tidak punya cabang,
+    // sehingga mereka semua lolos bypass dan melihat seluruh menu termasuk keuangan.
+    //
+    // 'Admin Super' tidak perlu bypass: namanya sudah tercantum di setiap daftar roles di atas.
+    // Ini juga menyamakan aturannya dengan middleware `role:` di backend, yang memang tidak
+    // memberi jalan pintas kepada siapa pun.
 
     // Check if user's role is in the allowed roles
     const userRole = user?.role?.toLowerCase() || ''
@@ -494,7 +510,12 @@ export function AppSidebar() {
               </Avatar>
               <div className="flex flex-col text-left text-sm leading-tight">
                 <span className="font-semibold truncate">{user?.name ?? "Admin"}</span>
-                <span className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</span>
+                {/* Jabatan, bukan email: menu yang tampil ditentukan oleh jabatan, jadi
+                    ketika seseorang bertanya "kenapa menu saya beda", jawabannya harus
+                    terbaca di layar tanpa perlu membuka DevTools. */}
+                <span className="text-xs text-muted-foreground truncate">
+                  {user?.role ?? "Tanpa jabatan"}
+                </span>
               </div>
               <LogOut className="ml-auto h-4 w-4 text-muted-foreground" />
             </SidebarMenuButton>

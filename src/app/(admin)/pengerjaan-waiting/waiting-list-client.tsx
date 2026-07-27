@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Search, Loader2, ChevronLeft, ChevronRight, UserPlus, Package, Clock, CheckCircle2, AlertTriangle, User } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase, waLink } from "@/lib/utils"
 
 type Treatment = {
   id: number
@@ -100,6 +101,11 @@ export function WaitingListClient() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [assignType, setAssignType] = useState<"teknisi" | "mitra">("teknisi")
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("")
+  const { user } = useAuth()
+  // Non-admin tidak menugaskan siapa pun: ia mengambil pekerjaan untuk DIRINYA SENDIRI lewat
+  // POST /api/treatments/claim, langsung jadi miliknya. Backend menolak treatments/assign
+  // untuk mereka, jadi ini penyelarasan tampilan dengan pagarnya.
+  const isAdmin = user?.role === "Admin Super" || user?.role === "Admin"
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("")
   const [dateStart, setDateStart] = useState<string>("")
   const [technicians, setTechnicians] = useState<Technician[]>([])
@@ -143,6 +149,7 @@ export function WaitingListClient() {
     try {
       const res = await api.get<Technician[]>('/api/treatments/available-technicians')
       setTechnicians(res)
+      if (!isAdmin && user?.id) setSelectedTechnicianId(String(user.id))
     } catch (error) {
 
     }
@@ -256,6 +263,19 @@ export function WaitingListClient() {
         payload.partnerships_id = Number(selectedPartnerId)
         const partner = partners.find(p => p.id === Number(selectedPartnerId))
         assigneeName = partner?.name || "Mitra"
+      }
+
+      if (!isAdmin) {
+        // Ambil sendiri: tidak mengirim users_id sama sekali — backend memakai pengguna yang
+        // login. Langsung jadi miliknya, tanpa menunggu persetujuan siapa pun.
+        await api.post('/api/treatments/claim', { treatment_ids: selectedIds })
+        toast.success(`${selectedIds.length} pekerjaan diambil`, {
+          description: "Pekerjaan sudah masuk ke daftar Anda.",
+        })
+        setAssignDialogOpen(false)
+        setSelectedIds([])
+        fetchTreatments()
+        return
       }
 
       await api.post('/api/treatments/assign', payload)
@@ -483,7 +503,7 @@ export function WaitingListClient() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <div className="font-bold text-base">{treatment.orders_items_name}</div>
+                        <div className="font-bold text-base">{titleCase(treatment.orders_items_name)}</div>
                         <div className="text-xs text-muted-foreground truncate">
                           {treatment.orders_code}
                         </div>
@@ -495,7 +515,11 @@ export function WaitingListClient() {
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="max-w-[200px]">
-                      <div className="font-medium text-sm truncate">{treatment.customers_name}</div>
+                      {waLink(treatment.customers_phone) ? (
+                        <a href={waLink(treatment.customers_phone, `Halo ${titleCase(treatment.customers_name)}, saya dari kurir Shoesfast mau konfirmasi beberapa hal.`) ?? "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline underline-offset-2 hover:text-green-800 truncate block">{titleCase(treatment.customers_name) || "-"}</a>
+                      ) : (
+                        <div className="font-medium text-sm truncate">{titleCase(treatment.customers_name) || "-"}</div>
+                      )}
                       <div className="text-xs text-muted-foreground truncate">{treatment.customers_phone}</div>
                     </div>
                   </TableCell>
@@ -599,7 +623,9 @@ export function WaitingListClient() {
               </div>
             </div>
 
-            {/* Type Selection */}
+            {/* Type Selection — hanya admin yang memilih penerima tugas. Teknisi/kurir
+                mengajukan dirinya sendiri, jadi tidak ada yang perlu dipilih. */}
+            {isAdmin && (
             <div className="space-y-2">
               <Label className="text-sm font-semibold">
                 Assign Kepada <span className="text-destructive">*</span>
@@ -632,8 +658,11 @@ export function WaitingListClient() {
               </Select>
             </div>
 
-            {/* Technician Selection */}
-            {assignType === "teknisi" && (
+            )}
+
+            {/* Technician Selection — disembunyikan untuk non-admin: penerimanya sudah pasti
+                dirinya sendiri. */}
+            {isAdmin && assignType === "teknisi" && (
               <div className="space-y-2">
                 <Label htmlFor="technician" className="text-sm font-semibold">
                   Pilih Teknisi <span className="text-destructive">*</span>
@@ -641,6 +670,7 @@ export function WaitingListClient() {
                 <Select
                   value={selectedTechnicianId}
                   onValueChange={setSelectedTechnicianId}
+                  disabled={!isAdmin}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="-- Pilih Teknisi --" />
