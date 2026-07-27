@@ -103,16 +103,20 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // OPERASIONAL - Admin Super, Admin, Supervisor, Teknisi
+  // OPERASIONAL - Admin, plus Teknisi dan Kurir dengan tampilan yang sama: teknisi di lapangan
+  // juga merangkap mengantar, jadi keduanya butuh Pengerjaan DAN Pengiriman sekaligus.
+  // Kurir HARUS ada di grup ini: penyaringan grup jalan sebelum penyaringan menu, jadi tanpa
+  // ini menu Pengiriman yang sudah mengizinkan Kurir tidak pernah sempat dirender dan kurir
+  // hanya melihat Dashboard.
   {
     label: "Operasional",
-    roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Teknisi'],
+    roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir'],
     items: [
       {
         title: "Pesanan",
         url: "/pesanan",
         icon: ShoppingBag,
-        roles: ['Admin Super', 'Admin', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin'],
       },
       {
         title: "Layanan",
@@ -128,25 +132,25 @@ const navGroups: NavGroup[] = [
             title: "Waiting List",
             url: "/pengerjaan-waiting",
             icon: ClipboardList,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead']
+            roles: ['Admin Super', 'Admin']
           },
           {
             title: "Dalam Proses",
             url: "/pengerjaan",
             icon: Wrench,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Teknisi']
+            roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir']
           },
           {
             title: "Pengerjaan Mitra",
             url: "/pengerjaan-mitra",
             icon: UserCheck,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead']
+            roles: ['Admin Super', 'Admin']
           },
           {
             title: "Histori",
             url: "/pengerjaan-histori",
             icon: History,
-            roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Teknisi']
+            roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir']
           },
         ],
       },
@@ -159,7 +163,7 @@ const navGroups: NavGroup[] = [
       {
         title: "Pengiriman",
         icon: Truck,
-        roles: ['Admin Super', 'Admin', 'Supervisor / Lead', 'Kurir'],
+        roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir'],
         children: [
           {
             title: "Pickup Waiting",
@@ -189,7 +193,7 @@ const navGroups: NavGroup[] = [
   // PELANGGAN & CRM - Admin Super, Admin, Admin CRM, Admin Sosmed
   {
     label: "Pelanggan & CRM",
-    roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed', 'Supervisor / Lead'],
+    roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed'],
     items: [
       {
         title: "Data Pelanggan",
@@ -216,7 +220,7 @@ const navGroups: NavGroup[] = [
   // KEUANGAN - Admin Super, Admin, Finance
   {
     label: "Keuangan",
-    roles: ['Admin Super', 'Admin', 'Finance', 'Supervisor / Lead'],
+    roles: ['Admin Super', 'Admin', 'Finance'],
     items: [
       {
         title: "Pembayaran",
@@ -234,20 +238,24 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // SDM - Admin Super, Admin, HRD
+  // SDM - Admin & HRD mengelola datanya; Teknisi dan Kurir masuk untuk urusan dirinya sendiri
+  // (absen, izin, catatan harian). Karena itu grupnya terbuka untuk mereka, tapi Data Karyawan
+  // dan Jabatan dikunci per-menu — tanpa kunci itu staf ikut melihat data seluruh karyawan.
   {
     label: "Sumber Daya Manusia",
-    roles: ['Admin Super', 'Admin', 'HRD', 'Supervisor / Lead'],
+    roles: ['Admin Super', 'Admin', 'HRD', 'Teknisi', 'Kurir'],
     items: [
       {
         title: "Data Karyawan",
         url: "/karyawan",
         icon: Users,
+        roles: ['Admin Super', 'Admin', 'HRD'],
       },
       {
         title: "Jabatan",
         url: "/jabatan",
         icon: ClipboardCheck,
+        roles: ['Admin Super', 'Admin', 'HRD'],
       },
       {
         title: "Absensi",
@@ -270,24 +278,24 @@ const navGroups: NavGroup[] = [
   // LAPORAN - Admin Super, Admin, Finance, HRD, Supervisor, Admin Sosmed, Admin CRM
   {
     label: "Laporan",
-    roles: ['Admin Super', 'Admin', 'Finance', 'HRD', 'Supervisor / Lead', 'Admin Sosmed', 'Admin Crm'],
+    roles: ['Admin Super', 'Admin', 'Finance', 'HRD', 'Admin Sosmed', 'Admin Crm'],
     items: [
       {
         title: "Laporan Pengerjaan",
         url: "/laporan-pengerjaan",
         icon: Wrench,
-        roles: ['Admin Super', 'Admin', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin'],
       },
       {
         title: "Laporan Pelanggan",
         url: "/laporan-pelanggan",
         icon: Users,
-        roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'Admin Crm', 'Admin Sosmed'],
       },
       {
         title: "Laporan Iklan",
         icon: Megaphone,
-        roles: ['Admin Super', 'Admin', 'Admin Sosmed', 'Admin Crm', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'Admin Sosmed', 'Admin Crm'],
         children: [
           { title: "Google Ads", url: "/laporan-google-ads", icon: BarChart2 },
           { title: "Meta Ads", url: "/laporan-meta-ads", icon: BarChart2 },
@@ -296,7 +304,7 @@ const navGroups: NavGroup[] = [
       {
         title: "Laporan Keuangan",
         icon: CircleDollarSign,
-        roles: ['Admin Super', 'Admin', 'Finance', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'Finance'],
         children: [
           { title: "Laporan Penjualan", url: "/laporan-penjualan", icon: TrendingUp },
           { title: "Laporan Pembayaran", url: "/laporan-pembayaran", icon: HandCoins },
@@ -312,7 +320,7 @@ const navGroups: NavGroup[] = [
       {
         title: "Laporan SDM",
         icon: ClipboardCheck,
-        roles: ['Admin Super', 'Admin', 'HRD', 'Supervisor / Lead'],
+        roles: ['Admin Super', 'Admin', 'HRD'],
         children: [
           { title: "Laporan Absensi", url: "/laporan-absensi", icon: ClipboardCheck },
           { title: "Laporan Catatan Harian", url: "/laporan-catatan-harian", icon: ScrollText },
