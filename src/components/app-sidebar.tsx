@@ -367,8 +367,14 @@ export function AppSidebar() {
     // If no roles specified, accessible to all
     if (!roles || roles.length === 0) return true
 
-    // Super admin has access to everything
-    if (user?.is_super_admin) return true
+    // TIDAK ada bypass di sini. `is_super_admin` dulu dipakai untuk itu, dan itu keliru:
+    // backend menghitungnya sebagai `projects_id === null`, yang artinya "tidak ditugaskan ke
+    // cabang mana pun" — bukan "administrator tertinggi". 13 dari 16 teknisi tidak punya cabang,
+    // sehingga mereka semua lolos bypass dan melihat seluruh menu termasuk keuangan.
+    //
+    // 'Admin Super' tidak perlu bypass: namanya sudah tercantum di setiap daftar roles di atas.
+    // Ini juga menyamakan aturannya dengan middleware `role:` di backend, yang memang tidak
+    // memberi jalan pintas kepada siapa pun.
 
     // Check if user's role is in the allowed roles
     const userRole = user?.role?.toLowerCase() || ''
