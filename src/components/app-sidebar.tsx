@@ -238,12 +238,11 @@ const navGroups: NavGroup[] = [
     ],
   },
 
-  // SDM - Admin & HRD mengelola datanya; Teknisi dan Kurir masuk untuk urusan dirinya sendiri
-  // (absen, izin, catatan harian). Karena itu grupnya terbuka untuk mereka, tapi Data Karyawan
-  // dan Jabatan dikunci per-menu — tanpa kunci itu staf ikut melihat data seluruh karyawan.
+  // SDM - grupnya sengaja TANPA `roles`: absen, izin, dan catatan harian adalah urusan setiap
+  // karyawan apa pun jabatannya, jadi semua role melihatnya. Yang dikunci per-menu hanya Data
+  // Karyawan dan Jabatan — tanpa itu staf ikut melihat data seluruh karyawan.
   {
     label: "Sumber Daya Manusia",
-    roles: ['Admin Super', 'Admin', 'HRD', 'Teknisi', 'Kurir'],
     items: [
       {
         title: "Data Karyawan",
