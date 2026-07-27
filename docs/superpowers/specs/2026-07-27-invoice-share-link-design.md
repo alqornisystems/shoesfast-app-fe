@@ -158,7 +158,13 @@ dijanjikan. `withoutBranchScope()` membuat niatnya terbaca dan tahan kalau `Bran
 berubah.
 
 Kalau order tidak ketemu → 404. Kalau `invoice_expires_at` kosong atau sudah lewat → 410
-dengan body `{ "message": "Link invoice sudah kedaluwarsa" }`.
+dengan body `{ "message": "Link invoice sudah kedaluwarsa", "branch": { "name", "whatsapp" } }`
+— cabang ikut dikirim supaya halaman kedaluwarsa bisa memberi tahu customer harus menghubungi
+siapa. Hanya nama dan nomor toko; tidak ada data customer di respons ini.
+
+`branch.whatsapp` bersumber dari `projects.whatsapp` dengan fallback ke `projects.phone`
+memakai `?:` (bukan `??`) — skema lama menyimpan kosong sebagai `''` sesering `NULL`. Tidak
+ada key `branch.phone`.
 
 ### Bentuk payload
 
@@ -171,7 +177,7 @@ Menyatukan yang sekarang butuh dua panggilan (`/orders/{id}/items` dan
   "date": 1785000000,
   "due_date": 1785259200,
   "payment_status": "paid",
-  "branch": { "name": "Cabang Kemang", "phone": "0812xxxxxxx" },
+  "branch": { "name": "Cabang Kemang", "whatsapp": "0812xxxxxxx" },
   "customer": { "name": "Budi Santoso", "phone": "0812…", "email": null, "address": "Jl. …" },
   "items": [
     {
@@ -199,7 +205,7 @@ Perhitungan `due_date` (tanggal order + 3 hari), `total_paid`, `credit`, dan
 `PaymentController.php:77-105`, supaya angka di invoice publik dan di halaman pembayaran
 tidak pernah berselisih.
 
-`branch.phone` dipakai halaman "tautan kedaluwarsa" agar customer tahu harus menghubungi
+`branch.whatsapp` dipakai halaman "tautan kedaluwarsa" agar customer tahu harus menghubungi
 siapa.
 
 ## Frontend (`shoesfast-app-fe`)
