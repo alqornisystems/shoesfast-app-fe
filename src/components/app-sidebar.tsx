@@ -501,7 +501,12 @@ export function AppSidebar() {
               </Avatar>
               <div className="flex flex-col text-left text-sm leading-tight">
                 <span className="font-semibold truncate">{user?.name ?? "Admin"}</span>
-                <span className="text-xs text-muted-foreground truncate">{user?.email ?? ""}</span>
+                {/* Jabatan, bukan email: menu yang tampil ditentukan oleh jabatan, jadi
+                    ketika seseorang bertanya "kenapa menu saya beda", jawabannya harus
+                    terbaca di layar tanpa perlu membuka DevTools. */}
+                <span className="text-xs text-muted-foreground truncate">
+                  {user?.role ?? "Tanpa jabatan"}
+                </span>
               </div>
               <LogOut className="ml-auto h-4 w-4 text-muted-foreground" />
             </SidebarMenuButton>
