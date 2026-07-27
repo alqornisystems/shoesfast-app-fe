@@ -94,10 +94,12 @@ const getInvoice = cache(async (token: string): Promise<FetchResult> => {
  * Label dan warnanya dibawa apa adanya dari invoice-utils.ts yang dihapus.
  */
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  paid: { label: "LUNAS", color: "bg-green-500/10 text-green-700 border-green-200" },
-  partial: { label: "CICILAN", color: "bg-blue-500/10 text-blue-700 border-blue-200" },
-  unpaid: { label: "BELUM BAYAR", color: "bg-red-500/10 text-red-700 border-red-200" },
+  paid: { label: "LUNAS", color: "border-green-700 text-green-700" },
+  partial: { label: "CICILAN", color: "border-blue-700 text-blue-700" },
+  unpaid: { label: "BELUM BAYAR", color: "border-red-700 text-red-700" },
 }
+
+const LOGO_URL = "https://shoesfast.id/images/logo-shoesfast.png"
 
 function Notice({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -145,9 +147,7 @@ export default async function InvoicePage({
     const wa = waLink(branch?.whatsapp)
     return (
       <Notice title="Link invoice sudah kedaluwarsa">
-        <p>
-          Silakan hubungi {branch?.name ?? "Shoesfast"} untuk meminta link invoice yang baru.
-        </p>
+        <p>Silakan hubungi Shoesfast untuk meminta link invoice yang baru.</p>
         {wa ? (
           <a href={wa} className="inline-block font-medium text-green-600 underline">
             Hubungi via WhatsApp {branch?.whatsapp}
@@ -172,139 +172,170 @@ export default async function InvoicePage({
   const items = data.items ?? []
   const payments = data.payments ?? []
 
+  // Dokumen, bukan halaman web: satu lembar kertas putih di atas latar abu, aturan garis tipis,
+  // angka rata kanan dengan tabular-nums, dan tabel sungguhan untuk rincian item. Semua utility
+  // `print:` menanggalkan latar dan bayangan supaya Ctrl+P menghasilkan lembar yang sama.
   return (
-    <div className="min-h-screen bg-muted/40 px-4 py-6 print:bg-white print:p-0">
-      <div className="mx-auto w-full max-w-2xl space-y-4">
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">SHOESFAST</h1>
-              <p className="text-sm text-muted-foreground">{data.branch?.name ?? "-"}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-lg font-semibold tracking-tight text-muted-foreground">INVOICE</p>
-              <p className="text-sm">No: {data.code ?? "-"}</p>
-              <p className="text-sm text-muted-foreground">
-                Tanggal: {data.date ? formatDate(data.date, "dd MMMM yyyy") : "-"}
-              </p>
-              {data.due_date ? (
-                <p className="text-sm text-muted-foreground">
-                  Jatuh tempo: {formatDate(data.due_date, "dd MMMM yyyy")}
-                </p>
-              ) : null}
-              <span
-                className={cn(
-                  "mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium",
-                  statusInfo?.color ?? "bg-gray-100 text-gray-700 border-gray-200",
-                )}
-              >
-                {statusInfo?.label ?? "-"}
-              </span>
-            </div>
+    <div className="min-h-screen bg-neutral-200/70 px-3 py-6 sm:px-6 sm:py-10 print:bg-white print:p-0">
+      <article className="mx-auto w-full max-w-3xl bg-white p-6 text-neutral-900 shadow-lg ring-1 ring-black/5 sm:p-10 print:max-w-none print:p-0 print:shadow-none print:ring-0">
+        {/* Kop */}
+        <header className="flex flex-wrap items-start justify-between gap-6">
+          {/* eslint-disable-next-line @next/next/no-img-element -- host eksternal, tidak ada di
+              remotePatterns next.config; <img> biasa menghindari perubahan konfigurasi. */}
+          <img src={LOGO_URL} alt="Shoesfast" className="h-10 w-auto" width={176} height={40} />
+          <div className="text-right">
+            <p className="text-2xl font-semibold uppercase tracking-[0.2em] text-neutral-400">
+              Invoice
+            </p>
+            <p className="mt-1 font-mono text-sm font-medium">{data.code ?? "-"}</p>
           </div>
+        </header>
 
-          <div className="mt-4 border-t pt-4">
-            <p className="text-xs font-semibold uppercase text-muted-foreground">
+        <div className="mt-5 border-t-2 border-neutral-900" />
+
+        {/* Ditagihkan kepada + tanggal + stempel status */}
+        <section className="mt-5 flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
               Ditagihkan kepada
             </p>
-            <p className="mt-1 font-medium">{data.customer?.name ?? "-"}</p>
-            <p className="text-sm text-muted-foreground">{data.customer?.phone ?? "-"}</p>
-            <p className="text-sm text-muted-foreground">{data.customer?.address ?? "-"}</p>
+            <p className="mt-1.5 font-semibold">{data.customer?.name ?? "-"}</p>
+            <p className="text-sm text-neutral-600">{data.customer?.phone ?? "-"}</p>
+            <p className="max-w-xs text-sm text-neutral-600">{data.customer?.address ?? "-"}</p>
           </div>
-        </div>
 
-        {items.length === 0 ? (
-          <div className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground shadow-sm">
-            Tidak ada rincian item.
-          </div>
-        ) : (
-          items.map((item, i) => {
-            const treatments = item.treatments ?? []
-            return (
-              <div key={i} className="flex gap-4 rounded-xl border bg-card p-4 shadow-sm">
-                <InvoicePhoto photo={item.photo ?? null} name={item.name ?? "Item"} />
-                <div className="min-w-0 flex-1">
-                  <p className="break-words font-medium">{item.name ?? "-"}</p>
-                  <div className="mt-2 space-y-1">
-                    {treatments.map((t, j) => (
-                      <div key={j} className="flex justify-between gap-3 text-sm">
-                        <span className="text-muted-foreground">{t.name ?? "-"}</span>
-                        <span className="tabular-nums">{formatCurrency(Number(t.price) || 0)}</span>
-                      </div>
-                    ))}
-                  </div>
-                  {Number(item.discount) > 0 ? (
-                    <div className="mt-1 flex justify-between gap-3 text-sm text-red-600">
-                      <span>Diskon</span>
-                      <span className="tabular-nums">
-                        -{formatCurrency(Number(item.discount))}
-                      </span>
-                    </div>
-                  ) : null}
-                  <div className="mt-2 flex justify-between gap-3 border-t pt-2 text-sm font-semibold">
-                    <span>Subtotal</span>
-                    <span className="tabular-nums">{formatCurrency(Number(item.price) || 0)}</span>
-                  </div>
-                </div>
+          <div className="flex flex-col items-end gap-3">
+            <dl className="text-sm">
+              <div className="flex justify-end gap-3">
+                <dt className="text-neutral-500">Tanggal</dt>
+                <dd className="w-32 text-right tabular-nums">
+                  {data.date ? formatDate(data.date, "dd MMMM yyyy") : "-"}
+                </dd>
               </div>
-            )
-          })
-        )}
-
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
-          <div className="ml-auto max-w-xs space-y-1.5">
-            <div className="flex justify-between gap-3 text-sm">
-              <span className="text-muted-foreground">Total</span>
-              <span className="font-medium tabular-nums">
-                {formatCurrency(Number(data.total_price) || 0)}
-              </span>
-            </div>
-            <div className="flex justify-between gap-3 text-sm">
-              <span className="text-muted-foreground">Terbayar</span>
-              <span className="font-medium tabular-nums text-green-600">
-                {formatCurrency(Number(data.total_paid) || 0)}
-              </span>
-            </div>
-            <div className="flex justify-between gap-3 border-t pt-1.5 text-base font-semibold">
-              <span>Sisa</span>
-              <span
-                className={cn(
-                  "tabular-nums",
-                  (Number(data.credit) || 0) > 0 ? "text-red-600" : "text-green-600",
-                )}
-              >
-                {formatCurrency(Number(data.credit) || 0)}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {payments.length > 0 && (
-          <div className="rounded-xl border bg-card p-5 shadow-sm">
-            <p className="text-sm font-semibold">Riwayat Pembayaran</p>
-            <div className="mt-3 space-y-2">
-              {payments.map((p, i) => (
-                <div
-                  key={i}
-                  className="flex flex-wrap items-baseline justify-between gap-2 border-b pb-2 text-sm last:border-b-0 last:pb-0"
-                >
-                  <span className="text-muted-foreground">{p.date ? formatDate(p.date) : "-"}</span>
-                  <span className="font-medium tabular-nums">
-                    {formatCurrency(Number(p.nominal) || 0)}
-                  </span>
-                  <span className="w-full text-xs text-muted-foreground sm:w-auto">
-                    {p.note ?? "-"}
-                  </span>
+              {data.due_date ? (
+                <div className="mt-0.5 flex justify-end gap-3">
+                  <dt className="text-neutral-500">Jatuh tempo</dt>
+                  <dd className="w-32 text-right tabular-nums">
+                    {formatDate(data.due_date, "dd MMMM yyyy")}
+                  </dd>
                 </div>
-              ))}
-            </div>
+              ) : null}
+            </dl>
+            <span
+              className={cn(
+                "inline-flex -rotate-3 items-center border-2 px-3 py-1 text-sm font-bold uppercase tracking-widest",
+                statusInfo?.color ?? "border-neutral-400 text-neutral-500",
+              )}
+            >
+              {statusInfo?.label ?? "-"}
+            </span>
           </div>
+        </section>
+
+        {/* Rincian */}
+        <table className="mt-8 w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b-2 border-neutral-900 text-[10px] uppercase tracking-widest text-neutral-500">
+              <th className="w-8 py-2 text-left font-semibold">No</th>
+              <th className="w-16 py-2 text-left font-semibold">Foto</th>
+              <th className="py-2 text-left font-semibold">Deskripsi</th>
+              <th className="py-2 text-right font-semibold">Jumlah</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.length === 0 ? (
+              <tr className="border-b border-neutral-200">
+                <td colSpan={4} className="py-8 text-center text-neutral-500">
+                  Tidak ada rincian item.
+                </td>
+              </tr>
+            ) : (
+              items.map((item, i) => {
+                const treatments = item.treatments ?? []
+                return (
+                  <tr key={i} className="border-b border-neutral-200 align-top">
+                    <td className="py-4 tabular-nums text-neutral-500">{i + 1}</td>
+                    <td className="py-4">
+                      <InvoicePhoto photo={item.photo ?? null} name={item.name ?? "Item"} />
+                    </td>
+                    <td className="py-4 pr-4">
+                      <p className="break-words font-semibold">{item.name ?? "-"}</p>
+                      <ul className="mt-1.5 space-y-0.5">
+                        {treatments.map((t, j) => (
+                          <li key={j} className="flex justify-between gap-4 text-neutral-600">
+                            <span>{t.name ?? "-"}</span>
+                            <span className="tabular-nums">
+                              {formatCurrency(Number(t.price) || 0)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {Number(item.discount) > 0 ? (
+                        <p className="mt-1 flex justify-between gap-4 text-red-700">
+                          <span>Diskon</span>
+                          <span className="tabular-nums">
+                            -{formatCurrency(Number(item.discount))}
+                          </span>
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="py-4 text-right font-semibold tabular-nums">
+                      {formatCurrency(Number(item.price) || 0)}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
+
+        {/* Total */}
+        <section className="mt-6 flex justify-end">
+          <dl className="w-full max-w-xs text-sm">
+            <div className="flex justify-between gap-4 py-1">
+              <dt className="text-neutral-600">Total</dt>
+              <dd className="tabular-nums">{formatCurrency(Number(data.total_price) || 0)}</dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-neutral-200 py-1">
+              <dt className="text-neutral-600">Terbayar</dt>
+              <dd className="tabular-nums">{formatCurrency(Number(data.total_paid) || 0)}</dd>
+            </div>
+            <div className="mt-2 flex justify-between gap-4 border-2 border-neutral-900 px-3 py-2 text-base font-bold">
+              <dt>Sisa Tagihan</dt>
+              <dd className="tabular-nums">{formatCurrency(Number(data.credit) || 0)}</dd>
+            </div>
+          </dl>
+        </section>
+
+        {/* Pembayaran diterima */}
+        {payments.length > 0 && (
+          <section className="mt-8">
+            <h2 className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
+              Pembayaran Diterima
+            </h2>
+            <table className="mt-2 w-full border-collapse text-sm">
+              <tbody>
+                {payments.map((p, i) => (
+                  <tr key={i} className="border-b border-neutral-200">
+                    <td className="w-36 py-2 tabular-nums text-neutral-600">
+                      {p.date ? formatDate(p.date) : "-"}
+                    </td>
+                    <td className="py-2 text-neutral-600">{p.note ?? "-"}</td>
+                    <td className="py-2 text-right tabular-nums">
+                      {formatCurrency(Number(p.nominal) || 0)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
         )}
 
-        <p className="pb-4 text-center text-xs text-muted-foreground">
-          Terima kasih atas kepercayaan Anda.
-        </p>
-      </div>
+        <footer className="mt-10 border-t border-neutral-200 pt-4 text-center text-xs text-neutral-500">
+          <p>Terima kasih atas kepercayaan Anda.</p>
+          <p className="mt-0.5">Dokumen ini dibuat otomatis dan sah tanpa tanda tangan.</p>
+        </footer>
+      </article>
     </div>
   )
 }

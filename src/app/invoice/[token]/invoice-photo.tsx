@@ -59,8 +59,8 @@ export function InvoicePhoto({ photo, name }: { photo: string | null; name: stri
 
   if (!photo || imgError) {
     return (
-      <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg border bg-muted sm:h-28 sm:w-28">
-        <ImageOff className="h-6 w-6 text-muted-foreground/60" />
+      <div className="flex h-14 w-14 shrink-0 items-center justify-center border border-neutral-300 bg-neutral-100">
+        <ImageOff className="h-4 w-4 text-neutral-400" />
         <span className="sr-only">Tidak ada foto</span>
       </div>
     )
@@ -73,7 +73,7 @@ export function InvoicePhoto({ photo, name }: { photo: string | null; name: stri
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Perbesar foto ${name}`}
-        className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border sm:h-28 sm:w-28"
+        className="h-14 w-14 shrink-0 overflow-hidden border border-neutral-300"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
