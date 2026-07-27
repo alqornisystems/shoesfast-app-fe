@@ -132,7 +132,10 @@ const navGroups: NavGroup[] = [
             title: "Waiting List",
             url: "/pengerjaan-waiting",
             icon: ClipboardList,
-            roles: ['Admin Super', 'Admin']
+            // Dibuka untuk lapangan: dari sinilah teknisi/kurir mengajukan diri mengambil
+            // pekerjaan. Pengajuannya tetap menunggu persetujuan admin — lihat
+            // POST /api/treatments/claim di backend.
+            roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir']
           },
           {
             title: "Dalam Proses",

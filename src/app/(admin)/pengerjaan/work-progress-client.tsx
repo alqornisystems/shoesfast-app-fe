@@ -188,6 +188,24 @@ export function WorkProgressClient() {
     setReviewDialogOpen(true)
   }
 
+  // Non-admin: antar sekaligus pekerjaan yang dicentang ke meja QC (status 0 -> 1).
+  // Bukan "selesai" — meluluskan QC tetap wewenang admin, dan backend menolak kalau dicoba.
+  async function handleBulkMarkQC() {
+    if (selectedIds.length === 0) return
+    try {
+      await Promise.all(
+        selectedIds.map(id => api.put(`/api/treatments/${id}/status`, { status: 1 }))
+      )
+      toast.success(`${selectedIds.length} pekerjaan dikirim ke QC`, {
+        description: "Menunggu pemeriksaan admin.",
+      })
+      setSelectedIds([])
+      fetchTreatments(pagination.current_page)
+    } catch {
+      toast.error("Gagal mengirim ke QC")
+    }
+  }
+
   async function handleMarkComplete(treatmentId: number) {
     try {
       await api.put(`/api/treatments/${treatmentId}/status`, {
@@ -361,6 +379,11 @@ export function WorkProgressClient() {
             Monitor dan review treatment yang sedang dikerjakan
           </p>
         </div>
+        {selectedIds.length > 0 && !isAdmin && (
+          <Button onClick={handleBulkMarkQC} className="gap-2">
+            QC-kan ({selectedIds.length})
+          </Button>
+        )}
         {isAdmin && selectedIds.length > 0 && (
           <Button onClick={handleBulkForceDone} variant="destructive" className="gap-2">
             <AlertCircle className="h-4 w-4" />
@@ -480,6 +503,7 @@ export function WorkProgressClient() {
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedIds.includes(treatment.id)}
+                        disabled={!isAdmin && treatment.status !== 0}
                         onCheckedChange={() => toggleSelection(treatment.id)}
                       />
                     </TableCell>
