@@ -244,7 +244,11 @@ export default function IzinPage() {
   const approved = absences.filter(a => a.is_approval === 1).length
   const rejected = absences.filter(a => a.is_approval === 2).length
 
-  const canApprove = user?.is_super_admin || user?.role === "HRD" || user?.role === "Admin"
+  // Cerminan persis dari pagar di backend (routes/api.php, blok "Persetujuan izin"):
+  // hanya Admin dan Admin Super. Sengaja memakai nama jabatan, bukan `is_super_admin` —
+  // flag itu berarti "tanpa cabang", bukan "boleh menyetujui", dan pernah membuat tombol
+  // tampil untuk orang yang justru ditolak 403 oleh API.
+  const canApprove = user?.role === "Admin Super" || user?.role === "Admin"
   const isSunday = new Date().getDay() === 0
 
   return (
