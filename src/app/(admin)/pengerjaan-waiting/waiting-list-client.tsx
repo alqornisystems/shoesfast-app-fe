@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Search, Loader2, ChevronLeft, ChevronRight, UserPlus, Package, Clock, CheckCircle2, AlertTriangle, User } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -100,6 +101,11 @@ export function WaitingListClient() {
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
   const [assignType, setAssignType] = useState<"teknisi" | "mitra">("teknisi")
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("")
+  const { user } = useAuth()
+  // Non-admin tidak menugaskan siapa pun: ia mengajukan DIRINYA SENDIRI, dan pekerjaan baru
+  // jadi miliknya setelah admin menyetujui (POST /api/treatments/claim). Backend menolak
+  // treatments/assign untuk mereka, jadi ini penyelarasan tampilan dengan pagarnya.
+  const isAdmin = user?.role === "Admin Super" || user?.role === "Admin"
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("")
   const [dateStart, setDateStart] = useState<string>("")
   const [technicians, setTechnicians] = useState<Technician[]>([])
@@ -143,6 +149,7 @@ export function WaitingListClient() {
     try {
       const res = await api.get<Technician[]>('/api/treatments/available-technicians')
       setTechnicians(res)
+      if (!isAdmin && user?.id) setSelectedTechnicianId(String(user.id))
     } catch (error) {
 
     }
@@ -256,6 +263,19 @@ export function WaitingListClient() {
         payload.partnerships_id = Number(selectedPartnerId)
         const partner = partners.find(p => p.id === Number(selectedPartnerId))
         assigneeName = partner?.name || "Mitra"
+      }
+
+      if (!isAdmin) {
+        // Jalur pengajuan: tidak mengirim users_id sama sekali — backend memakai pengguna
+        // yang login, lalu menunggu keputusan admin.
+        await api.post('/api/treatments/claim', { treatment_ids: selectedIds })
+        toast.success(`${selectedIds.length} pekerjaan diajukan`, {
+          description: "Menunggu persetujuan admin.",
+        })
+        setAssignDialogOpen(false)
+        setSelectedIds([])
+        fetchTreatments()
+        return
       }
 
       await api.post('/api/treatments/assign', payload)
@@ -599,7 +619,9 @@ export function WaitingListClient() {
               </div>
             </div>
 
-            {/* Type Selection */}
+            {/* Type Selection — hanya admin yang memilih penerima tugas. Teknisi/kurir
+                mengajukan dirinya sendiri, jadi tidak ada yang perlu dipilih. */}
+            {isAdmin && (
             <div className="space-y-2">
               <Label className="text-sm font-semibold">
                 Assign Kepada <span className="text-destructive">*</span>
@@ -632,8 +654,11 @@ export function WaitingListClient() {
               </Select>
             </div>
 
-            {/* Technician Selection */}
-            {assignType === "teknisi" && (
+            )}
+
+            {/* Technician Selection — disembunyikan untuk non-admin: penerimanya sudah pasti
+                dirinya sendiri. */}
+            {isAdmin && assignType === "teknisi" && (
               <div className="space-y-2">
                 <Label htmlFor="technician" className="text-sm font-semibold">
                   Pilih Teknisi <span className="text-destructive">*</span>
@@ -641,6 +666,7 @@ export function WaitingListClient() {
                 <Select
                   value={selectedTechnicianId}
                   onValueChange={setSelectedTechnicianId}
+                  disabled={!isAdmin}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="-- Pilih Teknisi --" />
