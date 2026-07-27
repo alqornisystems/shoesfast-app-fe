@@ -102,9 +102,9 @@ export function WaitingListClient() {
   const [assignType, setAssignType] = useState<"teknisi" | "mitra">("teknisi")
   const [selectedTechnicianId, setSelectedTechnicianId] = useState<string>("")
   const { user } = useAuth()
-  // Non-admin tidak menugaskan siapa pun: ia mengajukan DIRINYA SENDIRI, dan pekerjaan baru
-  // jadi miliknya setelah admin menyetujui (POST /api/treatments/claim). Backend menolak
-  // treatments/assign untuk mereka, jadi ini penyelarasan tampilan dengan pagarnya.
+  // Non-admin tidak menugaskan siapa pun: ia mengambil pekerjaan untuk DIRINYA SENDIRI lewat
+  // POST /api/treatments/claim, langsung jadi miliknya. Backend menolak treatments/assign
+  // untuk mereka, jadi ini penyelarasan tampilan dengan pagarnya.
   const isAdmin = user?.role === "Admin Super" || user?.role === "Admin"
   const [selectedPartnerId, setSelectedPartnerId] = useState<string>("")
   const [dateStart, setDateStart] = useState<string>("")
@@ -266,11 +266,11 @@ export function WaitingListClient() {
       }
 
       if (!isAdmin) {
-        // Jalur pengajuan: tidak mengirim users_id sama sekali — backend memakai pengguna
-        // yang login, lalu menunggu keputusan admin.
+        // Ambil sendiri: tidak mengirim users_id sama sekali — backend memakai pengguna yang
+        // login. Langsung jadi miliknya, tanpa menunggu persetujuan siapa pun.
         await api.post('/api/treatments/claim', { treatment_ids: selectedIds })
-        toast.success(`${selectedIds.length} pekerjaan diajukan`, {
-          description: "Menunggu persetujuan admin.",
+        toast.success(`${selectedIds.length} pekerjaan diambil`, {
+          description: "Pekerjaan sudah masuk ke daftar Anda.",
         })
         setAssignDialogOpen(false)
         setSelectedIds([])
