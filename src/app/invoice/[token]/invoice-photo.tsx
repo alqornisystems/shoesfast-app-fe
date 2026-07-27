@@ -14,6 +14,7 @@ import { ImageOff, X } from "lucide-react"
  */
 export function InvoicePhoto({ photo, name }: { photo: string | null; name: string }) {
   const [open, setOpen] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -56,7 +57,7 @@ export function InvoicePhoto({ photo, name }: { photo: string | null; name: stri
     }
   }, [open])
 
-  if (!photo) {
+  if (!photo || imgError) {
     return (
       <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-lg border bg-muted sm:h-28 sm:w-28">
         <ImageOff className="h-6 w-6 text-muted-foreground/60" />
@@ -71,11 +72,17 @@ export function InvoicePhoto({ photo, name }: { photo: string | null; name: stri
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        title="Klik untuk memperbesar"
+        aria-label={`Perbesar foto ${name}`}
         className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border sm:h-28 sm:w-28"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photo} alt={name} className="h-full w-full object-cover" loading="lazy" />
+        <img
+          src={photo}
+          alt={name}
+          className="h-full w-full object-cover"
+          loading="lazy"
+          onError={() => setImgError(true)}
+        />
       </button>
 
       {open && (

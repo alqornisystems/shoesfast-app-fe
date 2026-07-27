@@ -107,5 +107,5 @@ Forms use **plain `useState`** — there is no `react-hook-form`. Two shapes, sa
 ## Conventions
 
 - Client components need `"use client"` at the top of the file (data-fetching, hooks, `localStorage`, `useAuth`).
-- New API calls go through `api` from `@/lib/api` — never call `fetch` directly, so token handling and 401 logout stay centralized.
+- New API calls go through `api` from `@/lib/api` — never call `fetch` directly, so token handling and 401 logout stay centralized. One sanctioned exception exists (`src/app/invoice/[token]/page.tsx`, a public login-free page); see `docs/patterns/data-layer.md` for why and where.
 - Keep UI copy in Indonesian to match the rest of the app.

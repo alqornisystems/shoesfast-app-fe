@@ -150,8 +150,9 @@ export function PaymentClient() {
       // fallback document.execCommand("copy") ditambahkan hanya kalau itu benar-benar terjadi.
       await navigator.clipboard.writeText(res.url)
       toast.success("Link invoice disalin")
-    } catch {
-      toast.error("Gagal membuat link invoice")
+    } catch (err: unknown) {
+      const e = err as { message?: string }
+      toast.error(e?.message || "Gagal membuat link invoice")
     } finally {
       setCopyingId(null)
     }

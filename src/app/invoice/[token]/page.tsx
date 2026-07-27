@@ -36,9 +36,9 @@ export type InvoiceData = {
     address: string | null
   } | null
   items: InvoiceItem[] | null
-  total_price: number
-  total_paid: number
-  credit: number
+  total_price: number | string
+  total_paid: number | string
+  credit: number | string
   payments: InvoicePaymentRow[] | null
 }
 
@@ -71,6 +71,11 @@ const getInvoice = cache(async (token: string): Promise<FetchResult> => {
     const res = await fetch(`${BASE_URL}/api/public/invoice/${encodeURIComponent(token)}`, {
       cache: "no-store",
       headers: { Accept: "application/json" },
+      // Backend yang hang (DB lock, PHP-FPM jenuh) tanpa ini akan menggantung sampai timeout
+      // fungsi Vercel dan menampilkan galat bahasa Inggris. `catch` di bawah sudah mengubah
+      // AbortError jadi status 0, yang merender notice bahasa Indonesia yang sama seperti backend
+      // yang down.
+      signal: AbortSignal.timeout(8000),
     })
     const body = await res.json().catch(() => null)
     if (!res.ok) {
@@ -112,10 +117,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { token } = await params
   const { data } = await getInvoice(token)
-  if (!data) return { title: "Invoice · Shoesfast" }
+  // Halaman ini merender PII customer (nama, telepon, alamat) langsung ke HTML. Token memang
+  // sulit ditebak, tapi customer bisa saja menempel link ini di forum publik saat minta bantuan —
+  // begitu terindeks, invoice tetap bisa dicari selama token itu berlaku.
+  if (!data) return { title: "Invoice · Shoesfast", robots: { index: false, follow: false } }
   return {
     title: `Invoice ${data.code ?? "-"} · Shoesfast`,
-    description: `${data.customer?.name ?? "Pelanggan"} — Total ${formatCurrency(data.total_price ?? 0)}`,
+    description: `${data.customer?.name ?? "Pelanggan"} — Total ${formatCurrency(Number(data.total_price) || 0)}`,
+    robots: { index: false, follow: false },
   }
 }
 
@@ -247,13 +256,13 @@ export default async function InvoicePage({
             <div className="flex justify-between gap-3 text-sm">
               <span className="text-muted-foreground">Total</span>
               <span className="font-medium tabular-nums">
-                {formatCurrency(data.total_price ?? 0)}
+                {formatCurrency(Number(data.total_price) || 0)}
               </span>
             </div>
             <div className="flex justify-between gap-3 text-sm">
               <span className="text-muted-foreground">Terbayar</span>
               <span className="font-medium tabular-nums text-green-600">
-                {formatCurrency(data.total_paid ?? 0)}
+                {formatCurrency(Number(data.total_paid) || 0)}
               </span>
             </div>
             <div className="flex justify-between gap-3 border-t pt-1.5 text-base font-semibold">
@@ -261,10 +270,10 @@ export default async function InvoicePage({
               <span
                 className={cn(
                   "tabular-nums",
-                  (data.credit ?? 0) > 0 ? "text-red-600" : "text-green-600",
+                  (Number(data.credit) || 0) > 0 ? "text-red-600" : "text-green-600",
                 )}
               >
-                {formatCurrency(data.credit ?? 0)}
+                {formatCurrency(Number(data.credit) || 0)}
               </span>
             </div>
           </div>
