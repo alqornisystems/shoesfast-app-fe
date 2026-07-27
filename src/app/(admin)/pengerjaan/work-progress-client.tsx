@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Search, Loader2, ChevronLeft, ChevronRight, Package, CheckCircle2, Clock, AlertCircle, XCircle, Calendar, Timer, CheckSquare, Pencil, Play, User } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -100,6 +101,10 @@ export function WorkProgressClient() {
   }
 
   const [selectedIds, setSelectedIds] = useState<number[]>([])
+  const { user } = useAuth()
+  // Cerminan pagar backend (TreatmentController@updateStatus + route force-complete):
+  // teknisi hanya mengantar pekerjaan sampai meja QC, keputusan QC milik admin.
+  const isAdmin = user?.role === "Admin Super" || user?.role === "Admin"
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false)
   const [selectedTreatment, setSelectedTreatment] = useState<Treatment | null>(null)
   const [reviewNote, setReviewNote] = useState("")
@@ -356,7 +361,7 @@ export function WorkProgressClient() {
             Monitor dan review treatment yang sedang dikerjakan
           </p>
         </div>
-        {selectedIds.length > 0 && (
+        {isAdmin && selectedIds.length > 0 && (
           <Button onClick={handleBulkForceDone} variant="destructive" className="gap-2">
             <AlertCircle className="h-4 w-4" />
             Done Paksa ({selectedIds.length})
@@ -566,6 +571,10 @@ export function WorkProgressClient() {
                               <Pencil className="h-4 w-4" />
                             </Button>
                           </>
+                        ) : !isAdmin ? (
+                          /* Sudah masuk QC: bagi teknisi tidak ada lagi yang bisa dilakukan.
+                             Keputusan QC Pass/Fail wewenang admin. */
+                          <span className="text-xs text-muted-foreground">Menunggu QC</span>
                         ) : (
                           <>
                             {/* Status 1: Siap QC */}
