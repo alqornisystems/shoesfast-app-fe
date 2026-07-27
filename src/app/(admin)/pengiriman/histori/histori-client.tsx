@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Search, History, Package, Phone, User, Filter, Calendar } from "lucide-react"
 import { api } from "@/lib/api"
+import { titleCase, waLink } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -248,7 +249,11 @@ export function HistoriClient() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium text-sm">{send.customer_name || "-"}</div>
+                    {waLink(send.customer_phone) ? (
+                        <a href={waLink(send.customer_phone, `Halo ${titleCase(send.customer_name)}, saya dari kurir Shoesfast mau konfirmasi beberapa hal.`) ?? "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline underline-offset-2 hover:text-green-800 truncate block">{titleCase(send.customer_name) || "-"}</a>
+                      ) : (
+                        <div className="font-medium text-sm truncate">{titleCase(send.customer_name) || "-"}</div>
+                      )}
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <Phone className="h-3 w-3" />
                       {send.customer_phone || "-"}

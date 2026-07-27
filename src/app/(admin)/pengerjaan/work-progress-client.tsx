@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+import { cn, titleCase, waLink } from "@/lib/utils"
 
 const STORAGE_KEY_SEARCH = "work_progress_list_search"
 const STORAGE_KEY_PAGE = "work_progress_list_page"
@@ -545,7 +545,11 @@ export function WorkProgressClient() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="max-w-[160px]">
-                        <div className="font-medium text-sm truncate">{treatment.customers_name}</div>
+                        {waLink(treatment.customers_phone) ? (
+                        <a href={waLink(treatment.customers_phone, `Halo ${titleCase(treatment.customers_name)}, saya dari kurir Shoesfast mau konfirmasi beberapa hal.`) ?? "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline underline-offset-2 hover:text-green-800 truncate block">{titleCase(treatment.customers_name) || "-"}</a>
+                      ) : (
+                        <div className="font-medium text-sm truncate">{titleCase(treatment.customers_name) || "-"}</div>
+                      )}
                         <div className="text-xs text-muted-foreground truncate">{treatment.customers_phone}</div>
                       </div>
                     </TableCell>

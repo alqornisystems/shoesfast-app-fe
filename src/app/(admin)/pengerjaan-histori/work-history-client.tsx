@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Search, Loader2, ChevronLeft, ChevronRight, Package, User, Calendar, CheckCircle2 } from "lucide-react"
 import { api } from "@/lib/api"
+import { titleCase, waLink } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -269,7 +270,11 @@ export function WorkHistoryClient() {
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
                     <div className="max-w-[200px]">
-                      <div className="font-medium text-sm truncate">{treatment.customers_name}</div>
+                      {waLink(treatment.customers_phone) ? (
+                        <a href={waLink(treatment.customers_phone, `Halo ${titleCase(treatment.customers_name)}, saya dari kurir Shoesfast mau konfirmasi beberapa hal.`) ?? "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline underline-offset-2 hover:text-green-800 truncate block">{titleCase(treatment.customers_name) || "-"}</a>
+                      ) : (
+                        <div className="font-medium text-sm truncate">{titleCase(treatment.customers_name) || "-"}</div>
+                      )}
                       <div className="text-xs text-muted-foreground truncate">{treatment.customers_phone}</div>
                     </div>
                   </TableCell>
