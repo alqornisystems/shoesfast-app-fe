@@ -18,6 +18,12 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -35,6 +41,16 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+
+type SendDetail = {
+  order_code: string | null
+  customer_name: string | null
+  item_name: string | null
+  item_photo: string | null
+  item_note: string | null
+  kelengkapan: { nama: string; ada: boolean }[]
+  pengerjaan: { nama: string | null; status: number; teknisi: string | null; mulai: number | null; selesai: number | null }[]
+}
 
 type Send = {
   id: number
@@ -57,6 +73,9 @@ type Send = {
 export function DalamProsesClient() {
   const [sends, setSends] = useState<Send[]>([])
   const [menyusunRute, setMenyusunRute] = useState(false)
+  const [detail, setDetail] = useState<SendDetail | null>(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [memuatDetail, setMemuatDetail] = useState(false)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
@@ -156,6 +175,24 @@ export function DalamProsesClient() {
       toast.error(e instanceof Error ? e.message : "Gagal menyusun rute")
     } finally {
       setMenyusunRute(false)
+    }
+  }
+
+
+  // Hanya delivery yang punya barang untuk ditinjau; pickup belum membawa apa-apa.
+  async function bukaDetail(send: Send) {
+    if (send.type !== 1) return
+    setDetailOpen(true)
+    setMemuatDetail(true)
+    setDetail(null)
+    try {
+      setDetail(await api.get<SendDetail>(`/api/sends/${send.id}/detail`))
+    } catch (err: unknown) {
+      const e = err as { message?: string }
+      toast.error(e?.message || "Gagal memuat rincian barang")
+      setDetailOpen(false)
+    } finally {
+      setMemuatDetail(false)
     }
   }
 
@@ -334,7 +371,17 @@ export function DalamProsesClient() {
                     <TableCell>
                       <div className="font-semibold text-sm">{send.order_code || "-"}</div>
                       {send.item_name && (
-                        <div className="text-xs text-muted-foreground">{send.item_name}</div>
+                        send.type === 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => bukaDetail(send)}
+                            className="text-xs text-blue-600 underline underline-offset-2 hover:text-blue-700 text-left"
+                          >
+                            {send.item_name}
+                          </button>
+                        ) : (
+                          <div className="text-xs text-muted-foreground">{send.item_name}</div>
+                        )
                       )}
                     </TableCell>
                     <TableCell>
@@ -383,6 +430,69 @@ export function DalamProsesClient() {
       </div>
 
       {/* Complete Confirmation Dialog */}
+
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Rincian Barang</DialogTitle>
+          </DialogHeader>
+          {memuatDetail ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : detail ? (
+            <div className="space-y-5">
+              <div className="flex gap-3">
+                {detail.item_photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={detail.item_photo} alt={detail.item_name ?? ""} className="h-20 w-20 rounded-lg border object-cover" />
+                ) : null}
+                <div className="min-w-0">
+                  <div className="font-semibold">{detail.item_name ?? "-"}</div>
+                  <div className="text-sm text-muted-foreground">{detail.order_code ?? "-"} · {detail.customer_name ?? "-"}</div>
+                  {detail.item_note ? (
+                    <div className="mt-1 text-xs text-muted-foreground">Catatan: {detail.item_note}</div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Pengerjaan</div>
+                <div className="mt-2 space-y-1.5">
+                  {detail.pengerjaan.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">Belum ada pengerjaan tercatat.</div>
+                  ) : detail.pengerjaan.map((p, i) => (
+                    <div key={i} className="flex items-baseline justify-between gap-3 border-b pb-1.5 text-sm last:border-b-0">
+                      <div>
+                        <div>{p.nama ?? "-"}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {p.teknisi ?? "Belum ada teknisi"}
+                          {p.selesai ? ` · selesai ${formatDate(p.selesai)}` : p.mulai ? ` · mulai ${formatDate(p.mulai)}` : ""}
+                        </div>
+                      </div>
+                      <Badge variant={p.status >= 2 ? "default" : "secondary"}>
+                        {p.status >= 2 ? "Selesai" : p.status === 1 ? "Siap QC" : "Dikerjakan"}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Kelengkapan</div>
+                <div className="mt-2 grid grid-cols-2 gap-1.5 text-sm">
+                  {detail.kelengkapan.map((k, i) => (
+                    <div key={i} className={k.ada ? "" : "text-muted-foreground line-through"}>
+                      {k.ada ? "✓" : "—"} {k.nama}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={completeDialogOpen} onOpenChange={setCompleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
