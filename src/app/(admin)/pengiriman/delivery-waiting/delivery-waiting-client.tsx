@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Search, Loader2, ChevronLeft, ChevronRight, Package, MapPin, Phone, Truck, Image as ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -66,6 +67,11 @@ export function DeliveryWaitingClient() {
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [selectedCourierId, setSelectedCourierId] = useState<string>("")
+  const { user } = useAuth()
+  // Kurir dan teknisi hanya boleh menugaskan dirinya sendiri. Backend menimpa users_id
+  // dengan pengguna yang login (SendController@store), jadi ini penyelarasan tampilan —
+  // bukan pagarnya. Daftar jabatan sama persis dengan yang dipakai backend.
+  const isAdmin = user?.role === "Admin Super" || user?.role === "Admin"
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [couriers, setCouriers] = useState<Courier[]>([])
   const [creating, setCreating] = useState(false)
@@ -86,6 +92,11 @@ export function DeliveryWaitingClient() {
     try {
       const res = await api.get<Courier[]>('/api/sends/available-couriers')
       setCouriers(res)
+      // Non-admin: pilih dirinya sendiri, dan kunci pilihannya.
+      if (!isAdmin && user?.id) {
+        const sendiri = res.find(c => c.id === user.id)
+        if (sendiri) setSelectedCourierId(String(sendiri.id))
+      }
     } catch (error) {
       toast.error("Gagal memuat data kurir")
     }
@@ -392,6 +403,7 @@ export function DeliveryWaitingClient() {
               <Select
                 value={selectedCourierId}
                 onValueChange={setSelectedCourierId}
+                disabled={!isAdmin}
               >
                 <SelectTrigger className="h-11">
                   <SelectValue placeholder="-- Pilih Kurir --" />
