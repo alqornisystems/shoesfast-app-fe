@@ -393,7 +393,7 @@ export default function LaporanAbsensiPage() {
           <CardDescription>Pilih periode dan cabang</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Periode</Label>
               <Input
@@ -442,7 +442,7 @@ export default function LaporanAbsensiPage() {
 
       {/* Summary Statistics */}
       {!loading && users.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -451,7 +451,7 @@ export default function LaporanAbsensiPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">
                 {calculateSummaryStats().totalPresent}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -468,7 +468,7 @@ export default function LaporanAbsensiPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
+              <div className="text-xl font-bold tabular-nums sm:text-2xl text-orange-600">
                 {calculateSummaryStats().totalLate}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -485,7 +485,7 @@ export default function LaporanAbsensiPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">
+              <div className="text-xl font-bold tabular-nums sm:text-2xl text-red-600">
                 {calculateSummaryStats().totalAbsent}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -502,7 +502,7 @@ export default function LaporanAbsensiPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
+              <div className="text-xl font-bold tabular-nums sm:text-2xl text-blue-600">
                 {calculateSummaryStats().totalLeave}
               </div>
               <p className="text-xs text-muted-foreground mt-1">

@@ -240,10 +240,10 @@ export function OrderClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pesanan</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Kelola pesanan layanan perawatan sepatu.
           </p>
         </div>
@@ -254,8 +254,8 @@ export function OrderClient() {
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm">
-        <div className="flex items-center gap-3 border-b px-4 py-3">
-          <div className="relative flex-1 max-w-xs">
+        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
+          <div className="relative flex-1 sm:max-w-xs">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari kode / customer..."
@@ -374,7 +374,7 @@ export function OrderClient() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex items-center justify-end gap-2 sm:gap-1">
                       {order.status === 0 && !order.has_pickup && (
                         <Button
                           variant="ghost"

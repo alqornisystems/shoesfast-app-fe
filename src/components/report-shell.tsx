@@ -69,14 +69,15 @@ export function ReportShell({
   const hasExport = Boolean(onExportExcel || onExportPDF)
 
   return (
-    <div className="container py-6 space-y-6">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-          {description && <p className="text-muted-foreground">{description}</p>}
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+          {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
-        <div className="flex gap-2 print:hidden">
+        {/* Tombol ekspor/print bisa lebih dari lebar layar HP — biarkan menggulung */}
+        <div className="flex gap-2 overflow-x-auto print:hidden">
           {actions}
           {hasExport && (
             <ReportExportButtons
@@ -105,7 +106,8 @@ export function ReportShell({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Dua tanggal berdampingan di HP, tombol turun selebar penuh */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="report_start_date">Tanggal Mulai</Label>
               <Input
@@ -124,7 +126,7 @@ export function ReportShell({
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
-            <div className="flex items-end">
+            <div className="col-span-2 flex items-end md:col-span-1">
               <Button onClick={refetch} disabled={loading} className="w-full">
                 {loading ? "Memuat..." : "Tampilkan Laporan"}
               </Button>

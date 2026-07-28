@@ -348,7 +348,7 @@ export function ServiceHppClient() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div className="text-lg font-semibold">Total HPP Per Treatment</div>
-            <div className="text-2xl font-bold text-primary">{formatCurrency(calculateTotalHpp())}</div>
+            <div className="text-xl font-bold tabular-nums sm:text-2xl text-primary">{formatCurrency(calculateTotalHpp())}</div>
           </div>
         </CardContent>
       </Card>

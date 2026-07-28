@@ -85,7 +85,7 @@ export default function LaporanPerformaPage() {
       {data && (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
@@ -94,7 +94,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{data.summary.total_employees}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{data.summary.total_employees}</div>
                 <p className="text-xs text-muted-foreground mt-1">Karyawan aktif</p>
               </CardContent>
             </Card>
@@ -107,7 +107,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{data.summary.avg_performance_score.toFixed(1)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{data.summary.avg_performance_score.toFixed(1)}</div>
                 <p className="text-xs text-muted-foreground mt-1">Dari 100 poin</p>
               </CardContent>
             </Card>
@@ -120,7 +120,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{data.summary.top_performers}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">{data.summary.top_performers}</div>
                 <p className="text-xs text-muted-foreground mt-1">Skor ≥ 80</p>
               </CardContent>
             </Card>
@@ -133,7 +133,7 @@ export default function LaporanPerformaPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{data.summary.needs_improvement}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-orange-600">{data.summary.needs_improvement}</div>
                 <p className="text-xs text-muted-foreground mt-1">Skor &lt; 60</p>
               </CardContent>
             </Card>
@@ -210,7 +210,7 @@ export default function LaporanPerformaPage() {
               <CardTitle>Cara Perhitungan Skor</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid gap-4 md:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-blue-500"></div>

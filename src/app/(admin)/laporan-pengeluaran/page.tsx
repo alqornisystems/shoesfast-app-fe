@@ -151,14 +151,14 @@ export default function LaporanPengeluaranPage() {
       {data?.summary && (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Pengeluaran</CardTitle>
                 <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-red-600">
                   {formatCurrency(data.summary.total_expenses)}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -173,7 +173,7 @@ export default function LaporanPengeluaranPage() {
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(data.summary.total_general)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(data.summary.total_general)}</div>
                 <p className="text-xs text-muted-foreground">{data.summary.count_general} transaksi</p>
               </CardContent>
             </Card>
@@ -184,7 +184,7 @@ export default function LaporanPengeluaranPage() {
                 <Layers className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">
                   {formatCurrency(data.summary.total_operational)}
                 </div>
                 <p className="text-xs text-muted-foreground">

@@ -279,13 +279,13 @@ export default function IzinPage() {
       )}
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Pending</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2">
+            <div className="text-xl font-bold tabular-nums sm:text-2xl flex items-center gap-2">
               <Clock className="h-5 w-5 text-orange-600" />
               {pending}
             </div>
@@ -298,7 +298,7 @@ export default function IzinPage() {
             <CardTitle className="text-sm font-medium">Disetujui</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2">
+            <div className="text-xl font-bold tabular-nums sm:text-2xl flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-600" />
               {approved}
             </div>
@@ -311,7 +311,7 @@ export default function IzinPage() {
             <CardTitle className="text-sm font-medium">Ditolak</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold flex items-center gap-2">
+            <div className="text-xl font-bold tabular-nums sm:text-2xl flex items-center gap-2">
               <XCircle className="h-5 w-5 text-red-600" />
               {rejected}
             </div>

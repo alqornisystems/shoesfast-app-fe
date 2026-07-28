@@ -90,7 +90,7 @@ type NavGroup = {
   roles?: string[] // Optional: specific roles that can access this group
 }
 
-const navGroups: NavGroup[] = [
+export const navGroups: NavGroup[] = [
   // DASHBOARD - Accessible to all roles
   {
     label: "Dashboard",

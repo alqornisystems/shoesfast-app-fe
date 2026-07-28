@@ -328,10 +328,10 @@ export function SendClient() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Broadcast WhatsApp</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Kirim pesan broadcast ke pelanggan atau karyawan.
           </p>
         </div>
@@ -534,7 +534,7 @@ export function SendClient() {
         <TabsContent value="history" className="space-y-4">
           <div className="rounded-xl border bg-card shadow-sm">
             {/* Toolbar */}
-            <div className="flex items-center gap-3 border-b px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
               <Badge variant="secondary">
                 {pagination.total} riwayat
               </Badge>
@@ -599,7 +599,7 @@ export function SendClient() {
                         {formatDate(item.sent_at)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-2 sm:gap-1">
                           <Button
                             variant="ghost"
                             size="icon"

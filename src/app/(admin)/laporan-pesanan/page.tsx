@@ -121,14 +121,14 @@ export default function LaporanPesananPage() {
       {summary && (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Item</CardTitle>
                 <Package className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{summary.total_items}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{summary.total_items}</div>
                 <p className="text-xs text-muted-foreground">Item layanan diproses</p>
               </CardContent>
             </Card>
@@ -139,7 +139,7 @@ export default function LaporanPesananPage() {
                 <ShoppingBag className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">
                   {formatCurrency(summary.total_revenue)}
                 </div>
                 <p className="text-xs text-muted-foreground">Pendapatan bersih</p>
@@ -152,7 +152,7 @@ export default function LaporanPesananPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(summary.average_per_item)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(summary.average_per_item)}</div>
                 <p className="text-xs text-muted-foreground">Nilai rata-rata</p>
               </CardContent>
             </Card>
@@ -232,7 +232,7 @@ export default function LaporanPesananPage() {
                     <Badge variant={getStatusBadgeVariant(item.status_label)}>
                       {item.status_label}
                     </Badge>
-                    <div className="text-2xl font-bold mt-2">{item.count}</div>
+                    <div className="text-xl font-bold tabular-nums sm:text-2xl mt-2">{item.count}</div>
                     <p className="text-xs text-muted-foreground">pesanan</p>
                   </div>
                 ))}

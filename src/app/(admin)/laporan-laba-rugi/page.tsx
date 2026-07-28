@@ -180,14 +180,14 @@ export default function LaporanLabaRugiPage() {
           </Card>
 
           {/* Key Metrics */}
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">
                   {formatCurrency(summary.total_revenue)}
                 </div>
                 <p className="text-xs text-muted-foreground">Pendapatan kotor</p>
@@ -200,7 +200,7 @@ export default function LaporanLabaRugiPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-blue-600">
                   {formatCurrency(summary.gross_profit)}
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -215,7 +215,7 @@ export default function LaporanLabaRugiPage() {
                 <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-red-600">
                   {formatCurrency(summary.total_expenses)}
                 </div>
                 <p className="text-xs text-muted-foreground">COGS + Operating</p>

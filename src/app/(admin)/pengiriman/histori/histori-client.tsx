@@ -130,10 +130,10 @@ export function HistoriClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Histori Pengiriman</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Riwayat pickup & delivery yang sudah selesai
           </p>
         </div>
@@ -196,7 +196,7 @@ export function HistoriClient() {
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm">
-        <div className="flex items-center gap-3 border-b px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
           <Badge variant="secondary">
             {filteredSends.length} pengiriman
           </Badge>

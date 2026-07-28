@@ -138,7 +138,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Primary stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
         {topCards.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -150,7 +150,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-24" />
               ) : (
                 <div className="flex items-center gap-2">
-                  <div className="text-2xl font-bold">{stat.value}</div>
+                  <div className="text-xl font-bold tabular-nums sm:text-2xl">{stat.value}</div>
                   {stat.growth && <GrowthBadge current={stat.growth.current} previous={stat.growth.previous} />}
                 </div>
               )}

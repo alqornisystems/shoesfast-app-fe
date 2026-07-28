@@ -317,7 +317,7 @@ export default function KalenderLiburPage() {
 
       {/* Dialog Form */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>{editMode ? "Edit Hari Libur" : "Tambah Hari Libur"}</DialogTitle>

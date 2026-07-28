@@ -81,14 +81,14 @@ export default function LaporanPenjualanPage() {
       {data?.summary && (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Pesanan</CardTitle>
                 <ShoppingCart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{data.summary.total_orders}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{data.summary.total_orders}</div>
                 <p className="text-xs text-muted-foreground">Periode yang dipilih</p>
               </CardContent>
             </Card>
@@ -99,7 +99,7 @@ export default function LaporanPenjualanPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(data.summary.total_revenue)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(data.summary.total_revenue)}</div>
                 <p className="text-xs text-muted-foreground">Omzet bersih</p>
               </CardContent>
             </Card>
@@ -110,7 +110,7 @@ export default function LaporanPenjualanPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(data.summary.average_order_value)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(data.summary.average_order_value)}</div>
                 <p className="text-xs text-muted-foreground">Per pesanan</p>
               </CardContent>
             </Card>

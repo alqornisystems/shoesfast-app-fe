@@ -355,10 +355,10 @@ export function PartnershipWorkClient() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pengerjaan Mitra</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Monitor dan review treatment yang sedang dikerjakan mitra
           </p>
         </div>
@@ -371,7 +371,7 @@ export function PartnershipWorkClient() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
@@ -412,7 +412,7 @@ export function PartnershipWorkClient() {
       {/* Table */}
       <div className="rounded-xl border bg-card shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b px-4 py-3">
-          <div className="relative flex-1 max-w-xs w-full">
+          <div className="relative flex-1 sm:max-w-xs w-full">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari customer / item..."
@@ -548,7 +548,7 @@ export function PartnershipWorkClient() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-2 sm:gap-1">
                         {treatment.status === 0 ? (
                           <>
                             {/* Status 0: Sedang Dikerjakan */}

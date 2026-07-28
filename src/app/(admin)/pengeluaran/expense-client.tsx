@@ -403,7 +403,7 @@ export function ExpenseClient() {
             <h1 className="text-2xl font-bold tracking-tight">
               {editingExpense ? "Edit Pengeluaran" : "Tambah Pengeluaran"}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="line-clamp-1 text-sm text-muted-foreground">
               {editingExpense ? "Perbarui data pengeluaran" : "Tambahkan satu atau lebih item pengeluaran"}
             </p>
           </div>
@@ -693,10 +693,10 @@ export function ExpenseClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pengeluaran Umum</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Kelola data pengeluaran umum perusahaan
           </p>
         </div>
@@ -708,7 +708,7 @@ export function ExpenseClient() {
 
       <div className="rounded-xl border bg-card shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b px-4 py-3">
-          <div className="relative flex-1 max-w-xs w-full">
+          <div className="relative flex-1 sm:max-w-xs w-full">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari catatan..."
@@ -846,7 +846,7 @@ export function ExpenseClient() {
 
       {/* Image Preview Modal */}
       <Dialog open={!!previewImage} onOpenChange={() => setPreviewImage(null)}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Bukti Pengeluaran</DialogTitle>
           </DialogHeader>

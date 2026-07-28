@@ -541,7 +541,7 @@ export function EditOrderClient() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Edit Pesanan</h1>
-          <p className="text-sm text-muted-foreground">{order.code}</p>
+          <p className="line-clamp-1 text-sm text-muted-foreground">{order.code}</p>
         </div>
       </div>
 

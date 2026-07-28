@@ -426,7 +426,7 @@ export function OrderFormClient() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Buat Pesanan Baru</h1>
-          <p className="text-sm text-muted-foreground">Tambahkan pesanan layanan baru</p>
+          <p className="line-clamp-1 text-sm text-muted-foreground">Tambahkan pesanan layanan baru</p>
         </div>
       </div>
 

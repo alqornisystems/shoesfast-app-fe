@@ -147,7 +147,7 @@ export default function LaporanGoogleAdsPage() {
     >
       {summary && (
         <>
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-1">
@@ -156,7 +156,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(summary.total_impressions)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatNumber(summary.total_impressions)}</div>
               </CardContent>
             </Card>
 
@@ -168,7 +168,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{formatNumber(summary.total_clicks)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-blue-600">{formatNumber(summary.total_clicks)}</div>
               </CardContent>
             </Card>
 
@@ -180,7 +180,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{formatCurrency(summary.total_cost)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-red-600">{formatCurrency(summary.total_cost)}</div>
               </CardContent>
             </Card>
 
@@ -192,7 +192,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatNumber(summary.total_conversions)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatNumber(summary.total_conversions)}</div>
               </CardContent>
             </Card>
 
@@ -204,12 +204,12 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{formatCurrency(summary.total_revenue)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">{formatCurrency(summary.total_revenue)}</div>
               </CardContent>
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-1">
@@ -218,7 +218,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{summary.avg_ctr}%</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{summary.avg_ctr}%</div>
               </CardContent>
             </Card>
 
@@ -230,7 +230,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(summary.avg_cpc)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(summary.avg_cpc)}</div>
               </CardContent>
             </Card>
 
@@ -242,7 +242,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(summary.avg_cpa)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(summary.avg_cpa)}</div>
               </CardContent>
             </Card>
 
@@ -254,7 +254,7 @@ export default function LaporanGoogleAdsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">{formatROAS(summary.total_roas)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-purple-600">{formatROAS(summary.total_roas)}</div>
               </CardContent>
             </Card>
           </div>

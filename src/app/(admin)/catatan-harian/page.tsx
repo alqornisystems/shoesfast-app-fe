@@ -438,7 +438,7 @@ export default function CatatanHarianPage() {
 
       {/* Dialog Form */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-2xl">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>{editMode ? "Edit Catatan" : "Tambah Catatan Harian"}</DialogTitle>

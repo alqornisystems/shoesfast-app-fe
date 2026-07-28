@@ -83,13 +83,13 @@ export default function LaporanPengerjaanPage() {
     >
       {summary && (
         <>
-          <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Total</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{summary.total_treatments}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><CheckCircle2 className="h-4 w-4"/>Selesai</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-green-600">{summary.completed}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><Wrench className="h-4 w-4"/>Proses</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-blue-600">{summary.in_progress}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><Clock className="h-4 w-4"/>Waiting</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-orange-600">{summary.waiting}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4"/>Overdue</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold text-red-600">{summary.overdue}</div></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Rata-rata</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{summary.avg_duration_days}</div><p className="text-xs text-muted-foreground">hari</p></CardContent></Card>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-6">
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Total</CardTitle></CardHeader><CardContent><div className="text-xl font-bold tabular-nums sm:text-2xl">{summary.total_treatments}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><CheckCircle2 className="h-4 w-4"/>Selesai</CardTitle></CardHeader><CardContent><div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">{summary.completed}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><Wrench className="h-4 w-4"/>Proses</CardTitle></CardHeader><CardContent><div className="text-xl font-bold tabular-nums sm:text-2xl text-blue-600">{summary.in_progress}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><Clock className="h-4 w-4"/>Waiting</CardTitle></CardHeader><CardContent><div className="text-xl font-bold tabular-nums sm:text-2xl text-orange-600">{summary.waiting}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-1"><AlertCircle className="h-4 w-4"/>Overdue</CardTitle></CardHeader><CardContent><div className="text-xl font-bold tabular-nums sm:text-2xl text-red-600">{summary.overdue}</div></CardContent></Card>
+            <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Rata-rata</CardTitle></CardHeader><CardContent><div className="text-xl font-bold tabular-nums sm:text-2xl">{summary.avg_duration_days}</div><p className="text-xs text-muted-foreground">hari</p></CardContent></Card>
           </div>
 
           <Card>

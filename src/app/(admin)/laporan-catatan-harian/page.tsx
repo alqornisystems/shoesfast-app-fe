@@ -189,7 +189,7 @@ export default function LaporanCatatanHarianPage() {
           <CardDescription>Pilih bulan dan tahun</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Bulan</Label>
               <Select
@@ -324,7 +324,7 @@ export default function LaporanCatatanHarianPage() {
 
       {/* Dialog Create */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="sm:max-w-2xl">
           <form onSubmit={handleSubmit}>
             <DialogHeader>
               <DialogTitle>Tambah Catatan Harian</DialogTitle>

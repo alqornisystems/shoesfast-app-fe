@@ -87,7 +87,7 @@ export default function LaporanPelangganPage() {
     >
       {summary && (
         <>
-          <div className="grid gap-4 md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-5">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-1">
@@ -96,7 +96,7 @@ export default function LaporanPelangganPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{summary.total_customers}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{summary.total_customers}</div>
               </CardContent>
             </Card>
             <Card>
@@ -107,7 +107,7 @@ export default function LaporanPelangganPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">{summary.repeat_customers}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-blue-600">{summary.repeat_customers}</div>
               </CardContent>
             </Card>
             <Card>
@@ -118,7 +118,7 @@ export default function LaporanPelangganPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{summary.repeat_rate_percent}%</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{summary.repeat_rate_percent}%</div>
               </CardContent>
             </Card>
             <Card>
@@ -129,7 +129,7 @@ export default function LaporanPelangganPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{formatCurrency(summary.total_revenue)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">{formatCurrency(summary.total_revenue)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -140,7 +140,7 @@ export default function LaporanPelangganPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(summary.avg_order_value)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(summary.avg_order_value)}</div>
               </CardContent>
             </Card>
           </div>

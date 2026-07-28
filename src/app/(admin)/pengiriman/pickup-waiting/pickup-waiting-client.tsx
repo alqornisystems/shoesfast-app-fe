@@ -238,10 +238,10 @@ export function PickupWaitingClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pickup Waiting List</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Daftar order baru yang perlu dijemput dari customer
           </p>
         </div>
@@ -254,8 +254,8 @@ export function PickupWaitingClient() {
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm">
-        <div className="flex items-center gap-3 border-b px-4 py-3">
-          <div className="relative flex-1 max-w-xs">
+        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
+          <div className="relative flex-1 sm:max-w-xs">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari order / customer..."

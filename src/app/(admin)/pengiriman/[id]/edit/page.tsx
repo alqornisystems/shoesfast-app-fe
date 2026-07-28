@@ -162,7 +162,7 @@ export default function EditPengirimanPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Edit {typeLabel}</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Update informasi {typeLabel.toLowerCase()} pesanan
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function EditPengirimanPage() {
             <CardDescription>Data pesanan yang akan dikirim (tidak dapat diubah)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label>Kode Pesanan</Label>
                 <div className="flex h-9 items-center rounded-md border border-input bg-muted px-3 py-1 text-sm">

@@ -119,14 +119,14 @@ export default function LaporanPembayaranPage() {
       {summary && (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Transaksi</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{summary.total_payments}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{summary.total_payments}</div>
                 <p className="text-xs text-muted-foreground">Pembayaran diterima</p>
               </CardContent>
             </Card>
@@ -137,7 +137,7 @@ export default function LaporanPembayaranPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl text-green-600">
                   {formatCurrency(summary.total_amount)}
                 </div>
                 <p className="text-xs text-muted-foreground">Cash in periode ini</p>
@@ -150,7 +150,7 @@ export default function LaporanPembayaranPage() {
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(summary.average_payment)}</div>
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">{formatCurrency(summary.average_payment)}</div>
                 <p className="text-xs text-muted-foreground">Per transaksi</p>
               </CardContent>
             </Card>

@@ -355,10 +355,10 @@ export function PaymentClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pembayaran</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Kelola pembayaran dari customer.
           </p>
         </div>
@@ -366,7 +366,7 @@ export function PaymentClient() {
 
       <div className="rounded-xl border bg-card shadow-sm">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 border-b px-4 py-3">
-          <div className="relative flex-1 max-w-xs w-full">
+          <div className="relative flex-1 sm:max-w-xs w-full">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari kode / customer..."
@@ -476,7 +476,7 @@ export function PaymentClient() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-2 sm:gap-1">
                         {payment.credit > 0 ? (
                           <Button
                             variant="ghost"

@@ -121,5 +121,49 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Notch / home-indicator iOS */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    /* Cegah iOS Safari membesarkan teks saat rotasi landscape */
+    -webkit-text-size-adjust: 100%;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer base {
+  /*
+   * Target sentuh 44x44px di perangkat sentuh.
+   * min-height/min-width menang atas height/width, jadi override per-halaman
+   * seperti `className="h-8 w-8"` tetap ikut aturan ini tanpa perlu diedit.
+   */
+  @media (pointer: coarse) {
+    [data-slot="button"],
+    [data-slot="select-trigger"],
+    [data-slot="dropdown-menu-item"],
+    [data-slot="select-item"] {
+      min-height: 44px;
+    }
+    [data-slot="button"] {
+      min-width: 44px;
+    }
+    /* Hilangkan kotak highlight abu-abu bawaan Android saat tap */
+    a,
+    button,
+    [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }

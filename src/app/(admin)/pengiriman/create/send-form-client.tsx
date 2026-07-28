@@ -220,7 +220,7 @@ export function SendFormClient() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Buat Pengiriman Baru</h1>
-          <p className="text-sm text-muted-foreground">Pilih order untuk dijemput atau item untuk diantar</p>
+          <p className="line-clamp-1 text-sm text-muted-foreground">Pilih order untuk dijemput atau item untuk diantar</p>
         </div>
       </div>
 
@@ -477,7 +477,7 @@ export function SendFormClient() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-sm text-muted-foreground">Total Pengiriman</div>
-                <div className="text-2xl font-bold">
+                <div className="text-xl font-bold tabular-nums sm:text-2xl">
                   {selectedPickupIds.length + selectedDeliveryIds.length}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">

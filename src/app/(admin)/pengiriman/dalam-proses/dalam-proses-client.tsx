@@ -280,10 +280,10 @@ export function DalamProsesClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pengiriman Dalam Proses</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="line-clamp-1 text-sm text-muted-foreground">
             Daftar pickup & delivery yang sedang dalam perjalanan
           </p>
         </div>
@@ -308,8 +308,8 @@ export function DalamProsesClient() {
       </div>
 
       <div className="rounded-xl border bg-card shadow-sm">
-        <div className="flex items-center gap-3 border-b px-4 py-3">
-          <div className="relative flex-1 max-w-xs">
+        <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
+          <div className="relative flex-1 sm:max-w-xs">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Cari order / customer / kurir..."
@@ -348,7 +348,7 @@ export function DalamProsesClient() {
               <TableHead>Customer</TableHead>
               <TableHead className="hidden lg:table-cell">Kurir</TableHead>
               <TableHead className="hidden md:table-cell">Tanggal</TableHead>
-              <TableHead className="text-right">Aksi</TableHead>
+              <TableHead className="w-24 text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -478,7 +478,7 @@ export function DalamProsesClient() {
       {/* Complete Confirmation Dialog */}
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Rincian Barang</DialogTitle>
           </DialogHeader>
