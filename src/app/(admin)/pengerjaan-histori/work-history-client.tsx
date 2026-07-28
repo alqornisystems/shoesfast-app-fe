@@ -53,9 +53,11 @@ type PaginationData = {
   to: number
 }
 
+// Status 3 berarti COMPLETE, bukan dibatalkan — lihat catatan di
+// pesanan/order-client.tsx. Pembatalan memakai is_deleted, bukan status.
 const STATUS_LABELS: Record<number, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
-  2: { label: "Selesai", variant: "outline" },
-  3: { label: "Dibatalkan", variant: "destructive" },
+  2: { label: "Siap Diambil", variant: "outline" },
+  3: { label: "Selesai", variant: "outline" },
 }
 
 const STORAGE_KEY_SEARCH = "work_history_list_search"

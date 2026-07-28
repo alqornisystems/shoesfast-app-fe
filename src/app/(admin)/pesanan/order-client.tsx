@@ -74,11 +74,15 @@ type PaginationData = {
   to: number
 }
 
+// Status 3 berarti COMPLETE, bukan dibatalkan. Sebelumnya diberi label
+// "Dibatalkan" merah, padahal 2.448 pesanan berstatus 3 dan 1.473 di antaranya
+// lunas dibayar dengan rata-rata Rp 303.652 — pesanan batal tidak dibayar penuh.
+// Pembatalan tidak memakai status sama sekali melainkan is_deleted = 1.
 const STATUS_LABELS: Record<number, { label: string; variant: "default" | "secondary" | "outline" | "destructive"; color: string }> = {
   0: { label: "Pending", variant: "secondary", color: "bg-yellow-500/10 text-yellow-700 border-yellow-200" },
   1: { label: "Proses", variant: "default", color: "bg-blue-500/10 text-blue-700 border-blue-200" },
-  2: { label: "Selesai", variant: "outline", color: "bg-green-500/10 text-green-700 border-green-200" },
-  3: { label: "Dibatalkan", variant: "destructive", color: "bg-red-500/10 text-red-700 border-red-200" },
+  2: { label: "Siap Diambil", variant: "outline", color: "bg-amber-500/10 text-amber-700 border-amber-200" },
+  3: { label: "Selesai", variant: "outline", color: "bg-green-500/10 text-green-700 border-green-200" },
 }
 
 const STORAGE_KEY_SEARCH = 'order_list_search'
