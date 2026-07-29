@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Pencil, Trash2, Search, Loader2, Camera, X, ChevronLeft, ChevronRight, CalendarIcon } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, Loader2, Camera, X, ChevronLeft, ChevronRight, CalendarIcon, KeyRound } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { toast } from "sonner"
 import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
@@ -145,6 +146,11 @@ export function CustomerClient() {
   const [saving, setSaving] = useState(false)
 
   const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null)
+  // 3.781 dari 4.664 pelanggan tidak punya email dan tidak bisa mereset PIN
+  // sendiri. Ini satu-satunya jalur pemulihan mereka, sekaligus cara
+  // mengembalikan akun yang terlanjur diklaim orang lain.
+  const [resetTarget, setResetTarget] = useState<Customer | null>(null)
+  const [resetting, setResetting] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   async function fetchCustomers(page = 1, searchQuery = search) {
@@ -307,6 +313,20 @@ export function CustomerClient() {
     }
   }
 
+  async function handleResetPin() {
+    if (!resetTarget) return
+    setResetting(true)
+    try {
+      await api.post(`/api/customers/${resetTarget.id}/reset-pin`)
+      toast.success("PIN direset. Pelanggan bisa membuat PIN baru saat masuk.")
+      setResetTarget(null)
+    } catch {
+      toast.error("Gagal mereset PIN")
+    } finally {
+      setResetting(false)
+    }
+  }
+
   function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -456,6 +476,15 @@ export function CustomerClient() {
                         onClick={() => openEdit(customer)}
                       >
                         <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                        title="Reset PIN portal"
+                        onClick={() => setResetTarget(customer)}
+                      >
+                        <KeyRound className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -840,6 +869,27 @@ export function CustomerClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Reset PIN Confirm */}
+      <AlertDialog open={!!resetTarget} onOpenChange={(o) => !o && setResetTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset PIN portal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              PIN <span className="font-semibold text-foreground">&ldquo;{resetTarget?.name}&rdquo;</span> dikosongkan
+              dan semua sesinya di portal dikeluarkan. Pelanggan membuat PIN baru
+              saat masuk berikutnya. Pastikan identitasnya sudah kamu periksa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={resetting}>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetPin} disabled={resetting} className="gap-1.5">
+              {resetting && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              Reset PIN
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Delete Confirm */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>

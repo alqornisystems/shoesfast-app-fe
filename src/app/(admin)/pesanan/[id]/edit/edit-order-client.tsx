@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
-import { ArrowLeft, Loader2, Plus, Trash2, X, Upload, UserCog, Check, ChevronsUpDown } from "lucide-react"
+import { ArrowLeft, Loader2, MapPin, Plus, Trash2, X, Upload, UserCog, Check, ChevronsUpDown } from "lucide-react"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import Swal from "sweetalert2"
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -47,6 +48,11 @@ type Order = {
   code: string
   date: number
   note: string
+  // Diisi hanya untuk pesanan yang minta dijemput lewat portal. Pesanan yang
+  // dibuat admin di konter bernilai null.
+  pickup_address: string | null
+  pickup_maps: string | null
+  source: number
   customer: {
     id: number
     name: string
@@ -558,6 +564,37 @@ export function EditOrderClient() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Alamat jemput — hanya ada pada pesanan yang minta dijemput lewat
+          portal. Tanpa kartu ini kurir tidak tahu harus ke mana. */}
+      {order.pickup_address && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              Alamat Jemput
+              {order.source === 1 && (
+                <Badge variant="secondary" className="ml-auto">
+                  Dari portal
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm">{order.pickup_address}</p>
+            {order.pickup_maps && (
+              <a
+                href={order.pickup_maps}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-sm text-primary underline"
+              >
+                Buka di Google Maps
+              </a>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Order Info */}
       <Card>
