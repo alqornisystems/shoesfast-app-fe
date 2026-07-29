@@ -12,6 +12,7 @@ import {
   ClipboardCheck,
   ClipboardList,
   FileText,
+  Gift,
   HandCoins,
   History,
   LayoutDashboard,
@@ -21,10 +22,12 @@ import {
   ScrollText,
   Send,
   Settings,
+  ShieldCheck,
   Shirt,
   ShoppingBag,
   Smartphone,
   Star,
+  Ticket,
   TrendingUp,
   Truck,
   UserCheck,
@@ -215,6 +218,19 @@ export const navGroups: NavGroup[] = [
         children: [
           { title: "Template Pesan", url: "/broadcasts-templates", icon: FileText },
           { title: "Kirim Broadcast", url: "/broadcasts-sends", icon: Send },
+        ],
+      },
+      // Program member dari portal pelanggan. Daftar peran di sini cermin
+      // routes/api.php (role:Admin Super,Admin) — kalau salah satu berubah,
+      // menunya tampil tapi datanya 403.
+      {
+        title: "Program Member",
+        icon: Gift,
+        roles: ['Admin Super', 'Admin'],
+        children: [
+          { title: "Katalog Hadiah", url: "/hadiah", icon: Gift },
+          { title: "Penukaran Poin", url: "/penukaran", icon: Ticket },
+          { title: "Klaim Garansi", url: "/klaim-garansi", icon: ShieldCheck },
         ],
       },
     ],
