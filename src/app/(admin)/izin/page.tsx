@@ -380,7 +380,11 @@ export default function IzinPage() {
                   {absence.photo && (
                     <div className="mt-2">
                       <a
-                        href={`${process.env.NEXT_PUBLIC_API_URL}/storage/absences/${absence.photo}`}
+                        // Backend sudah mengirim URL penuh dan menormalkan tiga bentuk
+                        // simpanan yang telanjur ada (URL absolut, jalur relatif, nama
+                        // berkas telanjang). Menyusun jalurnya lagi di sini menghasilkan
+                        // .../storage/absences/https://.../storage/absences/x.png
+                        href={absence.photo}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs text-blue-600 hover:underline flex items-center gap-1"

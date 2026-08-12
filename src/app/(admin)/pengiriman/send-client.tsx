@@ -51,6 +51,10 @@ type Send = {
   date: number
   status: number
   type: number
+  // Terisi hanya saat status 2 (gagal). Dikirim endpoint daftar pengiriman.
+  reason_code?: string | null
+  fail_note?: string | null
+  reschedule_date?: number | null
   user: {
     id: number
     name: string
@@ -80,9 +84,23 @@ type PaginationData = {
   to: number
 }
 
+// Status 2 datang dari aplikasi kurir (POST /sends/{id}/failed): pelanggan tidak di
+// tempat, alamat salah, barang ditolak, atau minta dijadwalkan ulang. Tanpa baris ini
+// tugas gagal tampil "Unknown" — dan justru tugas gagal yang paling perlu terbaca kantor.
 const STATUS_LABELS: Record<number, { label: string; variant: "default" | "secondary" | "outline" | "destructive" }> = {
   0: { label: "Pending", variant: "secondary" },
   1: { label: "Selesai", variant: "outline" },
+  2: { label: "Gagal", variant: "destructive" },
+}
+
+// Cermin dari SendController::REASON_CODES. Daftarnya tertutup di server, jadi teks
+// bebas tidak akan pernah muncul di sini.
+const REASON_LABELS: Record<string, string> = {
+  customer_absent: "Pelanggan tidak di tempat",
+  wrong_address: "Alamat salah",
+  rejected: "Barang ditolak",
+  rescheduled: "Dijadwalkan ulang",
+  other: "Lainnya",
 }
 
 const STORAGE_KEY_SEARCH = 'send_list_search'
@@ -410,6 +428,14 @@ export function SendClient() {
                                 {STATUS_LABELS[send.status]?.label || "Unknown"}
                               </Badge>
                             </div>
+                            {send.status === 2 && send.reason_code && (
+                              <div className="text-xs text-destructive truncate">
+                                {REASON_LABELS[send.reason_code] ?? send.reason_code}
+                                {send.reschedule_date
+                                  ? ` · ulang ${formatDate(send.reschedule_date)}`
+                                  : ""}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </TableCell>
@@ -436,6 +462,14 @@ export function SendClient() {
                         <Badge variant={STATUS_LABELS[send.status]?.variant || "secondary"}>
                           {STATUS_LABELS[send.status]?.label || "Unknown"}
                         </Badge>
+                        {send.status === 2 && send.reason_code && (
+                          <div className="mt-1 max-w-[160px] text-xs text-muted-foreground">
+                            {REASON_LABELS[send.reason_code] ?? send.reason_code}
+                            {send.reschedule_date
+                              ? ` · ulang ${formatDate(send.reschedule_date)}`
+                              : ""}
+                          </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2 sm:gap-1">

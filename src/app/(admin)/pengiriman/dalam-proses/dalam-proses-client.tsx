@@ -45,10 +45,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 type SendDetail = {
   order_code: string | null
-  total_price: number
+  // null saat harga belum ditentukan — pesanan dari portal pelanggan lahir tanpa harga
+  // dan petugas menetapkannya setelah barang diperiksa.
+  total_price: number | null
   total_paid: number | string
-  credit: number | string
-  payment_status: "paid" | "partial" | "unpaid"
+  credit: number | string | null
+  payment_status: "paid" | "partial" | "unpaid" | "unpriced"
   customer_name: string | null
   item_name: string | null
   item_photo: string | null
@@ -506,15 +508,21 @@ export function DalamProsesClient() {
               <div className={`rounded-lg border px-3 py-2.5 ${
                 detail.payment_status === "paid"
                   ? "border-green-200 bg-green-50"
-                  : "border-red-200 bg-red-50"
+                  : detail.payment_status === "unpriced"
+                    // Bukan merah: belum berharga bukan tunggakan, dan mewarnainya seperti
+                    // tunggakan membuat kurir menagih pelanggan yang belum ditagih apa pun.
+                    ? "border-amber-200 bg-amber-50"
+                    : "border-red-200 bg-red-50"
               }`}>
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm font-semibold">
                     {detail.payment_status === "paid"
                       ? "LUNAS"
-                      : detail.payment_status === "partial"
-                        ? "BELUM LUNAS"
-                        : "BELUM BAYAR"}
+                      : detail.payment_status === "unpriced"
+                        ? "HARGA BELUM DITENTUKAN"
+                        : detail.payment_status === "partial"
+                          ? "BELUM LUNAS"
+                          : "BELUM BAYAR"}
                   </span>
                   {Number(detail.credit) > 0 ? (
                     <span className="text-sm font-bold text-red-700">
