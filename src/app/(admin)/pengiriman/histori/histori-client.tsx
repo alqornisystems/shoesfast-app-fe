@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, History, Package, Phone, User, Filter, Calendar } from "lucide-react"
+import { Search, History, Package, Phone, User, Filter, Calendar, ChevronLeft, ChevronRight } from "lucide-react"
 import { api } from "@/lib/api"
 import { titleCase, waLink } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,15 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 
+type Paginator = {
+  data: Send[]
+  current_page: number
+  last_page: number
+  from: number | null
+  to: number | null
+  total: number
+}
+
 type Send = {
   id: number
   date: number
@@ -46,16 +55,21 @@ type Send = {
 
 export function HistoriClient() {
   const [sends, setSends] = useState<Send[]>([])
+  // Endpoint ini kini paginator, sebentuk dengan /treatments.
+  const [pagination, setPagination] = useState({
+    current_page: 1, last_page: 1, from: 0, to: 0, total: 0,
+  })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
 
-  async function fetchSends() {
+  async function fetchSends(page = 1) {
     setLoading(true)
     try {
       const params = new URLSearchParams()
+      params.append('page', String(page))
       if (typeFilter !== "all") {
         params.append('type', typeFilter)
       }
@@ -65,9 +79,22 @@ export function HistoriClient() {
       if (endDate) {
         params.append('end_date', endDate)
       }
+      // Dicari di server sejak daftar ini dipaginasi — menyaring di klien hanya menyaring
+      // halaman yang sedang terbuka, sehingga hasilnya tampak kosong padahal ada di
+      // halaman lain.
+      if (search.trim()) {
+        params.append('search', search.trim())
+      }
 
-      const res = await api.get<{ data: Send[] }>(`/api/sends/history?${params.toString()}`)
+      const res = await api.get<Paginator>(`/api/sends/history?${params.toString()}`)
       setSends(res.data ?? [])
+      setPagination({
+        current_page: res.current_page ?? 1,
+        last_page: res.last_page ?? 1,
+        from: res.from ?? 0,
+        to: res.to ?? 0,
+        total: res.total ?? 0,
+      })
     } catch {
       setSends([])
     } finally {
@@ -96,7 +123,18 @@ export function HistoriClient() {
     if (startDate && endDate) {
       fetchSends()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeFilter, startDate, endDate])
+
+  // Jeda 300ms: tanpa itu tiap huruf yang diketik menembak satu permintaan.
+  useEffect(() => {
+    if (!startDate || !endDate) return
+
+    const timer = setTimeout(() => fetchSends(1), 300)
+
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   function formatDate(timestamp: number): string {
     return new Date(timestamp * 1000).toLocaleDateString('id-ID', {
@@ -285,6 +323,39 @@ export function HistoriClient() {
             )}
           </TableBody>
         </Table>
+
+        {pagination.total > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3">
+            <div className="text-sm text-muted-foreground text-center sm:text-left">
+              Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} pengiriman
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchSends(pagination.current_page - 1)}
+                disabled={pagination.current_page === 1 || loading}
+                className="h-8 gap-1"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Sebelumnya</span>
+              </Button>
+              <div className="text-sm font-medium px-2">
+                {pagination.current_page} / {pagination.last_page}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchSends(pagination.current_page + 1)}
+                disabled={pagination.current_page === pagination.last_page || loading}
+                className="h-8 gap-1"
+              >
+                <span className="hidden sm:inline">Selanjutnya</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

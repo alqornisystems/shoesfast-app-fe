@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, Loader2, CheckCircle2, Package, MapPin, Phone, Truck, User, Filter, Route } from "lucide-react"
+import { Search, Loader2, CheckCircle2, Package, MapPin, Phone, Truck, User, Filter, Route, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { formatCurrency, titleCase, waLink } from "@/lib/utils"
@@ -59,6 +59,15 @@ type SendDetail = {
   pengerjaan: { nama: string | null; status: number; teknisi: string | null; mulai: number | null; selesai: number | null }[]
 }
 
+type Paginator = {
+  data: Send[]
+  current_page: number
+  last_page: number
+  from: number | null
+  to: number | null
+  total: number
+}
+
 type Send = {
   id: number
   date: number
@@ -87,21 +96,40 @@ export function DalamProsesClient() {
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [selectedIds, setSelectedIds] = useState<number[]>([])
+  // Endpoint ini kini paginator, sebentuk dengan /treatments. Tanpa state ini layar
+  // hanya menampilkan 15 baris pertama dan kantor tidak punya petunjuk ada sisanya.
+  const [pagination, setPagination] = useState({
+    current_page: 1, last_page: 1, from: 0, to: 0, total: 0,
+  })
 
   // Complete dialog
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false)
   const [completing, setCompleting] = useState(false)
 
-  async function fetchSends() {
+  async function fetchSends(page = 1) {
     setLoading(true)
     try {
       const params = new URLSearchParams()
+      params.append('page', String(page))
       if (typeFilter !== "all") {
         params.append('type', typeFilter)
       }
+      // Pencarian dikerjakan server sejak daftar ini dipaginasi. Menyaring di klien hanya
+      // menyaring halaman yang sedang terbuka — tugas yang dicari ada di halaman tiga dan
+      // hasilnya tampak kosong.
+      if (search.trim()) {
+        params.append('search', search.trim())
+      }
 
-      const res = await api.get<{ data: Send[] }>(`/api/sends/in-progress?${params.toString()}`)
+      const res = await api.get<Paginator>(`/api/sends/in-progress?${params.toString()}`)
       setSends(res.data ?? [])
+      setPagination({
+        current_page: res.current_page ?? 1,
+        last_page: res.last_page ?? 1,
+        from: res.from ?? 0,
+        to: res.to ?? 0,
+        total: res.total ?? 0,
+      })
     } catch {
       setSends([])
     } finally {
@@ -111,7 +139,16 @@ export function DalamProsesClient() {
 
   useEffect(() => {
     fetchSends()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [typeFilter])
+
+  // Jeda 300ms: tanpa itu tiap huruf yang diketik menembak satu permintaan.
+  useEffect(() => {
+    const timer = setTimeout(() => fetchSends(1), 300)
+
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   function toggleSelection(id: number) {
     setSelectedIds(prev =>
@@ -475,6 +512,40 @@ export function DalamProsesClient() {
             )}
           </TableBody>
         </Table>
+
+        {/* Kaki paginasi — pola yang sama dengan halaman Pesanan. */}
+        {pagination.total > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3">
+            <div className="text-sm text-muted-foreground text-center sm:text-left">
+              Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} pengiriman
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchSends(pagination.current_page - 1)}
+                disabled={pagination.current_page === 1 || loading}
+                className="h-8 gap-1"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Sebelumnya</span>
+              </Button>
+              <div className="text-sm font-medium px-2">
+                {pagination.current_page} / {pagination.last_page}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchSends(pagination.current_page + 1)}
+                disabled={pagination.current_page === pagination.last_page || loading}
+                className="h-8 gap-1"
+              >
+                <span className="hidden sm:inline">Selanjutnya</span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Complete Confirmation Dialog */}
