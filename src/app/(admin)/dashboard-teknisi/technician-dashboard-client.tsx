@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { AlertTriangle, ArrowRight, Clock, Package, Search, Sparkles, Wrench } from "lucide-react"
+import { AlertTriangle, Clock, Package, Search, Sparkles, Wrench } from "lucide-react"
 
 import { api } from "@/lib/api"
 import { cn, titleCase } from "@/lib/utils"
@@ -63,7 +63,7 @@ export function TechnicianDashboardClient() {
         <h1 className="text-2xl font-bold tracking-tight">Dashboard Teknisi</h1>
         <p className="text-sm text-muted-foreground">
           Semua jenis treatment yang sedang berjalan beserta jumlahnya. Kartu paling atas yang
-          paling mendesak — tekan satu kartu untuk membuka daftar barangnya.
+          paling mendesak — tekan angkanya untuk membuka daftar barangnya.
         </p>
       </div>
 
@@ -136,15 +136,10 @@ export function TechnicianDashboardClient() {
             const mendesak = service.terlambat > 0
 
             return (
-              // Menuju daftar barangnya yang sudah tersaring ke jenis ini. Daftar itu
-              // tidak digandakan di sini: di halaman antrean barangnya bisa langsung
-              // dicentang dan diambil, dan itu yang mau dilakukan setelah melihatnya.
-              <Link
+              <div
                 key={service.services_id}
-                href={`/pengerjaan-waiting?services_id=${service.services_id}`}
                 className={cn(
-                  "block rounded-xl border bg-card p-4 text-left shadow-sm transition-colors",
-                  "hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "rounded-xl border bg-card p-4 text-left shadow-sm",
                   mendesak && "border-red-300",
                 )}
               >
@@ -153,7 +148,6 @@ export function TechnicianDashboardClient() {
                     <Sparkles className="h-4 w-4 shrink-0" />
                     <span className="truncate">{titleCase(service.services_name) || "Tanpa nama"}</span>
                   </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
 
                 {/* Yang paling mendesak diberi label, bukan cuma diletakkan di atas —
@@ -165,17 +159,25 @@ export function TechnicianDashboardClient() {
                   </Badge>
                 )}
 
-                <div className="mt-3 flex items-end gap-4">
-                  <div>
+                {/* Dua angka, dua daftar. Satu tautan untuk seluruh kartu membuat jenis
+                    yang semua barangnya sudah ditugaskan mengarah ke antrean kosong. */}
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link
+                    href={`/pengerjaan-waiting?services_id=${service.services_id}`}
+                    className="rounded-lg border px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
                     <div className="text-xs text-muted-foreground">Menunggu</div>
                     <div className="text-2xl font-bold leading-none">{service.menunggu}</div>
-                  </div>
-                  <div>
+                  </Link>
+                  <Link
+                    href={`/pengerjaan?services_id=${service.services_id}`}
+                    className="rounded-lg border px-3 py-2 transition-colors hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
                     <div className="text-xs text-muted-foreground">Dikerjakan</div>
                     <div className="text-2xl font-bold leading-none text-muted-foreground">
                       {service.dikerjakan}
                     </div>
-                  </div>
+                  </Link>
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t pt-2 text-xs text-muted-foreground">
@@ -188,7 +190,7 @@ export function TechnicianDashboardClient() {
                     <span className="font-semibold text-red-600">· {service.terlambat} terlambat</span>
                   )}
                 </div>
-              </Link>
+              </div>
             )
           })}
         </div>

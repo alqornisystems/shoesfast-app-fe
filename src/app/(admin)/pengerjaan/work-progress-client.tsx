@@ -193,6 +193,14 @@ export function WorkProgressClient() {
       savedFilters = null
     }
 
+    // `?services_id=` menang atas saringan yang tersimpan: pengguna baru saja menekan
+    // satu jenis treatment di Dashboard Teknisi dan meminta daftar itu. Dibaca dari
+    // window, bukan useSearchParams, supaya halaman ini tidak perlu dibungkus Suspense.
+    const dariTautan = new URLSearchParams(window.location.search).get('services_id')
+    if (dariTautan) {
+      savedFilters = { ...(savedFilters ?? FILTER_DEFAULT), servicesId: dariTautan }
+    }
+
     setSearch(savedSearch)
     if (savedFilters) {
       // Pemulihan ini mengubah `filters`, dan effect di bawah akan menyala karenanya.
@@ -202,7 +210,7 @@ export function WorkProgressClient() {
       setFilters(savedFilters)
     }
     setInitialized(true)
-    fetchTreatments(savedPage, savedFilters ?? FILTER_DEFAULT)
+    fetchTreatments(dariTautan ? 1 : savedPage, savedFilters ?? FILTER_DEFAULT)
   }, [])
 
   useEffect(() => {
