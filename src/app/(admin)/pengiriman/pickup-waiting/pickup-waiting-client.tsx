@@ -6,6 +6,8 @@ import { Search, Loader2, ChevronLeft, ChevronRight, Package, MapPin, Phone, Tru
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
+import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -56,10 +58,31 @@ type Courier = {
   email: string
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal pesanan" },
+  { value: "customer", label: "Nama customer" },
+  { value: "order_code", label: "Kode pesanan" },
+  { value: "total", label: "Total" },
+]
+
+type PaginationData = {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  from: number
+  to: number
+}
+
 export function PickupWaitingClient() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
+  const [pagination, setPagination] = useState<PaginationData>({
+    current_page: 1, last_page: 1, per_page: 15, total: 0, from: 0, to: 0,
+  })
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
   // Dialog states
@@ -74,11 +97,35 @@ export function PickupWaitingClient() {
   const [couriers, setCouriers] = useState<Courier[]>([])
   const [creating, setCreating] = useState(false)
 
-  async function fetchOrders() {
+  async function fetchOrders(page = 1) {
     setLoading(true)
     try {
-      const res = await api.get<{ data: Order[] }>('/api/sends/pickup-waiting-list')
+      const params = new URLSearchParams({ page: String(page), per_page: "15" })
+      if (search.trim()) params.append("search", search.trim())
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
+
+      const res = await api.get<{
+        data?: Order[]
+        current_page?: number
+        last_page?: number
+        per_page?: number
+        total?: number
+        from?: number | null
+        to?: number | null
+      }>(`/api/sends/pickup-waiting-list?${params.toString()}`)
+
       setOrders(res.data ?? [])
+      setPagination({
+        current_page: res.current_page ?? 1,
+        last_page: res.last_page ?? 1,
+        per_page: res.per_page ?? 15,
+        total: res.total ?? 0,
+        from: res.from ?? 0,
+        to: res.to ?? 0,
+      })
     } catch {
       setOrders([])
     } finally {
@@ -106,10 +153,17 @@ export function PickupWaitingClient() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchOrders()
+      fetchOrders(1)
     }, 300)
     return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
+
+  useEffect(() => {
+    setSelectedIds([])
+    fetchOrders(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   function toggleSelection(id: number) {
     setSelectedIds(prev =>
@@ -227,15 +281,9 @@ export function PickupWaitingClient() {
     return `${yyyy}-${mm}-${dd}`
   }
 
-  // Filter orders by search
-  const filteredOrders = orders.filter(order => {
-    const searchLower = search.toLowerCase()
-    return (
-      order.code.toLowerCase().includes(searchLower) ||
-      order.customer_name?.toLowerCase().includes(searchLower) ||
-      order.customer_phone?.toLowerCase().includes(searchLower)
-    )
-  })
+  // Server yang menyaring dan memotong halaman; nama lama dipertahankan supaya
+  // "pilih semua" tetap berarti "semua yang terlihat di halaman ini".
+  const filteredOrders = orders
 
   return (
     <div className="space-y-6">
@@ -265,8 +313,14 @@ export function PickupWaitingClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(s, o) => { setSort(s); setOrder(o) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
-            {filteredOrders.length} order
+            {pagination.total} order
           </Badge>
         </div>
 
@@ -357,6 +411,20 @@ export function PickupWaitingClient() {
             )}
           </TableBody>
         </Table>
+
+        {pagination.total > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3">
+            <div className="text-sm text-muted-foreground text-center sm:text-left">
+              Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} order
+            </div>
+            <SimplePagination
+              currentPage={pagination.current_page}
+              totalPages={pagination.last_page}
+              onPageChange={(halaman) => fetchOrders(halaman)}
+              isLoading={loading}
+            />
+          </div>
+        )}
       </div>
 
       {/* Create Pickup Dialog */}

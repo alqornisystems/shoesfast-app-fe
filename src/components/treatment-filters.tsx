@@ -83,7 +83,6 @@ export function TreatmentFilters({
     }
   }, [])
 
-  const arahBerikutnya = value.order === "asc" ? "desc" : "asc"
   const terpilih = services.find((service) => String(service.id) === value.servicesId)
 
   function pilihLayanan(servicesId: string) {
@@ -146,37 +145,60 @@ export function TreatmentFilters({
         </PopoverContent>
       </Popover>
 
-      <div className="flex items-center gap-1">
-        <Select value={value.sort} onValueChange={(sort) => onChange({ ...value, sort })}>
-          <SelectTrigger className="h-9 w-full sm:w-[180px]">
-            <SelectValue placeholder="Urutan bawaan" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">Urutan bawaan</SelectItem>
-            {sortOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-9 w-9 shrink-0"
-          disabled={value.sort === "default"}
-          title={value.order === "asc" ? "Naik (A-Z / terkecil dulu)" : "Turun (Z-A / terbesar dulu)"}
-          onClick={() => onChange({ ...value, order: arahBerikutnya })}
-        >
-          {value.order === "asc" ? (
-            <ArrowUpAZ className="h-4 w-4" />
-          ) : (
-            <ArrowDownAZ className="h-4 w-4" />
-          )}
-          <span className="sr-only">Balik arah urutan</span>
-        </Button>
-      </div>
+      <SortPicker
+        sort={value.sort}
+        order={value.order}
+        onChange={(sort, order) => onChange({ ...value, sort, order })}
+        options={sortOptions}
+      />
     </>
+  )
+}
+
+/**
+ * Pemilih urutan: satu dropdown kolom + satu tombol pembalik arah.
+ *
+ * Berdiri sendiri supaya halaman yang tidak punya jenis layanan — antrean penjemputan
+ * dan pengantaran, misalnya — memakai kontrol yang persis sama.
+ */
+export function SortPicker({
+  sort,
+  order,
+  onChange,
+  options,
+}: {
+  sort: string
+  order: "asc" | "desc"
+  onChange: (sort: string, order: "asc" | "desc") => void
+  options: SortOption[]
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <Select value={sort} onValueChange={(next) => onChange(next, order)}>
+        <SelectTrigger className="h-9 w-full sm:w-[180px]">
+          <SelectValue placeholder="Urutan bawaan" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default">Urutan bawaan</SelectItem>
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Button
+        variant="outline"
+        size="icon"
+        className="h-9 w-9 shrink-0"
+        disabled={sort === "default"}
+        title={order === "asc" ? "Naik (A-Z / terkecil dulu)" : "Turun (Z-A / terbesar dulu)"}
+        onClick={() => onChange(sort, order === "asc" ? "desc" : "asc")}
+      >
+        {order === "asc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
+        <span className="sr-only">Balik arah urutan</span>
+      </Button>
+    </div>
   )
 }
