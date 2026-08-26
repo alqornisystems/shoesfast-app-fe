@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Search, Loader2, ChevronLeft, ChevronRight, Package, CheckCircle2, Clock, AlertCircle, XCircle, Calendar, Timer, CheckSquare, Pencil, Play, User, Sparkles } from "lucide-react"
+import { Search, Loader2, Package, CheckCircle2, Clock, AlertCircle, XCircle, Calendar, Timer, CheckSquare, Pencil, Play, User, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
 
 import { Button } from "@/components/ui/button"
+import { SimplePagination } from "@/components/report-pagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -711,31 +712,11 @@ export function WorkProgressClient() {
             <div className="text-sm text-muted-foreground text-center sm:text-left">
               Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} item
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchTreatments(pagination.current_page - 1)}
-                disabled={pagination.current_page === 1}
-                className="h-8 gap-1"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sebelumnya</span>
-              </Button>
-              <div className="text-sm font-medium px-2">
-                {pagination.current_page} / {pagination.last_page}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchTreatments(pagination.current_page + 1)}
-                disabled={pagination.current_page === pagination.last_page}
-                className="h-8 gap-1"
-              >
-                <span className="hidden sm:inline">Selanjutnya</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <SimplePagination
+              currentPage={pagination.current_page}
+              totalPages={pagination.last_page}
+              onPageChange={(halaman) => fetchTreatments(halaman)}
+            />
           </div>
         )}
       </div>

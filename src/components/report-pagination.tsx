@@ -1,7 +1,9 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -180,8 +182,13 @@ export function SimplePagination({
     return pages
   }
 
+  // Kotak isian nomor halaman hanya muncul kalau tombolnya memang tidak cukup.
+  // Dengan 100 halaman yang tampil cuma "1 … 4 5 6 … 100", dan halaman 47 tidak bisa
+  // dicapai tanpa mengklik puluhan kali.
+  const butuhLoncat = totalPages > maxPageButtons
+
   return (
-    <div className="flex items-center justify-center gap-1">
+    <div className="flex flex-wrap items-center justify-center gap-1">
       <Button
         variant="outline"
         size="icon"
@@ -217,6 +224,80 @@ export function SimplePagination({
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
+
+      {butuhLoncat && (
+        <PageJumper
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          isLoading={isLoading}
+        />
+      )}
+    </div>
+  )
+}
+
+/**
+ * Ketik nomor halaman, tekan Enter (atau keluar dari kotaknya) untuk loncat ke sana.
+ *
+ * Nilainya ditahan sebagai teks selama diketik supaya kotaknya boleh kosong sejenak;
+ * yang dikirim keluar selalu angka yang sudah dijepit ke rentang 1..totalPages, jadi
+ * "999" di daftar 12 halaman mendarat di halaman 12, bukan di halaman kosong.
+ */
+function PageJumper({
+  currentPage,
+  totalPages,
+  onPageChange,
+  isLoading,
+}: {
+  currentPage: number
+  totalPages: number
+  onPageChange: (page: number) => void
+  isLoading: boolean
+}) {
+  const [draf, setDraf] = useState(String(currentPage))
+
+  // Pindah halaman lewat tombol panah/nomor harus ikut terlihat di kotaknya.
+  useEffect(() => {
+    setDraf(String(currentPage))
+  }, [currentPage])
+
+  function loncat() {
+    const angka = parseInt(draf, 10)
+
+    if (Number.isNaN(angka)) {
+      setDraf(String(currentPage))
+      return
+    }
+
+    const tujuan = Math.min(Math.max(angka, 1), totalPages)
+    setDraf(String(tujuan))
+
+    if (tujuan !== currentPage) onPageChange(tujuan)
+  }
+
+  return (
+    <div className="ml-1 flex items-center gap-1.5">
+      <span className="text-sm text-muted-foreground">Ke</span>
+      <Input
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={totalPages}
+        value={draf}
+        disabled={isLoading}
+        aria-label={`Loncat ke halaman, 1 sampai ${totalPages}`}
+        onChange={(e) => setDraf(e.target.value)}
+        onBlur={loncat}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            loncat()
+          }
+        }}
+        className="h-9 w-16 text-center"
+      />
+      <span className="text-sm text-muted-foreground">/ {totalPages}</span>
     </div>
   )
 }

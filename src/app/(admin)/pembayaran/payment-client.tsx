@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Search, Loader2, Plus, ChevronLeft, ChevronRight, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X, Link2, Trash2, ChevronDown, UserRound } from "lucide-react"
+import { Search, Loader2, Plus, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X, Link2, Trash2, ChevronDown, UserRound } from "lucide-react"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { SimplePagination } from "@/components/report-pagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -597,31 +598,11 @@ export function PaymentClient() {
             <div className="text-sm text-muted-foreground text-center sm:text-left">
               Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} pesanan
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchPayments(pagination.current_page - 1)}
-                disabled={pagination.current_page === 1}
-                className="h-8 gap-1"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sebelumnya</span>
-              </Button>
-              <div className="text-sm font-medium px-2">
-                {pagination.current_page} / {pagination.last_page}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchPayments(pagination.current_page + 1)}
-                disabled={pagination.current_page === pagination.last_page}
-                className="h-8 gap-1"
-              >
-                <span className="hidden sm:inline">Selanjutnya</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <SimplePagination
+              currentPage={pagination.current_page}
+              totalPages={pagination.last_page}
+              onPageChange={(halaman) => fetchPayments(halaman)}
+            />
           </div>
         )}
       </div>

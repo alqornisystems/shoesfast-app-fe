@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { SimplePagination } from "@/components/report-pagination"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -349,31 +350,11 @@ export function RewardClient() {
               Menampilkan {pagination.from} - {pagination.to} dari{" "}
               {pagination.total}
             </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pagination.current_page <= 1}
-                onClick={() =>
-                  fetchRewards(pagination.current_page - 1, search)
-                }
-              >
-                Sebelumnya
-              </Button>
-              <span className="text-sm">
-                {pagination.current_page} / {pagination.last_page}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pagination.current_page >= pagination.last_page}
-                onClick={() =>
-                  fetchRewards(pagination.current_page + 1, search)
-                }
-              >
-                Berikutnya
-              </Button>
-            </div>
+            <SimplePagination
+              currentPage={pagination.current_page}
+              totalPages={pagination.last_page}
+              onPageChange={(halaman) => fetchRewards(halaman , search)}
+            />
           </div>
         )}
       </div>

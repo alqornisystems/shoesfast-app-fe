@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Search, Loader2, CheckCircle2, Package, MapPin, Phone, Truck, User, Filter, Route, ChevronLeft, ChevronRight } from "lucide-react"
+import { Search, Loader2, CheckCircle2, Package, MapPin, Phone, Truck, User, Filter, Route } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { formatCurrency, titleCase, waLink } from "@/lib/utils"
 import { bacaKoordinat, posisiSekarang, tautanRute, urutkanTerdekat, MAKS_TITIK, type Titik } from "@/lib/route-utils"
 import { Button } from "@/components/ui/button"
+import { SimplePagination } from "@/components/report-pagination"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -519,31 +520,12 @@ export function DalamProsesClient() {
             <div className="text-sm text-muted-foreground text-center sm:text-left">
               Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} pengiriman
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchSends(pagination.current_page - 1)}
-                disabled={pagination.current_page === 1 || loading}
-                className="h-8 gap-1"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sebelumnya</span>
-              </Button>
-              <div className="text-sm font-medium px-2">
-                {pagination.current_page} / {pagination.last_page}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchSends(pagination.current_page + 1)}
-                disabled={pagination.current_page === pagination.last_page || loading}
-                className="h-8 gap-1"
-              >
-                <span className="hidden sm:inline">Selanjutnya</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <SimplePagination
+              currentPage={pagination.current_page}
+              totalPages={pagination.last_page}
+              onPageChange={(halaman) => fetchSends(halaman)}
+              isLoading={loading}
+            />
           </div>
         )}
       </div>

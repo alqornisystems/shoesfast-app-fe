@@ -9,6 +9,7 @@ import { api } from "@/lib/api"
 import { formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { SimplePagination } from "@/components/report-pagination"
 import {
   Dialog,
   DialogContent,
@@ -272,27 +273,11 @@ export function ClaimClient() {
               Menampilkan {pagination.from} - {pagination.to} dari{" "}
               {pagination.total}
             </span>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pagination.current_page <= 1}
-                onClick={() => fetchRows(pagination.current_page - 1, status)}
-              >
-                Sebelumnya
-              </Button>
-              <span className="text-sm">
-                {pagination.current_page} / {pagination.last_page}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={pagination.current_page >= pagination.last_page}
-                onClick={() => fetchRows(pagination.current_page + 1, status)}
-              >
-                Berikutnya
-              </Button>
-            </div>
+            <SimplePagination
+              currentPage={pagination.current_page}
+              totalPages={pagination.last_page}
+              onPageChange={(halaman) => fetchRows(halaman , status)}
+            />
           </div>
         )}
       </div>

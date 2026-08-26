@@ -1,13 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Pencil, Trash2, Search, Loader2, Camera, X, ChevronLeft, ChevronRight, CalendarIcon, KeyRound } from "lucide-react"
+import { Plus, Pencil, Trash2, Search, Loader2, Camera, X, CalendarIcon, KeyRound } from "lucide-react"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
+import { SimplePagination } from "@/components/report-pagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -508,31 +509,11 @@ export function CustomerClient() {
             <div className="text-sm text-muted-foreground text-center sm:text-left">
               Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} pelanggan
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchCustomers(pagination.current_page - 1)}
-                disabled={pagination.current_page === 1}
-                className="h-8 gap-1"
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Sebelumnya</span>
-              </Button>
-              <div className="text-sm font-medium px-2">
-                {pagination.current_page} / {pagination.last_page}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchCustomers(pagination.current_page + 1)}
-                disabled={pagination.current_page === pagination.last_page}
-                className="h-8 gap-1"
-              >
-                <span className="hidden sm:inline">Selanjutnya</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <SimplePagination
+              currentPage={pagination.current_page}
+              totalPages={pagination.last_page}
+              onPageChange={(halaman) => fetchCustomers(halaman)}
+            />
           </div>
         )}
       </div>
