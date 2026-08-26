@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 import { Check, Loader2, Search, Ticket } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
-import { formatDate } from "@/lib/utils"
+import { formatDate, titleCase } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -228,9 +228,9 @@ export function RedemptionClient() {
                   </TableCell>
                   {/* Null-safe: pelanggan dan hadiah bisa terhapus setelah
                       penukaran terjadi. */}
-                  <TableCell>{r.customer_name ?? "-"}</TableCell>
+                  <TableCell>{titleCase(r.customer_name) || "-"}</TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    {r.reward_name ?? "-"}
+                    {titleCase(r.reward_name) || "-"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {r.points_spent}
@@ -280,8 +280,8 @@ export function RedemptionClient() {
             <AlertDialogTitle>Serahkan hadiah ke pelanggan?</AlertDialogTitle>
             <AlertDialogDescription>
               Kode <span className="font-mono font-medium">{target?.code}</span>{" "}
-              atas nama {target?.customer_name ?? "-"} untuk hadiah{" "}
-              {target?.reward_name ?? "-"}. Poinnya sudah dipotong saat
+              atas nama {titleCase(target?.customer_name) || "-"} untuk hadiah{" "}
+              {titleCase(target?.reward_name) || "-"}. Poinnya sudah dipotong saat
               pelanggan menukar, jadi tindakan ini hanya mencatat serah terima.
             </AlertDialogDescription>
           </AlertDialogHeader>

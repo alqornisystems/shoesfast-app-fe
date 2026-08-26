@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { titleCase } from "@/lib/utils"
 import { Building2, Check, ChevronDown } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
 import { api } from "@/lib/api"
@@ -92,7 +93,7 @@ export function BranchSwitcher() {
             className="cursor-pointer"
           >
             <div className="flex items-center justify-between w-full">
-              <span>{project.name}</span>
+              <span>{titleCase(project.name)}</span>
               {branch?.active_id === project.id && (
                 <Check className="h-4 w-4" />
               )}

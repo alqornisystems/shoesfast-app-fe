@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type Role = {
   id: number
@@ -240,7 +240,7 @@ export function RoleClient() {
                   <TableCell className="text-center text-muted-foreground text-sm">
                     {pagination.from + idx}
                   </TableCell>
-                  <TableCell className="font-medium">{role.name}</TableCell>
+                  <TableCell className="font-medium">{titleCase(role.name)}</TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2 sm:gap-1">
                       <Button
@@ -327,7 +327,7 @@ export function RoleClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Jabatan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Jabatan <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span> akan dihapus.
+              Jabatan <span className="font-semibold text-foreground">"{titleCase(deleteTarget?.name)}"</span> akan dihapus.
               Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>

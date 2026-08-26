@@ -9,7 +9,7 @@ import { CircleDollarSign, TrendingDown, Layers, PieChart } from "lucide-react"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
 import { useReport } from "@/hooks/use-report"
 import { ReportShell } from "@/components/report-shell"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
 
 type ExpenseType = "all" | "general" | "operational"
 
@@ -311,7 +311,7 @@ export default function LaporanPengeluaranPage() {
                               {formatDate(expense.date, "dd MMM yyyy HH:mm")}
                             </div>
                           </td>
-                          <td className="p-4 align-middle text-xs">{expense.branch_name}</td>
+                          <td className="p-4 align-middle text-xs">{titleCase(expense.branch_name)}</td>
                           <td className="p-4 align-middle">
                             <Badge variant="outline">{expense.category}</Badge>
                           </td>
@@ -322,7 +322,7 @@ export default function LaporanPengeluaranPage() {
                           <td className="p-4 align-middle text-center">
                             {getTypeBadge(expense.type)}
                           </td>
-                          <td className="p-4 align-middle text-xs">{expense.user_name}</td>
+                          <td className="p-4 align-middle text-xs">{titleCase(expense.user_name)}</td>
                         </tr>
                       ))
                     )}

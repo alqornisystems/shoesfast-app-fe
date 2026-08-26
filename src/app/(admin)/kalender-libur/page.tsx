@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { titleCase } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -255,7 +256,7 @@ export default function KalenderLiburPage() {
                           {dayHolidays.map((holiday) => (
                             <div key={holiday.id} className="text-xs space-y-1">
                               <p className="font-medium text-orange-700 line-clamp-2">
-                                {holiday.name}
+                                {titleCase(holiday.name)}
                               </p>
                               {holiday.description && (
                                 <p className="text-[10px] text-muted-foreground line-clamp-1">
@@ -263,7 +264,7 @@ export default function KalenderLiburPage() {
                                 </p>
                               )}
                               <p className="text-[10px] text-muted-foreground">
-                                {holiday.branch_name}
+                                {titleCase(holiday.branch_name)}
                               </p>
                               <div className="flex gap-1 mt-1">
                                 <Button
@@ -369,7 +370,7 @@ export default function KalenderLiburPage() {
                     <SelectItem value="all">Semua Cabang</SelectItem>
                     {branches.map((branch) => (
                       <SelectItem key={branch.id} value={branch.id.toString()}>
-                        {branch.name}
+                        {titleCase(branch.name)}
                       </SelectItem>
                     ))}
                   </SelectContent>

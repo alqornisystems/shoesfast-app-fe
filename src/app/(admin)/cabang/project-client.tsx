@@ -37,7 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type Project = {
   id: number
@@ -301,7 +301,7 @@ export function ProjectClient() {
                   <TableCell className="text-center text-muted-foreground text-sm">
                     {idx + 1}
                   </TableCell>
-                  <TableCell className="font-medium">{project.name}</TableCell>
+                  <TableCell className="font-medium">{titleCase(project.name)}</TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                     {project.full_address || "-"}
                   </TableCell>
@@ -621,7 +621,7 @@ export function ProjectClient() {
             <AlertDialogDescription>
               Cabang{" "}
               <span className="font-semibold text-foreground">
-                "{deleteTarget?.name}"
+                "{titleCase(deleteTarget?.name)}"
               </span>{" "}
               akan dihapus. Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import dynamic from "next/dynamic"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -216,7 +217,7 @@ export default function AbsensiPage() {
     }
 
     if (todayHoliday) {
-      toast.error(`Tidak dapat absen di hari libur: ${todayHoliday.name}`)
+      toast.error(`Tidak dapat absen di hari libur: ${titleCase(todayHoliday.name)}`)
       return
     }
 
@@ -271,7 +272,7 @@ export default function AbsensiPage() {
     }
 
     if (todayHoliday) {
-      toast.error(`Tidak dapat absen di hari libur: ${todayHoliday.name}`)
+      toast.error(`Tidak dapat absen di hari libur: ${titleCase(todayHoliday.name)}`)
       return
     }
 
@@ -547,7 +548,7 @@ export default function AbsensiPage() {
                       <p className="font-medium">
                         {format(new Date(item.date), "EEEE, dd MMMM yyyy", { locale: idLocale })}
                       </p>
-                      <p className="text-sm text-muted-foreground">{item.user_name}</p>
+                      <p className="text-sm text-muted-foreground">{titleCase(item.user_name)}</p>
                     </div>
                   </div>
                   <div className="flex gap-6 text-sm">

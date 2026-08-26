@@ -13,7 +13,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useReport } from "@/hooks/use-report"
 import { ReportShell } from "@/components/report-shell"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatPercentForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -369,7 +369,7 @@ export default function LaporanGoogleAdsPage() {
                             <div className="text-xs text-muted-foreground">{item.campaign_id}</div>
                           )}
                         </td>
-                        <td className="p-4">{item.branch_name}</td>
+                        <td className="p-4">{titleCase(item.branch_name)}</td>
                         <td className="p-4 text-right">{formatNumber(item.impressions)}</td>
                         <td className="p-4 text-right">{formatNumber(item.clicks)}</td>
                         <td className="p-4 text-right text-red-600">{formatCurrency(item.cost)}</td>

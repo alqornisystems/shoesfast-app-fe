@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -345,7 +346,7 @@ export default function IzinPage() {
                         </Badge>
                         {getApprovalBadge(absence.is_approval)}
                       </div>
-                      <p className="font-medium">{absence.user_name}</p>
+                      <p className="font-medium">{titleCase(absence.user_name)}</p>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
                         <span>

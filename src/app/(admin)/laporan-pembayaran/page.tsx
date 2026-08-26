@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { useReport } from "@/hooks/use-report"
 import { ReportShell } from "@/components/report-shell"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -275,12 +275,12 @@ export default function LaporanPembayaranPage() {
                             <div className="font-medium">{payment.order_code}</div>
                           </td>
                           <td className="p-4 align-middle">
-                            <div className="font-medium">{payment.customer_name}</div>
+                            <div className="font-medium">{titleCase(payment.customer_name)}</div>
                             <div className="text-xs text-muted-foreground">
                               {payment.customer_phone}
                             </div>
                           </td>
-                          <td className="p-4 align-middle text-xs">{payment.branch_name}</td>
+                          <td className="p-4 align-middle text-xs">{titleCase(payment.branch_name)}</td>
                           <td className="p-4 align-middle text-right font-bold text-green-600">
                             {formatCurrency(payment.total)}
                           </td>
@@ -289,7 +289,7 @@ export default function LaporanPembayaranPage() {
                               {payment.method_label}
                             </Badge>
                           </td>
-                          <td className="p-4 align-middle text-xs">{payment.user_name}</td>
+                          <td className="p-4 align-middle text-xs">{titleCase(payment.user_name)}</td>
                         </tr>
                       ))
                     )}

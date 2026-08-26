@@ -1,6 +1,7 @@
 "use client"
 
 import { format } from "date-fns"
+import { titleCase } from "@/lib/utils"
 import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -103,7 +104,7 @@ export default function LaporanPengerjaanPage() {
                       <tr key={tech.user_id || `vendor-${index}`} className="border-b hover:bg-muted/50">
                         <td className="p-4">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{tech.user_name}</span>
+                            <span className="font-medium">{titleCase(tech.user_name)}</span>
                             {tech.type === 'vendor' && (
                               <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-300">
                                 Vendor

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
@@ -422,7 +423,7 @@ export function ExpenseOperationalClient() {
                   <TableCell className="text-center text-sm text-muted-foreground">
                     {pagination.from + idx}
                   </TableCell>
-                  <TableCell className="font-medium">{expense.name}</TableCell>
+                  <TableCell className="font-medium">{titleCase(expense.name)}</TableCell>
                   <TableCell className="text-sm">
                     {expense.cost_basis || (
                       <span className="text-muted-foreground">-</span>

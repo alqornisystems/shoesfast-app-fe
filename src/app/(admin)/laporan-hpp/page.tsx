@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { BarChart2, DollarSign, Percent, TrendingUp } from "lucide-react"
 import { useReport } from "@/hooks/use-report"
 import { ReportShell } from "@/components/report-shell"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, titleCase } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatPercentForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -207,7 +207,7 @@ export default function LaporanHppPage() {
                           className="border-b transition-colors hover:bg-muted/50"
                         >
                           <td className="p-4 align-middle font-medium">
-                            {service.service_name}
+                            {titleCase(service.service_name)}
                           </td>
                           <td className="p-4 align-middle text-right">{service.total_sold}</td>
                           <td className="p-4 align-middle text-right">

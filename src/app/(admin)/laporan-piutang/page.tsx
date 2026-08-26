@@ -10,7 +10,7 @@ import { format } from "date-fns"
 import { DollarSign, AlertCircle, FileText, Filter } from "lucide-react"
 import { useReport } from "@/hooks/use-report"
 import { ReportShell } from "@/components/report-shell"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -255,10 +255,10 @@ export default function LaporanPiutangPage() {
                             </div>
                           </td>
                           <td className="p-4 align-middle">
-                            <div className="font-medium">{order.customer_name}</div>
+                            <div className="font-medium">{titleCase(order.customer_name)}</div>
                             <div className="text-xs text-muted-foreground">{order.customer_phone}</div>
                           </td>
-                          <td className="p-4 align-middle">{order.branch_name}</td>
+                          <td className="p-4 align-middle">{titleCase(order.branch_name)}</td>
                           <td className="p-4 align-middle text-right">
                             {formatCurrency(order.total)}
                           </td>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { titleCase } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -345,7 +346,7 @@ export default function LaporanAbsensiPage() {
               }`}
             >
               <div className="w-48 p-2 font-medium border-r-2 border-gray-300">
-                {user.name}
+                {titleCase(user.name)}
               </div>
               <div className="flex flex-1">
                 {days.map((day) => {

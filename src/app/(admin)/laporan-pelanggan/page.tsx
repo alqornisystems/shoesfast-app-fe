@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Users, DollarSign, Repeat, TrendingUp, Star } from "lucide-react"
 import { useReport } from "@/hooks/use-report"
 import { ReportShell } from "@/components/report-shell"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -167,7 +167,7 @@ export default function LaporanPelangganPage() {
                     {topCustomers.map((customer) => (
                       <tr key={customer.customer_id} className="border-b hover:bg-muted/50">
                         <td className="p-4">
-                          <div className="font-medium">{customer.customer_name}</div>
+                          <div className="font-medium">{titleCase(customer.customer_name)}</div>
                           <div className="text-xs text-muted-foreground">{customer.customer_phone}</div>
                         </td>
                         <td className="p-4 text-right">{customer.total_orders}</td>

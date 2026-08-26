@@ -38,7 +38,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type BroadcastTemplate = {
   id: number
@@ -326,7 +326,7 @@ export function TemplateClient() {
                     </TableCell>
                     <TableCell className="max-w-[300px]">
                       <div className="overflow-hidden">
-                        <div className="font-medium text-sm truncate">{template.name}</div>
+                        <div className="font-medium text-sm truncate">{titleCase(template.name)}</div>
                         <div className="text-xs text-muted-foreground mt-0.5 truncate">
                           {template.content}
                         </div>
@@ -436,10 +436,10 @@ export function TemplateClient() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => insertPlaceholder('{customer_name}')}
+                  onClick={() => insertPlaceholder('{titleCase(customer_name)}')}
                   className="h-7 text-xs"
                 >
-                  {'{customer_name}'}
+                  {'{titleCase(customer_name)}'}
                 </Button>
                 <Button
                   type="button"
@@ -454,10 +454,10 @@ export function TemplateClient() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => insertPlaceholder('{branch_name}')}
+                  onClick={() => insertPlaceholder('{titleCase(branch_name)}')}
                   className="h-7 text-xs"
                 >
-                  {'{branch_name}'}
+                  {'{titleCase(branch_name)}'}
                 </Button>
               </div>
               <Textarea
@@ -473,7 +473,7 @@ export function TemplateClient() {
               />
               {errors.content && <p className="text-xs text-destructive">{errors.content}</p>}
               <p className="text-xs text-muted-foreground">
-                Gunakan variabel untuk personalisasi pesan. Contoh: {'{name}'}, {'{phone}'}, {'{customer_name}'}
+                Gunakan variabel untuk personalisasi pesan. Contoh: {'{name}'}, {'{phone}'}, {'{titleCase(customer_name)}'}
               </p>
             </div>
 
@@ -506,7 +506,7 @@ export function TemplateClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Template?</AlertDialogTitle>
             <AlertDialogDescription>
-              Template <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span> akan dihapus.
+              Template <span className="font-semibold text-foreground">"{titleCase(deleteTarget?.name)}"</span> akan dihapus.
               Data ini tidak dapat dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>

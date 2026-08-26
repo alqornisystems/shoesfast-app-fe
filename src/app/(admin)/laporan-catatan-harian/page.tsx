@@ -12,7 +12,7 @@ import { FileText, Calendar as CalendarIcon, Plus } from "lucide-react"
 import { toast } from "sonner"
 import { format } from "date-fns"
 import { api } from "@/lib/api"
-import { formatDate } from "@/lib/utils"
+import { formatDate, titleCase } from "@/lib/utils"
 
 interface NoteDetail {
   id: number
@@ -278,7 +278,7 @@ export default function LaporanCatatanHarianPage() {
                       <td className="border p-2 text-center">{index + 1}</td>
                       <td className="border p-2 text-left">
                         <div>
-                          <p className="font-medium">{user.name}</p>
+                          <p className="font-medium">{titleCase(user.name)}</p>
                           <p className="text-xs text-muted-foreground">{user.role}</p>
                         </div>
                       </td>
@@ -355,7 +355,7 @@ export default function LaporanCatatanHarianPage() {
                           }}
                           className="w-full p-2 text-left hover:bg-muted border-b last:border-b-0"
                         >
-                          <p className="font-medium">{user.name}</p>
+                          <p className="font-medium">{titleCase(user.name)}</p>
                           <p className="text-xs text-muted-foreground">
                             {user.phone} • {user.role}
                           </p>

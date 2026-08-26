@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -167,7 +168,7 @@ export default function LaporanPerformaPage() {
                   <TableBody>
                     {data.data.map((employee) => (
                       <TableRow key={employee.user_id}>
-                        <TableCell className="font-medium">{employee.user_name}</TableCell>
+                        <TableCell className="font-medium">{titleCase(employee.user_name)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-xs">
                             {employee.role || 'Staff'}

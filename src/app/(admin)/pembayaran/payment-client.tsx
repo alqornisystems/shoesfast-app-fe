@@ -46,7 +46,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type Payment = {
   id: number
@@ -524,7 +524,7 @@ export function PaymentClient() {
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="max-w-[200px]">
-                        <div className="font-medium text-sm truncate">{payment.customer?.name ?? "-"}</div>
+                        <div className="font-medium text-sm truncate">{titleCase(payment.customer?.name) || "-"}</div>
                         <div className="text-xs text-muted-foreground truncate">{payment.customer?.phone ?? "-"}</div>
                       </div>
                     </TableCell>
@@ -627,7 +627,7 @@ export function PaymentClient() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm">{selectedOrder.code}</div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{selectedOrder.customer?.name ?? "-"}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{titleCase(selectedOrder.customer?.name) || "-"}</div>
                   </div>
                   <Badge variant="secondary" className="shrink-0">
                     {formatDate(selectedOrder.date)}
@@ -721,7 +721,7 @@ export function PaymentClient() {
                                 <div className="text-muted-foreground mb-0.5">Dicatat oleh</div>
                                 <div className="flex items-center gap-1.5 font-medium">
                                   <UserRound className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                                  <span className="truncate">{history.user?.name ?? "-"}</span>
+                                  <span className="truncate">{titleCase(history.user?.name) || "-"}</span>
                                 </div>
                               </div>
                               <div>

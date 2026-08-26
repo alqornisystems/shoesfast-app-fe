@@ -1,7 +1,7 @@
 import { cache } from "react"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
-import { cn, formatCurrency, formatDate, waLink } from "@/lib/utils"
+import { cn, formatCurrency, formatDate, waLink, titleCase } from "@/lib/utils"
 import { InvoicePhoto } from "./invoice-photo"
 
 export type InvoiceTreatment = {
@@ -125,7 +125,7 @@ export async function generateMetadata({
   if (!data) return { title: "Invoice · Shoesfast", robots: { index: false, follow: false } }
   return {
     title: `Invoice ${data.code ?? "-"} · Shoesfast`,
-    description: `${data.customer?.name ?? "Pelanggan"} — Total ${formatCurrency(Number(data.total_price) || 0)}`,
+    description: `${titleCase(data.customer?.name) || "Pelanggan"} — Total ${formatCurrency(Number(data.total_price) || 0)}`,
     robots: { index: false, follow: false },
   }
 }
@@ -199,7 +199,7 @@ export default async function InvoicePage({
             <p className="text-[10px] font-semibold uppercase tracking-widest text-neutral-500">
               Ditagihkan kepada
             </p>
-            <p className="mt-1.5 font-semibold">{data.customer?.name ?? "-"}</p>
+            <p className="mt-1.5 font-semibold">{titleCase(data.customer?.name) || "-"}</p>
             <p className="text-sm text-neutral-600">{data.customer?.phone ?? "-"}</p>
             <p className="max-w-xs text-sm text-neutral-600">{data.customer?.address ?? "-"}</p>
           </div>
@@ -259,11 +259,11 @@ export default async function InvoicePage({
                       <InvoicePhoto photo={item.photo ?? null} name={item.name ?? "Item"} />
                     </td>
                     <td className="py-4 pr-4">
-                      <p className="break-words font-semibold">{item.name ?? "-"}</p>
+                      <p className="break-words font-semibold">{titleCase(item.name) || "-"}</p>
                       <ul className="mt-1.5 space-y-0.5">
                         {treatments.map((t, j) => (
                           <li key={j} className="flex justify-between gap-4 text-neutral-600">
-                            <span>{t.name ?? "-"}</span>
+                            <span>{titleCase(t.name) || "-"}</span>
                             <span className="tabular-nums">
                               {formatCurrency(Number(t.price) || 0)}
                             </span>

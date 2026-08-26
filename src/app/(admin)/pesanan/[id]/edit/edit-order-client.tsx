@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type Order = {
   id: number
@@ -299,7 +299,7 @@ export function EditOrderClient() {
   async function handleForceCompleteItem(item: OrderItem) {
     const result = await Swal.fire({
       title: 'Selesaikan Paksa?',
-      html: `Item: <strong>${item.name}</strong><br/><br/>Semua treatment akan ditandai selesai dan item siap untuk delivery.`,
+      html: `Item: <strong>${titleCase(item.name)}</strong><br/><br/>Semua treatment akan ditandai selesai dan item siap untuk delivery.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#f97316',
@@ -558,7 +558,7 @@ export function EditOrderClient() {
         </CardHeader>
         <CardContent>
           <div className="space-y-1">
-            <p className="font-medium">{order.customer?.name ?? "-"}</p>
+            <p className="font-medium">{titleCase(order.customer?.name) || "-"}</p>
             <p className="text-sm text-muted-foreground">{order.customer?.phone ?? "-"}</p>
             <p className="text-sm text-muted-foreground">{order.customer?.address ?? "-"}</p>
           </div>
@@ -663,7 +663,7 @@ export function EditOrderClient() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">#{idx + 1}: {item.name}</div>
+                          <div className="font-medium text-sm">#{idx + 1}: {titleCase(item.name)}</div>
                           {item.note && (
                             <div className="text-xs text-muted-foreground mt-1">{item.note}</div>
                           )}
@@ -674,7 +674,7 @@ export function EditOrderClient() {
                               {item.delivery_courier_name ? (
                                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 border border-green-200 text-xs font-medium text-green-700">
                                   <UserCog className="h-3 w-3" />
-                                  <span>Kurir: {item.delivery_courier_name}</span>
+                                  <span>Kurir: {titleCase(item.delivery_courier_name)}</span>
                                 </div>
                               ) : (
                                 <div className="inline-flex items-center gap-2">
@@ -690,7 +690,7 @@ export function EditOrderClient() {
                                     <SelectContent>
                                       {couriers.map((courier) => (
                                         <SelectItem key={courier.id} value={String(courier.id)}>
-                                          {courier.name}
+                                          {titleCase(courier.name)}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
@@ -719,7 +719,7 @@ export function EditOrderClient() {
                               {/* Header Layanan */}
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
-                                  <div className="font-medium text-sm">{treatment.name}</div>
+                                  <div className="font-medium text-sm">{titleCase(treatment.name)}</div>
                                   <div className="text-xs text-muted-foreground mt-0.5">{formatCurrency(treatment.price)}</div>
                                 </div>
                                 {treatment.users_name && (
@@ -752,7 +752,7 @@ export function EditOrderClient() {
                                       <SelectContent>
                                         {technicians.map((tech) => (
                                           <SelectItem key={tech.id} value={String(tech.id)}>
-                                            {tech.name}
+                                            {titleCase(tech.name)}
                                           </SelectItem>
                                         ))}
                                       </SelectContent>
@@ -765,7 +765,7 @@ export function EditOrderClient() {
                                   <div className="flex items-center gap-2 text-sm">
                                     <UserCog className="h-4 w-4 text-muted-foreground" />
                                     <span className="text-muted-foreground">Teknisi:</span>
-                                    <span className="font-medium">{treatment.users_name}</span>
+                                    <span className="font-medium">{titleCase(treatment.users_name)}</span>
                                   </div>
                                 ) : null}
                               </div>
@@ -1045,7 +1045,7 @@ export function EditOrderClient() {
                                   disabled={!!hasAssignedTechnician}
                                 >
                                   {selectedService ? (
-                                    <span className="truncate">{selectedService.name} - {formatCurrency(selectedService.price)}</span>
+                                    <span className="truncate">{titleCase(selectedService.name)} - {formatCurrency(selectedService.price)}</span>
                                   ) : (
                                     <span className="text-muted-foreground">Pilih layanan...</span>
                                   )}
@@ -1061,7 +1061,7 @@ export function EditOrderClient() {
                                       {services.map((service) => (
                                         <CommandItem
                                           key={service.id}
-                                          value={`${service.name} ${service.id}`}
+                                          value={`${titleCase(service.name)} ${service.id}`}
                                           onSelect={() => {
                                             updateService(idx, service.id)
                                             setServiceSearchOpen(null)
@@ -1074,7 +1074,7 @@ export function EditOrderClient() {
                                             )}
                                           />
                                           <div className="flex-1">
-                                            <div className="font-medium">{service.name}</div>
+                                            <div className="font-medium">{titleCase(service.name)}</div>
                                             <div className="text-xs text-muted-foreground">{formatCurrency(service.price)} • {service.estimation} hari</div>
                                           </div>
                                         </CommandItem>

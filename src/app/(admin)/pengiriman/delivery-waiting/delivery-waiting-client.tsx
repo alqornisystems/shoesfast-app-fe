@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { Search, Loader2, ChevronLeft, ChevronRight, Package, MapPin, Phone, Truck, Image as ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
@@ -336,7 +337,7 @@ export function DeliveryWaitingClient() {
                           </div>
                         )}
                         <div>
-                          <div className="font-semibold text-sm">{item.name}</div>
+                          <div className="font-semibold text-sm">{titleCase(item.name)}</div>
                           <div className="text-xs text-muted-foreground">{item.order_code}</div>
                         </div>
                       </div>
@@ -421,7 +422,7 @@ export function DeliveryWaitingClient() {
                             {courier.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-medium">{courier.name}</div>
+                            <div className="font-medium">{titleCase(courier.name)}</div>
                             {courier.phone && (
                               <div className="text-xs text-muted-foreground">{courier.phone}</div>
                             )}

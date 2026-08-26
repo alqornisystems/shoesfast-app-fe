@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type Customer = {
   id: number
@@ -443,7 +443,7 @@ export function OrderFormClient() {
                   <User className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <div className="font-semibold">{selectedCustomer.name}</div>
+                  <div className="font-semibold">{titleCase(selectedCustomer.name)}</div>
                   <div className="text-sm text-muted-foreground">{selectedCustomer.phone}</div>
                   <div className="text-sm text-muted-foreground">{selectedCustomer.address}</div>
                 </div>
@@ -551,7 +551,7 @@ export function OrderFormClient() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm">#{idx + 1}: {item.name}</div>
+                          <div className="font-medium text-sm">#{idx + 1}: {titleCase(item.name)}</div>
                           {item.note && (
                             <div className="text-xs text-muted-foreground mt-1">{item.note}</div>
                           )}
@@ -710,7 +710,7 @@ export function OrderFormClient() {
                       onClick={() => selectCustomer(customer)}
                       className="w-full text-left p-3 border rounded-lg hover:bg-muted/50 transition-colors"
                     >
-                      <div className="font-medium">{customer.name}</div>
+                      <div className="font-medium">{titleCase(customer.name)}</div>
                       <div className="text-sm text-muted-foreground">{customer.phone}</div>
                     </button>
                   ))}
@@ -947,7 +947,7 @@ export function OrderFormClient() {
                         <SelectContent>
                           {services.map((service) => (
                             <SelectItem key={service.id} value={String(service.id)}>
-                              {service.name} - {formatCurrency(service.price)}
+                              {titleCase(service.name)} - {formatCurrency(service.price)}
                             </SelectItem>
                           ))}
                         </SelectContent>

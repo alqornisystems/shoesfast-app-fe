@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { titleCase } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -146,7 +147,7 @@ export default function CatatanHarianPage() {
         const holidayDate = new Date(h.date * 1000)
         return isSameDay(holidayDate, selectedDate)
       })
-      toast.error(`Tidak dapat membuat catatan di hari libur: ${holiday?.name}`)
+      toast.error(`Tidak dapat membuat catatan di hari libur: ${titleCase(holiday?.name)}`)
       return
     }
 
@@ -368,7 +369,7 @@ export default function CatatanHarianPage() {
                       {/* Holiday/Sunday label */}
                       {isHoliday && dayHoliday && (
                         <p className="text-[10px] text-red-600 font-medium mb-1" title={dayHoliday.description || undefined}>
-                          {dayHoliday.name}
+                          {titleCase(dayHoliday.name)}
                         </p>
                       )}
                       {isSunday && !isHoliday && (

@@ -35,6 +35,7 @@ import {
   Wrench,
   Megaphone,
 } from "lucide-react"
+import { titleCase } from "@/lib/utils"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -533,7 +534,7 @@ export function AppSidebar() {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col text-left text-sm leading-tight">
-                <span className="font-semibold truncate">{user?.name ?? "Admin"}</span>
+                <span className="font-semibold truncate">{titleCase(user?.name) || "Admin"}</span>
                 {/* Jabatan, bukan email: menu yang tampil ditentukan oleh jabatan, jadi
                     ketika seseorang bertanya "kenapa menu saya beda", jawabannya harus
                     terbaca di layar tanpa perlu membuka DevTools. */}

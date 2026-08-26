@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { ShoppingBag, Package, TrendingUp, BarChart3 } from "lucide-react"
 import { useReport } from "@/hooks/use-report"
 import { ReportShell } from "@/components/report-shell"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, titleCase } from "@/lib/utils"
 import { exportTableToExcel, formatCurrencyForExport, formatDateForExport } from "@/lib/export-utils"
 
 interface Summary {
@@ -199,7 +199,7 @@ export default function LaporanPesananPage() {
                           key={service.id}
                           className="border-b transition-colors hover:bg-muted/50"
                         >
-                          <td className="p-4 align-middle font-medium">{service.service_name}</td>
+                          <td className="p-4 align-middle font-medium">{titleCase(service.service_name)}</td>
                           <td className="p-4 align-middle text-right">{service.total_count}</td>
                           <td className="p-4 align-middle text-right font-bold text-green-600">
                             {formatCurrency(service.total_revenue)}
@@ -280,12 +280,12 @@ export default function LaporanPesananPage() {
                             <div className="font-medium">{item.order_code}</div>
                           </td>
                           <td className="p-4 align-middle">
-                            <div className="font-medium text-sm">{item.customer_name}</div>
+                            <div className="font-medium text-sm">{titleCase(item.customer_name)}</div>
                             <div className="text-xs text-muted-foreground">
                               {item.customer_phone}
                             </div>
                           </td>
-                          <td className="p-4 align-middle text-sm">{item.service_name}</td>
+                          <td className="p-4 align-middle text-sm">{titleCase(item.service_name)}</td>
                           <td className="p-4 align-middle text-right">
                             {formatCurrency(item.price)}
                           </td>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { titleCase } from "@/lib/utils"
 import { MapContainer, TileLayer, Marker, Circle, useMap } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
@@ -118,7 +119,7 @@ export default function AttendanceMap({ branchLocation, userLocation, radius }: 
       <div className="mt-3 flex items-center justify-center gap-6 text-sm">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-blue-500" />
-          <span className="text-muted-foreground">Kantor ({branchLocation.name})</span>
+          <span className="text-muted-foreground">Kantor ({titleCase(branchLocation.name)})</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-green-500 opacity-50" />

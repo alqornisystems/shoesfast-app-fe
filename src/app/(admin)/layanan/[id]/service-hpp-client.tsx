@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Trash2, Loader2, Save } from "lucide-react"
 import { api } from "@/lib/api"
@@ -204,7 +205,7 @@ export function ServiceHppClient() {
         </Button>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{service.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">{titleCase(service.name)}</h1>
             <p className="text-sm text-muted-foreground mt-1">
               Kelola HPP (Harga Pokok Penjualan) untuk layanan ini
             </p>

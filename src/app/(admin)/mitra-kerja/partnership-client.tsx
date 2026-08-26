@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Plus, Pencil, Trash2, Search, Loader2, UserCheck, Phone, MapPin, CreditCard } from "lucide-react"
 import { api } from "@/lib/api"
-import { formatDate } from "@/lib/utils"
+import { formatDate, titleCase } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -295,7 +295,7 @@ export function PartnershipClient() {
                         <UserCheck className="h-5 w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <div className="font-semibold truncate">{partnership.name}</div>
+                        <div className="font-semibold truncate">{titleCase(partnership.name)}</div>
                         <div className="text-xs text-muted-foreground sm:hidden flex items-center gap-1">
                           <Phone className="h-3 w-3" />
                           {partnership.phone}
@@ -330,7 +330,7 @@ export function PartnershipClient() {
                     )}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <Badge variant="outline">{partnership.branch_name}</Badge>
+                    <Badge variant="outline">{titleCase(partnership.branch_name)}</Badge>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                     {formatDate(partnership.created_at)}
@@ -463,7 +463,7 @@ export function PartnershipClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Mitra Kerja?</AlertDialogTitle>
             <AlertDialogDescription>
-              Mitra kerja <span className="font-semibold text-foreground">&quot;{deleteTarget?.name}&quot;</span> akan dihapus.
+              Mitra kerja <span className="font-semibold text-foreground">&quot;{titleCase(deleteTarget?.name)}&quot;</span> akan dihapus.
               Data ini tidak dapat dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>

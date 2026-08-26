@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { Search, Loader2, ChevronLeft, ChevronRight, Package, MapPin, Phone, Truck } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
@@ -323,7 +324,7 @@ export function PickupWaitingClient() {
                     </TableCell>
                     <TableCell>
                       <div className="font-semibold text-sm">{order.code}</div>
-                      <div className="text-xs text-muted-foreground">{order.project_name}</div>
+                      <div className="text-xs text-muted-foreground">{titleCase(order.project_name)}</div>
                     </TableCell>
                     <TableCell>
                       <div className="font-medium text-sm">{order.customer_name || "-"}</div>
@@ -410,7 +411,7 @@ export function PickupWaitingClient() {
                             {courier.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="font-medium">{courier.name}</div>
+                            <div className="font-medium">{titleCase(courier.name)}</div>
                             {courier.phone && (
                               <div className="text-xs text-muted-foreground">{courier.phone}</div>
                             )}

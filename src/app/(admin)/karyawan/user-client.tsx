@@ -46,7 +46,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 // Normalize phone number: remove leading 0 or 62
 function normalizePhone(phone: string): string {
@@ -382,7 +382,7 @@ export function UserClient() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="font-medium">{user.name}</div>
+                        <div className="font-medium">{titleCase(user.name)}</div>
                         <div className="text-xs text-muted-foreground lg:hidden truncate">{user.email}</div>
                       </div>
                     </div>
@@ -560,7 +560,7 @@ export function UserClient() {
                     <SelectContent>
                       {roles.map((r) => (
                         <SelectItem key={r.id} value={String(r.id)}>
-                          {r.name}
+                          {titleCase(r.name)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -585,7 +585,7 @@ export function UserClient() {
                       <SelectItem value="none">Tidak ada</SelectItem>
                       {projects.map((p) => (
                         <SelectItem key={p.id} value={String(p.id)}>
-                          {p.name}
+                          {titleCase(p.name)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -593,7 +593,7 @@ export function UserClient() {
                   {errors.projects_id && <p className="text-xs text-destructive">{errors.projects_id}</p>}
                   {branch && branch.active_id !== null && (
                     <p className="text-xs text-muted-foreground">
-                      Penempatan dikunci ke cabang aktif ({branch.active_name})
+                      Penempatan dikunci ke cabang aktif ({titleCase(branch.active_name)})
                     </p>
                   )}
                 </div>
@@ -669,7 +669,7 @@ export function UserClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Karyawan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Karyawan <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span> akan dihapus.
+              Karyawan <span className="font-semibold text-foreground">"{titleCase(deleteTarget?.name)}"</span> akan dihapus.
               Data ini tidak dapat dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>

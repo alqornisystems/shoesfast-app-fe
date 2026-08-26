@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type Treatment = {
   id: number
@@ -502,7 +502,7 @@ export function PartnershipWorkClient() {
                           </div>
                         )}
                         <div className="min-w-0 space-y-1">
-                          <div className="font-bold text-sm">{treatment.orders_items_name}</div>
+                          <div className="font-bold text-sm">{titleCase(treatment.orders_items_name)}</div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {treatment.orders_code}
@@ -515,14 +515,14 @@ export function PartnershipWorkClient() {
                             </Badge>
                           </div>
                           <div className="text-xs text-muted-foreground capitalize">
-                            {treatment.services_name}
+                            {titleCase(treatment.services_name)}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       <div className="max-w-[160px]">
-                        <div className="font-medium text-sm truncate">{treatment.customers_name}</div>
+                        <div className="font-medium text-sm truncate">{titleCase(treatment.customers_name)}</div>
                         <div className="text-xs text-muted-foreground truncate">{treatment.customers_phone}</div>
                       </div>
                     </TableCell>
@@ -674,9 +674,9 @@ export function PartnershipWorkClient() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm">{selectedTreatment.orders_items_name}</div>
+                    <div className="font-semibold text-sm">{titleCase(selectedTreatment.orders_items_name)}</div>
                     <div className="text-xs text-muted-foreground">{selectedTreatment.orders_code}</div>
-                    <div className="text-xs text-muted-foreground capitalize mt-1">{selectedTreatment.services_name}</div>
+                    <div className="text-xs text-muted-foreground capitalize mt-1">{titleCase(selectedTreatment.services_name)}</div>
                   </div>
                 </div>
               </div>
@@ -775,9 +775,9 @@ export function PartnershipWorkClient() {
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm">{editingTreatment.orders_items_name}</div>
+                    <div className="font-semibold text-sm">{titleCase(editingTreatment.orders_items_name)}</div>
                     <div className="text-xs text-muted-foreground">{editingTreatment.orders_code}</div>
-                    <div className="text-xs text-muted-foreground capitalize mt-1">{editingTreatment.services_name}</div>
+                    <div className="text-xs text-muted-foreground capitalize mt-1">{titleCase(editingTreatment.services_name)}</div>
                   </div>
                 </div>
               </div>
@@ -795,7 +795,7 @@ export function PartnershipWorkClient() {
                 <SelectContent>
                   {partnerships.map((partnership) => (
                     <SelectItem key={partnership.id} value={String(partnership.id)}>
-                      {partnership.name}
+                      {titleCase(partnership.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>

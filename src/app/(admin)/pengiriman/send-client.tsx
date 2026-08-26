@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { Plus, Pencil, Trash2, Search, Loader2, CheckCircle, Calendar, Truck, Package, MapPin } from "lucide-react"
 import { api } from "@/lib/api"
@@ -418,11 +419,11 @@ export function SendClient() {
                             <div className="font-semibold">{send.order.code}</div>
                             {send.order_item && (
                               <div className="text-xs text-muted-foreground truncate">
-                                {send.order_item.name}
+                                {titleCase(send.order_item.name)}
                               </div>
                             )}
                             <div className="text-xs text-muted-foreground lg:hidden truncate">
-                              {send.order.customer_name}
+                              {titleCase(send.order.customer_name)}
                             </div>
                             <div className="text-xs text-muted-foreground sm:hidden">
                               <Badge variant={STATUS_LABELS[send.status]?.variant || "secondary"} className="text-[10px] h-5">
@@ -442,7 +443,7 @@ export function SendClient() {
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         <div className="max-w-[200px]">
-                          <div className="font-medium truncate">{send.order.customer_name}</div>
+                          <div className="font-medium truncate">{titleCase(send.order.customer_name)}</div>
                           <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
                             <MapPin className="h-3 w-3 shrink-0" />
                             {send.order.customer_address}
@@ -570,9 +571,9 @@ export function SendClient() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-sm">{editingSend.order.code}</div>
-                    <div className="text-xs text-muted-foreground">{editingSend.order.customer_name}</div>
+                    <div className="text-xs text-muted-foreground">{titleCase(editingSend.order.customer_name)}</div>
                     {editingSend.order_item && (
-                      <div className="text-xs text-muted-foreground mt-1">{editingSend.order_item.name}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{titleCase(editingSend.order_item.name)}</div>
                     )}
                   </div>
                 </div>
@@ -591,7 +592,7 @@ export function SendClient() {
                 <SelectContent>
                   {couriers.map((courier) => (
                     <SelectItem key={courier.id} value={String(courier.id)}>
-                      {courier.name}
+                      {titleCase(courier.name)}
                     </SelectItem>
                   ))}
                 </SelectContent>

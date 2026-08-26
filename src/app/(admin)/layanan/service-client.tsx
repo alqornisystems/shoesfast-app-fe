@@ -39,7 +39,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 
 type Service = {
   id: number
@@ -345,7 +345,7 @@ export function ServiceClient() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="font-medium">{service.name}</div>
+                        <div className="font-medium">{titleCase(service.name)}</div>
                         {service.description && (
                           <div className="text-xs text-muted-foreground truncate max-w-xs">
                             {service.description}
@@ -573,7 +573,7 @@ export function ServiceClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Layanan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Layanan <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span> akan dihapus.
+              Layanan <span className="font-semibold text-foreground">"{titleCase(deleteTarget?.name)}"</span> akan dihapus.
               Data ini tidak dapat dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>

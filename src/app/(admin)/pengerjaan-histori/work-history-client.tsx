@@ -319,7 +319,7 @@ export function WorkHistoryClient() {
                         <div className="font-bold text-sm">{titleCase(treatment.orders_items_name)}</div>
                         <div className="flex items-center gap-1.5 text-sm font-semibold capitalize text-primary">
                           <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{treatment.services_name}</span>
+                          <span className="truncate">{titleCase(treatment.services_name)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">

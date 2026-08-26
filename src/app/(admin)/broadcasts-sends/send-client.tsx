@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 import {
   Command,
   CommandEmpty,
@@ -376,7 +376,7 @@ export function SendClient() {
                       {selectedTemplate ? (
                         <span className="flex items-center gap-2">
                           <FileText className="h-4 w-4" />
-                          {selectedTemplate.name}
+                          {titleCase(selectedTemplate.name)}
                         </span>
                       ) : (
                         "Pilih template..."
@@ -399,7 +399,7 @@ export function SendClient() {
                             >
                               <FileText className="h-4 w-4" />
                               <div className="flex-1">
-                                <div className="font-medium">{template.name}</div>
+                                <div className="font-medium">{titleCase(template.name)}</div>
                                 <div className="text-xs text-muted-foreground line-clamp-1">
                                   {template.content}
                                 </div>
@@ -497,7 +497,7 @@ export function SendClient() {
                                 htmlFor={`recipient-${recipient.id}`}
                                 className="flex-1 cursor-pointer"
                               >
-                                <div className="font-medium">{recipient.name}</div>
+                                <div className="font-medium">{titleCase(recipient.name)}</div>
                                 <div className="text-xs text-muted-foreground">
                                   {recipient.phone}
                                   {recipient.branch && ` • ${recipient.branch}`}
@@ -587,7 +587,7 @@ export function SendClient() {
                         <div className="flex items-center gap-2">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <div className="font-medium">{item.template_name}</div>
+                            <div className="font-medium">{titleCase(item.template_name)}</div>
                             <div className="text-xs text-muted-foreground xl:hidden">
                               {item.recipients_count} penerima • {formatDate(item.sent_at)}
                             </div>
@@ -724,7 +724,7 @@ export function SendClient() {
                         {detailData.recipients.map((r: any, idx: number) => (
                           <TableRow key={r.id}>
                             <TableCell className="text-center text-muted-foreground">{idx + 1}</TableCell>
-                            <TableCell>{r.name}</TableCell>
+                            <TableCell>{titleCase(r.name)}</TableCell>
                             <TableCell className="font-mono text-sm">{r.phone}</TableCell>
                           </TableRow>
                         ))}
@@ -749,7 +749,7 @@ export function SendClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Riwayat Broadcast?</AlertDialogTitle>
             <AlertDialogDescription>
-              Riwayat broadcast dengan template <span className="font-semibold text-foreground">"{deleteTarget?.template_name}"</span> akan dihapus.
+              Riwayat broadcast dengan template <span className="font-semibold text-foreground">"{titleCase(deleteTarget?.template_name)}"</span> akan dihapus.
               Data ini tidak dapat dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>

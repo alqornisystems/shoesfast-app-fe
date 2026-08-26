@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { Gift, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
@@ -304,13 +305,13 @@ export function RewardClient() {
               rewards.map((r, idx) => (
                 <TableRow key={r.id}>
                   <TableCell>{pagination.from + idx}</TableCell>
-                  <TableCell className="font-medium">{r.name}</TableCell>
+                  <TableCell className="font-medium">{titleCase(r.name)}</TableCell>
                   <TableCell className="hidden sm:table-cell">
                     {r.type_label}
                   </TableCell>
                   {/* Null-safe: layanan bisa dihapus setelah hadiah dibuat. */}
                   <TableCell className="hidden md:table-cell">
-                    {r.service_name ?? "-"}
+                    {titleCase(r.service_name) || "-"}
                   </TableCell>
                   <TableCell>{r.points_cost}</TableCell>
                   <TableCell className="hidden sm:table-cell">
@@ -417,7 +418,7 @@ export function RewardClient() {
                   <SelectContent>
                     {services.map((s) => (
                       <SelectItem key={s.id} value={String(s.id)}>
-                        {s.name}
+                        {titleCase(s.name)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -481,7 +482,7 @@ export function RewardClient() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus {deleteTarget?.name}?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus {titleCase(deleteTarget?.name)}?</AlertDialogTitle>
             <AlertDialogDescription>
               Hadiah tidak lagi muncul di portal. Penukaran yang sudah terjadi
               tetap tersimpan beserta nama hadiahnya.

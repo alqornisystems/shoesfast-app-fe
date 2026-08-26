@@ -435,10 +435,10 @@ export function CustomerClient() {
                               className="font-medium capitalize text-primary hover:underline"
                               title="Chat via WhatsApp"
                             >
-                              {customer.name}
+                              {titleCase(customer.name)}
                             </a>
                           ) : (
-                            <span className="font-medium capitalize">{customer.name}</span>
+                            <span className="font-medium capitalize">{titleCase(customer.name)}</span>
                           )}
                           {customer.is_member === 1 && (
                             <Badge variant="default" className="text-xs py-0 h-5">
@@ -712,7 +712,7 @@ export function CustomerClient() {
                           htmlFor={`project-${project.id}`}
                           className="text-sm font-normal cursor-pointer"
                         >
-                          {project.name}
+                          {titleCase(project.name)}
                         </Label>
                       </div>
                     ))
@@ -857,7 +857,7 @@ export function CustomerClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reset PIN portal?</AlertDialogTitle>
             <AlertDialogDescription>
-              PIN <span className="font-semibold text-foreground">&ldquo;{resetTarget?.name}&rdquo;</span> dikosongkan
+              PIN <span className="font-semibold text-foreground">&ldquo;{titleCase(resetTarget?.name)}&rdquo;</span> dikosongkan
               dan semua sesinya di portal dikeluarkan. Pelanggan membuat PIN baru
               saat masuk berikutnya. Pastikan identitasnya sudah kamu periksa.
             </AlertDialogDescription>
@@ -878,7 +878,7 @@ export function CustomerClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Pelanggan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Pelanggan <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span> akan dihapus.
+              Pelanggan <span className="font-semibold text-foreground">"{titleCase(deleteTarget?.name)}"</span> akan dihapus.
               Data ini tidak dapat dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>

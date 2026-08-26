@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { Plus, Trash2, Search, Loader2 } from "lucide-react"
 import { api } from "@/lib/api"
 
@@ -344,7 +345,7 @@ export function MemberClient() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0">
-                        <div className="font-medium">{customer.name}</div>
+                        <div className="font-medium">{titleCase(customer.name)}</div>
                         {customer.member_code && (
                           <div className="text-xs text-muted-foreground font-mono mt-0.5">
                             {customer.member_code}
@@ -499,7 +500,7 @@ export function MemberClient() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{customer.name}</div>
+                    <div className="font-medium truncate">{titleCase(customer.name)}</div>
                     <div className="text-sm text-muted-foreground font-mono">{customer.phone}</div>
                   </div>
                 </div>
@@ -532,7 +533,7 @@ export function MemberClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Pelanggan?</AlertDialogTitle>
             <AlertDialogDescription>
-              Pelanggan <span className="font-semibold text-foreground">"{deleteTarget?.name}"</span> akan dihapus.
+              Pelanggan <span className="font-semibold text-foreground">"{titleCase(deleteTarget?.name)}"</span> akan dihapus.
               Data ini tidak dapat dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -330,7 +330,7 @@ export function OrderClient() {
                               className="hover:underline"
                               title="Chat via WhatsApp"
                             >
-                              {order.customer?.name ?? "-"}
+                              {titleCase(order.customer?.name) || "-"}
                             </a>
                           ) : (
                             order.customer?.name ?? "-"
@@ -354,10 +354,10 @@ export function OrderClient() {
                           className="block font-medium truncate capitalize text-primary hover:underline"
                           title="Chat via WhatsApp"
                         >
-                          {order.customer?.name ?? "-"}
+                          {titleCase(order.customer?.name) || "-"}
                         </a>
                       ) : (
-                        <div className="font-medium truncate capitalize">{order.customer?.name ?? "-"}</div>
+                        <div className="font-medium truncate capitalize">{titleCase(order.customer?.name) || "-"}</div>
                       )}
                       <div className="text-xs text-muted-foreground truncate">{order.customer?.phone ?? "-"}</div>
                     </div>
@@ -475,7 +475,7 @@ export function OrderClient() {
                 <SelectContent>
                   {couriers.map((courier) => (
                     <SelectItem key={courier.id} value={String(courier.id)}>
-                      {courier.name} - {courier.phone}
+                      {titleCase(courier.name)} - {courier.phone}
                     </SelectItem>
                   ))}
                 </SelectContent>

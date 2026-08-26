@@ -24,7 +24,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { Checkbox } from "@/components/ui/checkbox"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
 import { Check, ChevronsUpDown } from "lucide-react"
 
 type Courier = {
@@ -244,7 +244,7 @@ export function SendFormClient() {
                   {selectedCourier ? (
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedCourier.name}</span>
+                      <span>{titleCase(selectedCourier.name)}</span>
                       {selectedCourier.phone && (
                         <span className="text-xs text-muted-foreground">({selectedCourier.phone})</span>
                       )}
@@ -264,7 +264,7 @@ export function SendFormClient() {
                       {couriers.map((courier) => (
                         <CommandItem
                           key={courier.id}
-                          value={`${courier.name} ${courier.phone || ''}`}
+                          value={`${titleCase(courier.name)} ${courier.phone || ''}`}
                           onSelect={() => {
                             setCourierId(courier.id)
                             setCourierOpen(false)
@@ -278,7 +278,7 @@ export function SendFormClient() {
                           />
                           <div className="flex items-center gap-2">
                             <User className="h-3.5 w-3.5 text-muted-foreground" />
-                            <span>{courier.name}</span>
+                            <span>{titleCase(courier.name)}</span>
                             {courier.phone && (
                               <span className="text-xs text-muted-foreground">({courier.phone})</span>
                             )}
@@ -357,7 +357,7 @@ export function SendFormClient() {
                       <User className="h-6 w-6 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-base">{order.customer_name}</div>
+                      <div className="font-semibold text-base">{titleCase(order.customer_name)}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         <Package className="h-3 w-3" />
                         {order.code}
@@ -443,13 +443,13 @@ export function SendFormClient() {
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-base">{item.name}</div>
+                      <div className="font-semibold text-base">{titleCase(item.name)}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         <Package className="h-3 w-3" />
                         {item.order_code}
                       </div>
                       <div className="text-xs text-muted-foreground mt-0.5">
-                        👤 {item.customer_name}
+                        👤 {titleCase(item.customer_name)}
                       </div>
                       <div className="text-xs text-muted-foreground truncate mt-0.5">
                         📍 {item.customer_address}

@@ -550,7 +550,7 @@ export function DalamProsesClient() {
                 ) : null}
                 <div className="min-w-0">
                   <div className="font-semibold">{titleCase(detail.item_name) || "-"}</div>
-                  <div className="text-sm text-muted-foreground">{detail.order_code ?? "-"} · {detail.customer_name ?? "-"}</div>
+                  <div className="text-sm text-muted-foreground">{detail.order_code ?? "-"} · {titleCase(detail.customer_name) || "-"}</div>
                   {detail.item_note ? (
                     <div className="mt-1 text-xs text-muted-foreground">Catatan: {detail.item_note}</div>
                   ) : null}

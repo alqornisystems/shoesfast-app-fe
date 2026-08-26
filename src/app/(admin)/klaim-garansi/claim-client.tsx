@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
-import { formatDate } from "@/lib/utils"
+import { formatDate, titleCase } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -216,10 +216,10 @@ export function ClaimClient() {
                   {/* Null-safe di tiap kolom: barang, pesanan, dan pelanggan
                       semuanya bisa terhapus setelah klaim dibuat. */}
                   <TableCell className="font-medium">
-                    {c.item_name ?? "-"}
+                    {titleCase(c.item_name) || "-"}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    {c.customer_name ?? "-"}
+                    {titleCase(c.customer_name) || "-"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {c.order_id && c.order_code ? (
@@ -285,9 +285,9 @@ export function ClaimClient() {
       <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Klaim: {target?.item_name ?? "-"}</DialogTitle>
+            <DialogTitle>Klaim: {titleCase(target?.item_name) || "-"}</DialogTitle>
             <DialogDescription>
-              Dari {target?.customer_name ?? "-"}, pesanan{" "}
+              Dari {titleCase(target?.customer_name) || "-"}, pesanan{" "}
               {target?.order_code ?? "-"}.
             </DialogDescription>
           </DialogHeader>
