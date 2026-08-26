@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Search, Loader2, Plus, ChevronLeft, ChevronRight, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X, Link2 } from "lucide-react"
+import { Search, Loader2, Plus, ChevronLeft, ChevronRight, HandCoins, AlertCircle, CheckCircle2, Clock, Calendar, Upload, X, Link2, Trash2, ChevronDown, UserRound } from "lucide-react"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -33,6 +34,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 
@@ -69,6 +80,9 @@ type PaymentHistoryRow = {
   nominal: number
   note?: string | null
   photo?: string | null
+  orders_items_id?: number | null
+  created_at?: number | null
+  user?: { id: number; name: string } | null
 }
 
 type PaymentListResponse = {
@@ -136,6 +150,13 @@ export function PaymentClient() {
 
   const [paymentHistory, setPaymentHistory] = useState<PaymentHistoryRow[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [expandedHistoryId, setExpandedHistoryId] = useState<number | null>(null)
+  // Cermin dari pagar `role:Admin Super,Admin` di routes/api.php. Tombolnya disembunyikan
+  // supaya tidak menawarkan aksi yang pasti ditolak 403 — backend tetap pagarnya.
+  const { user } = useAuth()
+  const bolehHapusPembayaran = user?.role === "Admin Super" || user?.role === "Admin"
+  const [deleteHistoryTarget, setDeleteHistoryTarget] = useState<PaymentHistoryRow | null>(null)
+  const [deletingHistory, setDeletingHistory] = useState(false)
   const [copyingId, setCopyingId] = useState<number | null>(null)
 
   async function handleCopyInvoiceLink(order: Payment) {
@@ -248,16 +269,54 @@ export function PaymentClient() {
     setPaymentDialogOpen(true)
   }
 
-  async function fetchPaymentHistory(orderId: number) {
+  async function fetchPaymentHistory(orderId: number): Promise<PaymentHistoryRow[]> {
     setLoadingHistory(true)
+    setExpandedHistoryId(null)
     try {
       const res = await api.get<PaymentHistoryRow[] | { data: PaymentHistoryRow }>(`/api/payments/order/${orderId}`)
-      setPaymentHistory(Array.isArray(res) ? res : (res.data ? [res.data] : []))
+      const rows = Array.isArray(res) ? res : (res.data ? [res.data] : [])
+      setPaymentHistory(rows)
+      return rows
     } catch (error) {
 
       setPaymentHistory([])
+      return []
     } finally {
       setLoadingHistory(false)
+    }
+  }
+
+  // Menghapus satu cicilan mengubah sisa tagihan pesanan, jadi ringkasan di dialog dan
+  // nominal bawaan form ikut dihitung ulang dari riwayat yang baru — tanpa itu dialognya
+  // masih memajang "Sisa Rp 0" untuk pesanan yang barusan jadi kurang bayar lagi.
+  async function handleDeletePayment() {
+    if (!deleteHistoryTarget?.id || !selectedOrder) return
+
+    setDeletingHistory(true)
+    try {
+      await api.delete(`/api/payments/${deleteHistoryTarget.id}`)
+
+      const rows = await fetchPaymentHistory(selectedOrder.id)
+      const totalPaid = rows.reduce((sum, row) => sum + row.nominal, 0)
+      const credit = selectedOrder.total_price - totalPaid
+
+      setSelectedOrder({
+        ...selectedOrder,
+        total_paid: totalPaid,
+        credit,
+        payment_status: credit === 0 ? "paid" : (totalPaid > 0 ? "partial" : "unpaid"),
+      })
+      setPaymentForm((form) => ({ ...form, nominal: credit }))
+      setNominalDisplay(formatNumber(credit))
+
+      setDeleteHistoryTarget(null)
+      toast.success("Pembayaran berhasil dihapus")
+      fetchPayments(pagination.current_page)
+    } catch (err: unknown) {
+      const e = err as { message?: string }
+      toast.error(e?.message || "Gagal menghapus pembayaran. Silakan coba lagi.")
+    } finally {
+      setDeletingHistory(false)
     }
   }
 
@@ -318,6 +377,16 @@ export function PaymentClient() {
       day: '2-digit',
       month: 'short',
       year: 'numeric'
+    })
+  }
+
+  function formatDateTime(timestamp: number): string {
+    return new Date(timestamp * 1000).toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     })
   }
 
@@ -607,38 +676,109 @@ export function PaymentClient() {
               <div className="space-y-2">
                 <Label className="text-sm font-semibold">Riwayat Pembayaran</Label>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {paymentHistory.map((history, idx) => (
-                    <div key={history.id || idx} className="p-3 border rounded-lg bg-card">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <div className="flex-1">
-                          <div className="text-sm font-semibold text-green-600">
-                            {formatCurrency(history.nominal)}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDate(history.date)}
-                          </div>
+                  {paymentHistory.map((history, idx) => {
+                    const expanded = history.id != null && expandedHistoryId === history.id
+                    const photoUrl = history.photo
+                      ? (history.photo.startsWith('http') ? history.photo : `/${history.photo}`)
+                      : null
+
+                    return (
+                      <div
+                        key={history.id ?? idx}
+                        className={cn(
+                          "border rounded-lg bg-card overflow-hidden transition-colors",
+                          expanded && "border-green-600/40 bg-green-600/[0.03]",
+                        )}
+                      >
+                        <div className="flex items-center gap-1 pr-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedHistoryId(expanded ? null : (history.id ?? null))}
+                            disabled={history.id == null}
+                            aria-expanded={expanded}
+                            className="flex flex-1 items-center gap-3 p-3 text-left hover:bg-muted/50 disabled:cursor-default disabled:hover:bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-l-lg"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-semibold text-green-600">
+                                {formatCurrency(history.nominal)}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {formatDate(history.date)}
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="shrink-0">
+                              Pembayaran #{idx + 1}
+                            </Badge>
+                            {history.id != null && (
+                              <ChevronDown
+                                className={cn(
+                                  "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+                                  expanded && "rotate-180",
+                                )}
+                              />
+                            )}
+                          </button>
+                          {history.id != null && bolehHapusPembayaran && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              title="Hapus pembayaran"
+                              onClick={() => setDeleteHistoryTarget(history)}
+                              className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              <span className="sr-only">Hapus pembayaran</span>
+                            </Button>
+                          )}
                         </div>
-                        <Badge variant="outline" className="shrink-0">
-                          Pembayaran #{idx + 1}
-                        </Badge>
+
+                        {expanded && (
+                          <div className="border-t px-3 py-3 space-y-3 text-xs">
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <div className="text-muted-foreground mb-0.5">Dicatat oleh</div>
+                                <div className="flex items-center gap-1.5 font-medium">
+                                  <UserRound className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                  <span className="truncate">{history.user?.name ?? "-"}</span>
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-muted-foreground mb-0.5">Waktu dicatat</div>
+                                <div className="flex items-center gap-1.5 font-medium">
+                                  <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                  <span className="truncate">
+                                    {history.created_at ? formatDateTime(history.created_at) : "-"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <div className="text-muted-foreground mb-0.5">Catatan</div>
+                              <p className="whitespace-pre-wrap break-words">{history.note || "-"}</p>
+                            </div>
+
+                            <div>
+                              <div className="text-muted-foreground mb-1">Bukti pembayaran</div>
+                              {photoUrl ? (
+                                <a href={photoUrl} target="_blank" rel="noopener noreferrer" className="block">
+                                  <img
+                                    src={photoUrl}
+                                    alt="Bukti pembayaran"
+                                    className="w-full h-40 rounded border object-cover transition-opacity hover:opacity-90"
+                                    loading="lazy"
+                                  />
+                                </a>
+                              ) : (
+                                <p className="text-muted-foreground">Tidak ada bukti terlampir.</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      {history.note && (
-                        <p className="text-xs text-muted-foreground mt-2 pt-2 border-t">
-                          {history.note}
-                        </p>
-                      )}
-                      {history.photo && (
-                        <div className="mt-2 pt-2 border-t">
-                          <img
-                            src={history.photo.startsWith('http') ? history.photo : `/${history.photo}`}
-                            alt="Bukti pembayaran"
-                            className="w-full h-32 rounded object-cover border"
-                            loading="lazy"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
@@ -787,6 +927,34 @@ export function PaymentClient() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={deleteHistoryTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteHistoryTarget(null) }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Pembayaran?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Pembayaran {deleteHistoryTarget ? formatCurrency(deleteHistoryTarget.nominal) : ""} tanggal{" "}
+              {deleteHistoryTarget ? formatDate(deleteHistoryTarget.date) : ""} akan dihapus. Sisa tagihan
+              pesanan ini bertambah kembali, dan poin member dari pelunasannya ditarik. Tindakan ini
+              tidak bisa dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingHistory}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDeletePayment() }}
+              disabled={deletingHistory}
+              className="bg-destructive text-white hover:bg-destructive/90 gap-1.5"
+            >
+              {deletingHistory && <Loader2 className="h-4 w-4 animate-spin" />}
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
