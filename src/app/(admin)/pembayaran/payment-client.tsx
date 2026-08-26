@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -121,6 +122,13 @@ const STORAGE_KEY_SEARCH = 'payment_list_search'
 const STORAGE_KEY_PAGE = 'payment_list_page'
 const STORAGE_KEY_STATUS = 'payment_list_status'
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal pesanan" },
+  { value: "customer", label: "Nama customer" },
+  { value: "order_code", label: "Kode pesanan" },
+  { value: "total", label: "Total tagihan" },
+]
+
 export function PaymentClient() {
   const [payments, setPayments] = useState<Payment[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -134,6 +142,8 @@ export function PaymentClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [statusFilter, setStatusFilter] = useState("unpaid_partial")
   const [initialized, setInitialized] = useState(false)
 
@@ -200,6 +210,11 @@ export function PaymentClient() {
         params.append('status', statusFilter)
       }
 
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
+
       const res = await api.get<PaymentListResponse>(`/api/payments?${params.toString()}`)
       setPayments(res.data ?? [])
       setPagination({
@@ -251,6 +266,11 @@ export function PaymentClient() {
     }, 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  useEffect(() => {
+    fetchPayments(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   async function openPaymentDialog(order: Payment) {
     setSelectedOrder(order)
@@ -459,6 +479,12 @@ export function PaymentClient() {
               <SelectItem value="all">Semua Status</SelectItem>
             </SelectContent>
           </Select>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} pesanan
           </Badge>

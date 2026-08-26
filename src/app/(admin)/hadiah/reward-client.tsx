@@ -9,6 +9,7 @@ import { api } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -83,12 +84,20 @@ const emptyForm = {
   is_active: true,
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama hadiah" },
+  { value: "points_cost", label: "Poin" },
+  { value: "created_at", label: "Waktu dibuat" },
+]
+
 export function RewardClient() {
   const [rewards, setRewards] = useState<Reward[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [pagination, setPagination] = useState<PaginationData>({
     current_page: 1,
     last_page: 1,
@@ -117,6 +126,10 @@ export function RewardClient() {
         per_page: "25",
         ...(keyword ? { search: keyword } : {}),
       })
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
       const res = await api.get<{ data: Reward[] } & PaginationData>(
         `/api/rewards?${params}`
       )
@@ -136,7 +149,7 @@ export function RewardClient() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [sort, order])
 
   // Pulihkan posisi terakhir supaya kembali dari halaman lain tidak
   // melemparkan admin ke halaman satu.
@@ -267,6 +280,12 @@ export function RewardClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} hadiah
           </Badge>

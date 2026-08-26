@@ -10,6 +10,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -96,6 +97,14 @@ type Courier = {
   phone: string
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal pesanan" },
+  { value: "customer", label: "Nama customer" },
+  { value: "order_code", label: "Kode pesanan" },
+  { value: "total", label: "Total" },
+  { value: "status", label: "Status" },
+]
+
 export function OrderClient() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
@@ -110,6 +119,8 @@ export function OrderClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
 
   const [deleteTarget, setDeleteTarget] = useState<Order | null>(null)
@@ -132,6 +143,11 @@ export function OrderClient() {
 
       if (search.trim()) {
         params.append('search', search.trim())
+      }
+
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
       }
 
       const res = await api.get<any>(`/api/orders?${params.toString()}`)
@@ -175,6 +191,11 @@ export function OrderClient() {
     }, 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  useEffect(() => {
+    fetchOrders(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   async function handleDelete() {
     if (!deleteTarget) return
@@ -271,6 +292,12 @@ export function OrderClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} pesanan
           </Badge>

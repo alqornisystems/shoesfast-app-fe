@@ -7,6 +7,7 @@ import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -83,6 +84,12 @@ type PaginationData = {
 const STORAGE_KEY_SEARCH = 'service_list_search'
 const STORAGE_KEY_PAGE = 'service_list_page'
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama layanan" },
+  { value: "price", label: "Harga" },
+  { value: "estimation", label: "Estimasi hari" },
+]
+
 export function ServiceClient() {
   const router = useRouter()
   const [services, setServices] = useState<Service[]>([])
@@ -96,6 +103,8 @@ export function ServiceClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -117,6 +126,11 @@ export function ServiceClient() {
       if (searchQuery.trim()) {
         params.append('search', searchQuery.trim())
       }
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
+
       const json = await api.get<any>(`/api/services?${params.toString()}`)
       setServices(json.data ?? [])
       setPagination({
@@ -159,6 +173,11 @@ export function ServiceClient() {
 
     return () => clearTimeout(timer)
   }, [search])
+
+  useEffect(() => {
+    fetchServices(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   function openAdd() {
     setEditTarget(null)
@@ -287,6 +306,12 @@ export function ServiceClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} layanan
           </Badge>

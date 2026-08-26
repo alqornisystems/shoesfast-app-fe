@@ -9,6 +9,7 @@ import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,11 +63,20 @@ type PaginationData = {
 const STORAGE_KEY_SEARCH = "penukaran_list_search"
 const STORAGE_KEY_PAGE = "penukaran_list_page"
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal" },
+  { value: "points_spent", label: "Poin" },
+  { value: "status", label: "Status" },
+  { value: "code", label: "Kode" },
+]
+
 export function RedemptionClient() {
   const [rows, setRows] = useState<Redemption[]>([])
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [status, setStatus] = useState("semua")
   const [pagination, setPagination] = useState<PaginationData>({
     current_page: 1,
@@ -93,6 +103,10 @@ export function RedemptionClient() {
           ...(keyword ? { search: keyword } : {}),
           ...(statusFilter !== "semua" ? { status: statusFilter } : {}),
         })
+        if (sort !== "default") {
+          params.append("sort", sort)
+          params.append("order", order)
+        }
         const res = await api.get<{ data: Redemption[] } & PaginationData>(
           `/api/redemptions?${params}`
         )
@@ -113,7 +127,7 @@ export function RedemptionClient() {
         setLoading(false)
       }
     },
-    []
+    [sort, order]
   )
 
   useEffect(() => {
@@ -185,6 +199,12 @@ export function RedemptionClient() {
             </SelectContent>
           </Select>
 
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} penukaran
           </Badge>

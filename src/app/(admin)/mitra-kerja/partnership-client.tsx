@@ -8,6 +8,7 @@ import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -73,6 +74,12 @@ const emptyForm: FormState = { name: "", phone: "", address: "", account_number:
 const STORAGE_KEY_SEARCH = "partnership_list_search"
 const STORAGE_KEY_PAGE = "partnership_list_page"
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama mitra" },
+  { value: "phone", label: "Nomor HP" },
+  { value: "created_at", label: "Waktu daftar" },
+]
+
 export function PartnershipClient() {
   const [partnerships, setPartnerships] = useState<Partnership[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -86,6 +93,8 @@ export function PartnershipClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -102,6 +111,11 @@ export function PartnershipClient() {
     try {
       const params = new URLSearchParams({ page: String(page), per_page: String(15) })
       if (search.trim()) params.append("search", search.trim())
+
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
 
       const res = await api.get<{
         data: Partnership[]
@@ -147,6 +161,11 @@ export function PartnershipClient() {
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
+
+  useEffect(() => {
+    fetchPartnerships(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   function openAdd() {
     setEditTarget(null)
@@ -244,6 +263,12 @@ export function PartnershipClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} mitra
           </Badge>

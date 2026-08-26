@@ -8,6 +8,7 @@ import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -112,6 +113,13 @@ type PaginationData = {
 const STORAGE_KEY_SEARCH = 'user_list_search'
 const STORAGE_KEY_PAGE = 'user_list_page'
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama" },
+  { value: "phone", label: "Nomor HP" },
+  { value: "role", label: "Jabatan" },
+  { value: "branch", label: "Cabang" },
+]
+
 export function UserClient() {
   const router = useRouter()
   const { branch } = useAuth()
@@ -129,6 +137,8 @@ export function UserClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -146,7 +156,7 @@ export function UserClient() {
     setLoading(true)
     try {
       const [usersRes, rolesRes, projectsRes] = await Promise.all([
-        api.get<any>(`/api/users?page=${page}&per_page=25`),
+        api.get<any>(`/api/users?page=${page}&per_page=25${sort !== "default" ? `&sort=${sort}&order=${order}` : ""}`),
         api.get<any>("/api/roles?per_page=1000"),
         api.get<any>("/api/projects?per_page=1000"),
       ])
@@ -188,6 +198,11 @@ export function UserClient() {
     if (!initialized) return
     sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
   }, [search])
+
+  useEffect(() => {
+    fetchUsers(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   function openAdd() {
     setEditTarget(null)
@@ -337,6 +352,12 @@ export function UserClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} karyawan
           </Badge>

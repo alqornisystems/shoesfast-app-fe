@@ -5,6 +5,7 @@ import { titleCase } from "@/lib/utils"
 import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -57,6 +58,12 @@ type PaginationData = {
 const STORAGE_KEY_SEARCH = "expense_op_list_search"
 const STORAGE_KEY_PAGE = "expense_op_list_page"
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama" },
+  { value: "nominal", label: "Nominal" },
+  { value: "note", label: "Catatan" },
+]
+
 export function ExpenseOperationalClient() {
   const [expenses, setExpenses] = useState<ExpenseOperational[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -69,6 +76,8 @@ export function ExpenseOperationalClient() {
   })
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -108,6 +117,11 @@ export function ExpenseOperationalClient() {
     return () => clearTimeout(timer)
   }, [search])
 
+  useEffect(() => {
+    fetchExpenses(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
+
   const fetchExpenses = async (page?: number) => {
     setIsLoading(true)
     try {
@@ -117,6 +131,10 @@ export function ExpenseOperationalClient() {
       })
 
       if (search) params.append("search", search)
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
 
       const result = await api.get<any>(`/api/expense-operationals?${params}`)
       setExpenses(result.data || [])
@@ -387,6 +405,12 @@ export function ExpenseOperationalClient() {
               className="pl-8 h-9"
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary">
             {pagination.total} pengeluaran
           </Badge>

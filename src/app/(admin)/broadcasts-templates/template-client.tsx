@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -76,6 +77,11 @@ type PaginationData = {
 const STORAGE_KEY_SEARCH = "broadcast_template_list_search"
 const STORAGE_KEY_PAGE = "broadcast_template_list_page"
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama template" },
+  { value: "created_at", label: "Waktu dibuat" },
+]
+
 export function TemplateClient() {
   const [templates, setTemplates] = useState<BroadcastTemplate[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -89,6 +95,8 @@ export function TemplateClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -110,6 +118,11 @@ export function TemplateClient() {
       if (searchQuery.trim()) {
         params.append('search', searchQuery.trim())
       }
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
+
       const json = await api.get<any>(`/api/broadcasts/templates?${params.toString()}`)
       setTemplates(json.data ?? [])
       setPagination({
@@ -147,6 +160,11 @@ export function TemplateClient() {
 
     return () => clearTimeout(timer)
   }, [search])
+
+  useEffect(() => {
+    fetchTemplates(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   function openAdd() {
     setEditTarget(null)
@@ -281,6 +299,12 @@ export function TemplateClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} template
           </Badge>

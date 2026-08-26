@@ -7,6 +7,7 @@ import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
@@ -76,6 +77,12 @@ type PaginationData = {
   to: number
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama" },
+  { value: "phone", label: "Nomor HP" },
+  { value: "created_at", label: "Waktu daftar" },
+]
+
 export function MemberClient() {
   const [customers, setCustomers] = useState<Customer[]>([])
   const [nonMembers, setNonMembers] = useState<Customer[]>([])
@@ -91,6 +98,8 @@ export function MemberClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
 
   const [addMemberDialogOpen, setAddMemberDialogOpen] = useState(false)
@@ -112,6 +121,11 @@ export function MemberClient() {
       if (searchQuery.trim()) {
         params.append('search', searchQuery.trim())
       }
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
+
       const json = await api.get<any>(`/api/customers?${params.toString()}`)
       setCustomers(json.data ?? [])
       setPagination({
@@ -237,6 +251,11 @@ export function MemberClient() {
     return () => clearTimeout(timer)
   }, [search])
 
+  useEffect(() => {
+    fetchCustomers(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
+
   // Search with debounce (for non-member dialog)
   useEffect(() => {
     if (!addMemberDialogOpen) return
@@ -289,6 +308,12 @@ export function MemberClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} member
           </Badge>

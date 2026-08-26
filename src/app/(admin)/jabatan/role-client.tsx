@@ -6,6 +6,7 @@ import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -58,6 +59,11 @@ type PaginationData = {
   to: number
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "name", label: "Nama jabatan" },
+  { value: "created_at", label: "Waktu dibuat" },
+]
+
 export function RoleClient() {
   const [roles, setRoles] = useState<Role[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
@@ -70,6 +76,8 @@ export function RoleClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
 
   // Dialog state
@@ -87,7 +95,7 @@ export function RoleClient() {
   async function fetchRoles(page = 1) {
     setLoading(true)
     try {
-      const json = await api.get<any>(`/api/roles?page=${page}&per_page=25`)
+      const json = await api.get<any>(`/api/roles?page=${page}&per_page=25${sort !== "default" ? `&sort=${sort}&order=${order}` : ""}`)
       setRoles(json.data ?? [])
       setPagination({
         current_page: json.current_page ?? 1,
@@ -120,6 +128,12 @@ export function RoleClient() {
     if (!initialized) return
     sessionStorage.setItem(STORAGE_KEY_SEARCH, search)
   }, [search, initialized])
+
+  useEffect(() => {
+    if (!initialized) return
+    fetchRoles(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   // Open add dialog
   function openAdd() {
@@ -205,6 +219,12 @@ export function RoleClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} jabatan
           </Badge>

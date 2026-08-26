@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -93,6 +94,12 @@ const STORAGE_KEY_SEARCH = 'broadcast_send_list_search'
 const STORAGE_KEY_PAGE = 'broadcast_send_list_page'
 const STORAGE_KEY_TAB = 'broadcast_send_list_tab'
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal kirim" },
+  { value: "status", label: "Status" },
+  { value: "created_at", label: "Waktu dibuat" },
+]
+
 export function SendClient() {
   const [activeTab, setActiveTab] = useState("send")
   const [initialized, setInitialized] = useState(false)
@@ -108,6 +115,8 @@ export function SendClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(false)
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
 
   // Send broadcast state
   const [templates, setTemplates] = useState<BroadcastTemplate[]>([])
@@ -136,6 +145,10 @@ export function SendClient() {
         page: String(page),
         per_page: '20',
       })
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
       const json = await api.get<any>(`/api/broadcasts?${params.toString()}`)
       setHistory(json.data ?? [])
       setPagination({
@@ -186,6 +199,11 @@ export function SendClient() {
     fetchHistory(savedPage)
     fetchTemplates()
   }, [])
+
+  useEffect(() => {
+    fetchHistory(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   // Persist active tab
   useEffect(() => {
@@ -542,7 +560,13 @@ export function SendClient() {
           <div className="rounded-xl border bg-card shadow-sm">
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
-              <Badge variant="secondary">
+              <SortPicker
+                sort={sort}
+                order={order}
+                onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+                options={SORT_OPTIONS}
+              />
+              <Badge variant="secondary" className="ml-auto">
                 {pagination.total} riwayat
               </Badge>
             </div>

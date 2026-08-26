@@ -9,6 +9,7 @@ import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { bacaKoordinat, posisiSekarang, tautanRute, urutkanTerdekat, MAKS_TITIK, type Titik } from "@/lib/route-utils"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -88,6 +89,13 @@ type Send = {
   created_at: number
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal kirim" },
+  { value: "customer", label: "Nama customer" },
+  { value: "courier", label: "Nama kurir" },
+  { value: "order_code", label: "Kode pesanan" },
+]
+
 export function DalamProsesClient() {
   const [sends, setSends] = useState<Send[]>([])
   const [menyusunRute, setMenyusunRute] = useState(false)
@@ -97,6 +105,8 @@ export function DalamProsesClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [selectedIds, setSelectedIds] = useState<number[]>([])
   // Endpoint ini kini paginator, sebentuk dengan /treatments. Tanpa state ini layar
@@ -122,6 +132,11 @@ export function DalamProsesClient() {
       // hasilnya tampak kosong.
       if (search.trim()) {
         params.append('search', search.trim())
+      }
+
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
       }
 
       const res = await api.get<Paginator>(`/api/sends/in-progress?${params.toString()}`)
@@ -152,6 +167,11 @@ export function DalamProsesClient() {
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
+
+  useEffect(() => {
+    fetchSends(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   function toggleSelection(id: number) {
     setSelectedIds(prev =>
@@ -371,6 +391,12 @@ export function DalamProsesClient() {
               <SelectItem value="1">Delivery</SelectItem>
             </SelectContent>
           </Select>
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {filteredSends.length} pengiriman
           </Badge>

@@ -7,6 +7,7 @@ import { titleCase, waLink } from "@/lib/utils"
 import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -55,6 +56,14 @@ type Send = {
   modified_at: number | null
 }
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal kirim" },
+  { value: "customer", label: "Nama customer" },
+  { value: "courier", label: "Nama kurir" },
+  { value: "order_code", label: "Kode pesanan" },
+  { value: "status", label: "Status" },
+]
+
 export function HistoriClient() {
   const [sends, setSends] = useState<Send[]>([])
   // Endpoint ini kini paginator, sebentuk dengan /treatments.
@@ -64,6 +73,8 @@ export function HistoriClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [startDate, setStartDate] = useState<string>("")
   const [endDate, setEndDate] = useState<string>("")
@@ -87,6 +98,11 @@ export function HistoriClient() {
       // halaman lain.
       if (search.trim()) {
         params.append('search', search.trim())
+      }
+
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
       }
 
       const res = await api.get<Paginator>(`/api/sends/history?${params.toString()}`)
@@ -138,6 +154,11 @@ export function HistoriClient() {
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
+
+  useEffect(() => {
+    fetchSends(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   function formatDate(timestamp: number): string {
     return new Date(timestamp * 1000).toLocaleDateString('id-ID', {
@@ -238,6 +259,12 @@ export function HistoriClient() {
 
       <div className="rounded-xl border bg-card shadow-sm">
         <div className="flex flex-wrap items-center gap-2 border-b px-3 py-3 sm:gap-3 sm:px-4">
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary">
             {filteredSends.length} pengiriman
           </Badge>

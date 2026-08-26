@@ -11,6 +11,7 @@ import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import {
   Dialog,
   DialogContent,
@@ -66,11 +67,18 @@ type PaginationData = {
 
 const STORAGE_KEY_PAGE = "klaim_list_page"
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal klaim" },
+  { value: "status", label: "Status" },
+]
+
 export function ClaimClient() {
   const [rows, setRows] = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [status, setStatus] = useState("semua")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [pagination, setPagination] = useState<PaginationData>({
     current_page: 1,
     last_page: 1,
@@ -95,6 +103,10 @@ export function ClaimClient() {
         per_page: "25",
         ...(statusFilter !== "semua" ? { status: statusFilter } : {}),
       })
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
+      }
       const res = await api.get<{ data: Claim[] } & PaginationData>(
         `/api/guarantee-claims?${params}`
       )
@@ -114,7 +126,7 @@ export function ClaimClient() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [sort, order])
 
   useEffect(() => {
     const savedPage = Number(sessionStorage.getItem(STORAGE_KEY_PAGE) ?? "1")
@@ -177,6 +189,12 @@ export function ClaimClient() {
             </SelectContent>
           </Select>
 
+          <SortPicker
+            sort={sort}
+            order={order}
+            onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+            options={SORT_OPTIONS}
+          />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} klaim
           </Badge>

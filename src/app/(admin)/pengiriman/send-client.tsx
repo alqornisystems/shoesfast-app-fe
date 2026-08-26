@@ -9,6 +9,7 @@ import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
+import { SortPicker, type SortOption } from "@/components/treatment-filters"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -110,6 +111,14 @@ const STORAGE_KEY_SEARCH = 'send_list_search'
 const STORAGE_KEY_PAGE = 'send_list_page'
 const STORAGE_KEY_TAB = 'send_list_tab'
 
+const SORT_OPTIONS: SortOption[] = [
+  { value: "date", label: "Tanggal kirim" },
+  { value: "customer", label: "Nama customer" },
+  { value: "courier", label: "Nama kurir" },
+  { value: "order_code", label: "Kode pesanan" },
+  { value: "status", label: "Status" },
+]
+
 export function SendClient() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"pickup" | "delivery">("pickup")
@@ -125,6 +134,8 @@ export function SendClient() {
   const [loading, setLoading] = useState(true)
   const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
+  const [sort, setSort] = useState("default")
+  const [order, setOrder] = useState<"asc" | "desc">("asc")
   const [initialized, setInitialized] = useState(false)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
 
@@ -150,6 +161,11 @@ export function SendClient() {
 
       if (search.trim()) {
         params.append('search', search.trim())
+      }
+
+      if (sort !== "default") {
+        params.append("sort", sort)
+        params.append("order", order)
       }
 
       const res = await api.get<any>(`/api/sends?${params.toString()}`)
@@ -203,6 +219,11 @@ export function SendClient() {
     }, 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  useEffect(() => {
+    fetchSends(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort, order])
 
   async function handleDelete() {
     if (!deleteTarget) return
@@ -345,6 +366,12 @@ export function SendClient() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
+              <SortPicker
+                sort={sort}
+                order={order}
+                onChange={(kolom, arah) => { setSort(kolom); setOrder(arah) }}
+                options={SORT_OPTIONS}
+              />
               <Badge variant="secondary" className="ml-auto">
                 {pagination.total} {activeTab === "pickup" ? "penjemputan" : "pengantaran"}
               </Badge>
