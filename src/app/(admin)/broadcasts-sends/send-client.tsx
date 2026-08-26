@@ -6,7 +6,7 @@ import { api } from "@/lib/api"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -82,7 +82,7 @@ type Recipient = {
 
 type PaginationData = {
   current_page: number
-  total_pages: number
+  last_page: number
   per_page: number
   total: number
 }
@@ -99,7 +99,7 @@ export function SendClient() {
   const [history, setHistory] = useState<BroadcastHistory[]>([])
   const [pagination, setPagination] = useState<PaginationData>({
     current_page: 1,
-    total_pages: 1,
+    last_page: 1,
     per_page: 20,
     total: 0,
   })
@@ -136,7 +136,7 @@ export function SendClient() {
       setHistory(json.data ?? [])
       setPagination(json.pagination ?? {
         current_page: 1,
-        total_pages: 1,
+        last_page: 1,
         per_page: 20,
         total: 0,
       })
@@ -629,11 +629,11 @@ export function SendClient() {
             {pagination.total > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3">
                 <div className="text-sm text-muted-foreground text-center sm:text-left">
-                  Halaman {pagination.current_page} dari {pagination.total_pages}
+                  Halaman {pagination.current_page} dari {pagination.last_page}
                 </div>
                 <SimplePagination
                   currentPage={pagination.current_page}
-                  totalPages={pagination.total_pages}
+                  totalPages={pagination.last_page}
                   onPageChange={(halaman) => fetchHistory(halaman)}
                 />
               </div>

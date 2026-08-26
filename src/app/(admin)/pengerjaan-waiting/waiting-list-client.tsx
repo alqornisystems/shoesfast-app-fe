@@ -7,7 +7,7 @@ import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
 
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"

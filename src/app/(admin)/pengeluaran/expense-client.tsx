@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import {
   Dialog,
   DialogContent,

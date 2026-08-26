@@ -6,7 +6,7 @@ import { api } from "@/lib/api"
 import { titleCase, waLink } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {

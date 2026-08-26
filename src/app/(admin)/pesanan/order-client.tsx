@@ -8,7 +8,7 @@ import { waLink, titleCase } from "@/lib/utils"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {

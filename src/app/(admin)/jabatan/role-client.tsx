@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react"
 import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {

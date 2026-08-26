@@ -6,7 +6,7 @@ import { Plus, Pencil, Trash2, Search, Loader2, Camera, X, Calculator } from "lu
 import { api } from "@/lib/api"
 
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"

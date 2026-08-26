@@ -7,7 +7,7 @@ import { api } from "@/lib/api"
 import { formatDate } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import {
   AlertDialog,
   AlertDialogAction,

@@ -6,7 +6,7 @@ import { api } from "@/lib/api"
 import { formatDate } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -103,7 +103,7 @@ export function PartnershipClient() {
 
       const res = await api.get<{
         data: Partnership[]
-        pagination: { current_page: number; per_page: number; total: number; total_pages: number }
+        pagination: { current_page: number; per_page: number; total: number; last_page: number }
       }>(`/api/partnerships?${params.toString()}`)
 
       const p = res.pagination
@@ -115,7 +115,7 @@ export function PartnershipClient() {
       setPartnerships(rows)
       setPagination({
         current_page: currentPage,
-        last_page: p?.total_pages ?? 1,
+        last_page: p?.last_page ?? 1,
         per_page: perPage,
         total,
         from: total === 0 ? 0 : (currentPage - 1) * perPage + 1,

@@ -6,7 +6,7 @@ import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { SimplePagination } from "@/components/report-pagination"
+import { SimplePagination } from "@/components/list-pagination"
 import {
   AlertDialog,
   AlertDialogAction,
