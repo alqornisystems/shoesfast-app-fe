@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 // Normalize phone number: remove leading 0 or 62
 function normalizePhone(phone: string): string {
@@ -68,7 +69,7 @@ type User = {
   roles_id: number
   role_name: string | null
   projects_id: number | null
-  project_name: string | null
+  branch_name: string | null
   payment_date: number | null
   account_number: number | null
   created_at: number | null
@@ -126,6 +127,7 @@ export function UserClient() {
   const [roles, setRoles] = useState<Role[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [initialized, setInitialized] = useState(false)
 
@@ -348,6 +350,7 @@ export function UserClient() {
               <TableHead className="hidden lg:table-cell">Email</TableHead>
               <TableHead className="hidden md:table-cell">Telepon</TableHead>
               <TableHead className="hidden xl:table-cell">Jabatan</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -360,12 +363,13 @@ export function UserClient() {
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-40" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : users.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 7 : 6} className="h-32 text-center text-muted-foreground">
                   Belum ada data karyawan.
                 </TableCell>
               </TableRow>
@@ -396,6 +400,7 @@ export function UserClient() {
                       {user.role_name || "-"}
                     </Badge>
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(user.branch_name) || "-"}</TableCell>}
                   <TableCell>
                     <div className="flex items-center justify-end gap-2 sm:gap-1">
                       <Button

@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 type BroadcastTemplate = {
   id: number
@@ -86,6 +87,7 @@ export function TemplateClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [initialized, setInitialized] = useState(false)
 
@@ -293,6 +295,7 @@ export function TemplateClient() {
                 <TableHead className="w-[300px]">Template</TableHead>
                 <TableHead className="w-24 text-center">Variabel</TableHead>
                 <TableHead className="w-20 text-center">Digunakan</TableHead>
+                {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
                 <TableHead className="w-24 text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
@@ -309,12 +312,13 @@ export function TemplateClient() {
                     </TableCell>
                     <TableCell className="text-center"><Skeleton className="h-4 w-16 mx-auto" /></TableCell>
                     <TableCell className="text-center"><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                    {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                     <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : templates.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={tampilCabang ? 6 : 5} className="h-32 text-center text-muted-foreground">
                     {search ? "Tidak ada template yang sesuai dengan pencarian." : "Belum ada template broadcast."}
                   </TableCell>
                 </TableRow>
@@ -344,6 +348,7 @@ export function TemplateClient() {
                     <TableCell className="text-center text-sm">
                       {template.broadcasts_count}x
                     </TableCell>
+                    {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(template.branch_name) || "-"}</TableCell>}
                     <TableCell>
                       <div className="flex items-center justify-end gap-2 sm:gap-1">
                         <Button

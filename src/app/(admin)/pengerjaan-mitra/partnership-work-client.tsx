@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 type Treatment = {
   id: number
@@ -60,6 +61,8 @@ type Treatment = {
   note: string | null
   done_at: number | null
   created_at: number
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type Partnership = {
@@ -94,6 +97,7 @@ export function PartnershipWorkClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [initialized, setInitialized] = useState(false)
 
@@ -439,6 +443,7 @@ export function PartnershipWorkClient() {
               <TableHead className="hidden xl:table-cell">Mitra</TableHead>
               <TableHead className="hidden lg:table-cell">Mulai</TableHead>
               <TableHead className="hidden md:table-cell">Estimasi Selesai</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -453,12 +458,13 @@ export function PartnershipWorkClient() {
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-8 w-24" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : treatments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 9 : 8} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <Package className="h-10 w-10 text-muted-foreground/50" />
                     <p>Tidak ada item dalam pengerjaan mitra.</p>
@@ -548,6 +554,7 @@ export function PartnershipWorkClient() {
                         {formatDate(treatment.date_end)}
                       </div>
                     </TableCell>
+                    {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(treatment.branch_name) || "-"}</TableCell>}
                     <TableCell>
                       <div className="flex items-center justify-end gap-2 sm:gap-1">
                         {treatment.status === 0 ? (

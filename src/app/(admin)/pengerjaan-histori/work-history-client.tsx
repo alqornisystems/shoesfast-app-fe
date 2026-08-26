@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Search, Loader2, Package, User, Calendar, CheckCircle2, Sparkles } from "lucide-react"
 import { api } from "@/lib/api"
 import { titleCase, waLink } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -44,6 +45,8 @@ type Treatment = {
   is_partnerships: number
   done_at: number | null
   created_at: number
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type PaginationData = {
@@ -89,6 +92,7 @@ export function WorkHistoryClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [filters, setFilters] = useState<TreatmentFilterValue>(FILTER_DEFAULT)
   const lewatiSatuPutaran = useRef(false)
@@ -271,6 +275,7 @@ export function WorkHistoryClient() {
               <TableHead className="hidden md:table-cell">Selesai</TableHead>
               <TableHead className="hidden lg:table-cell">Durasi</TableHead>
               <TableHead className="text-right">Harga</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -283,12 +288,13 @@ export function WorkHistoryClient() {
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : treatments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 8 : 7} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <CheckCircle2 className="h-10 w-10 text-muted-foreground/50" />
                     <p>Belum ada histori pengerjaan.</p>
@@ -367,6 +373,7 @@ export function WorkHistoryClient() {
                       {formatCurrency(treatment.price)}
                     </div>
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(treatment.branch_name) || "-"}</TableCell>}
                 </TableRow>
               ))
             )}

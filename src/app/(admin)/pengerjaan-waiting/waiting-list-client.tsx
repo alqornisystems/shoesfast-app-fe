@@ -37,6 +37,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { TreatmentFilters, type TreatmentFilterValue } from "@/components/treatment-filters"
 import { cn, titleCase, waLink } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 type Treatment = {
   id: number
@@ -64,6 +65,8 @@ type Treatment = {
   created_at: number
   previous_treatment_done_at: number | null
   is_first_treatment: boolean
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type Technician = {
@@ -108,6 +111,7 @@ export function WaitingListClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [filters, setFilters] = useState<TreatmentFilterValue>(FILTER_DEFAULT)
   const lewatiSatuPutaran = useRef(false)
@@ -500,6 +504,7 @@ export function WaitingListClient() {
               <TableHead className="hidden lg:table-cell">Dibuat</TableHead>
               <TableHead className="hidden md:table-cell">Estimasi</TableHead>
               <TableHead className="text-right">Harga</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -513,12 +518,13 @@ export function WaitingListClient() {
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : treatments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 9 : 8} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <CheckCircle2 className="h-10 w-10 text-muted-foreground/50" />
                     <p>Tidak ada item di waiting list.</p>
@@ -644,6 +650,7 @@ export function WaitingListClient() {
                       {formatCurrency(treatment.price)}
                     </div>
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(treatment.branch_name) || "-"}</TableCell>}
                 </TableRow>
                 )
               })

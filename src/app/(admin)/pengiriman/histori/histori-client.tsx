@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Search, History, Package, Phone, User, Filter, Calendar } from "lucide-react"
 import { api } from "@/lib/api"
 import { titleCase, waLink } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
@@ -49,7 +50,7 @@ type Send = {
   customer_address: string | null
   customer_maps: string | null
   item_name: string | null
-  project_name: string | null
+  branch_name: string | null
   created_at: number
   modified_at: number | null
 }
@@ -61,6 +62,7 @@ export function HistoriClient() {
     current_page: 1, last_page: 1, from: 0, to: 0, total: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [startDate, setStartDate] = useState<string>("")
@@ -250,6 +252,7 @@ export function HistoriClient() {
               <TableHead className="hidden lg:table-cell">Kurir</TableHead>
               <TableHead className="hidden md:table-cell">Tanggal</TableHead>
               <TableHead className="hidden xl:table-cell">Diselesaikan</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -262,11 +265,12 @@ export function HistoriClient() {
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-32" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                 </TableRow>
               ))
             ) : filteredSends.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 7 : 6} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <History className="h-10 w-10 text-muted-foreground/50" />
                     <p>Tidak ada histori pengiriman.</p>
@@ -319,6 +323,7 @@ export function HistoriClient() {
                       {send.modified_at ? formatDateTime(send.modified_at) : "-"}
                     </div>
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(send.branch_name) || "-"}</TableCell>}
                 </TableRow>
               ))
             )}

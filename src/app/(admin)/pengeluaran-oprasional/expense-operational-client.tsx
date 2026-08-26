@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
 import { Input } from "@/components/ui/input"
@@ -40,6 +41,8 @@ type ExpenseOperational = {
   nominal: number
   created_at: number
   updated_at: number
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type PaginationData = {
@@ -64,6 +67,7 @@ export function ExpenseOperationalClient() {
     from: 0,
     to: 0,
   })
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [initialized, setInitialized] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -396,6 +400,7 @@ export function ExpenseOperationalClient() {
               <TableHead>Dasar Biaya</TableHead>
               <TableHead className="text-right">Nominal</TableHead>
               <TableHead>Catatan</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-center">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -409,11 +414,12 @@ export function ExpenseOperationalClient() {
                   <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-16 mx-auto" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                 </TableRow>
               ))
             ) : expenses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 7 : 6} className="h-32 text-center text-muted-foreground">
                   Tidak ada data pengeluaran operasional
                 </TableCell>
               </TableRow>
@@ -439,6 +445,7 @@ export function ExpenseOperationalClient() {
                       )}
                     </p>
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(expense.branch_name) || "-"}</TableCell>}
                   <TableCell>
                     <div className="flex items-center justify-center gap-1">
                       <Button

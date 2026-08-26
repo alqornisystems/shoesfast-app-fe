@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Plus, Pencil, Trash2, Search, Loader2, UserCheck, Phone, MapPin, CreditCard } from "lucide-react"
 import { api } from "@/lib/api"
 import { formatDate, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -83,6 +84,7 @@ export function PartnershipClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [initialized, setInitialized] = useState(false)
 
@@ -257,6 +259,7 @@ export function PartnershipClient() {
               <TableHead className="hidden xl:table-cell">Rekening</TableHead>
               <TableHead className="hidden md:table-cell">Cabang</TableHead>
               <TableHead className="hidden lg:table-cell">Ditambahkan</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -271,12 +274,13 @@ export function PartnershipClient() {
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : partnerships.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 9 : 8} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <UserCheck className="h-10 w-10 text-muted-foreground/50" />
                     <p>Belum ada data mitra kerja.</p>
@@ -335,6 +339,7 @@ export function PartnershipClient() {
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                     {formatDate(partnership.created_at)}
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(partnership.branch_name) || "-"}</TableCell>}
                   <TableCell>
                     <div className="flex items-center justify-end gap-2 sm:gap-1">
                       <Button

@@ -7,6 +7,7 @@ import { Loader2, ShieldCheck } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { formatDate, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -50,6 +51,8 @@ type Claim = {
   status: number
   status_label: string
   date: number | null
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type PaginationData = {
@@ -66,6 +69,7 @@ const STORAGE_KEY_PAGE = "klaim_list_page"
 export function ClaimClient() {
   const [rows, setRows] = useState<Claim[]>([])
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [status, setStatus] = useState("semua")
   const [pagination, setPagination] = useState<PaginationData>({
     current_page: 1,
@@ -187,6 +191,7 @@ export function ClaimClient() {
               <TableHead className="hidden lg:table-cell">Keluhan</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden lg:table-cell">Tanggal</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -199,11 +204,12 @@ export function ClaimClient() {
                       <Skeleton className="h-5 w-full" />
                     </TableCell>
                   ))}
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                 </TableRow>
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center">
+                <TableCell colSpan={tampilCabang ? 8 : 7} className="py-12 text-center">
                   <ShieldCheck className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                   <p className="text-muted-foreground">
                     Belum ada klaim garansi.
@@ -252,6 +258,7 @@ export function ClaimClient() {
                   <TableCell className="hidden lg:table-cell">
                     {c.date ? formatDate(c.date) : "-"}
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(c.branch_name) || "-"}</TableCell>}
                   <TableCell className="text-right">
                     <Button
                       size="sm"

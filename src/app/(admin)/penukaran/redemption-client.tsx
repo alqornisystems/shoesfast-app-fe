@@ -5,6 +5,7 @@ import { Check, Loader2, Search, Ticket } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { formatDate, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -45,6 +46,8 @@ type Redemption = {
   status: number
   status_label: string
   date: number
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type PaginationData = {
@@ -62,6 +65,7 @@ const STORAGE_KEY_PAGE = "penukaran_list_page"
 export function RedemptionClient() {
   const [rows, setRows] = useState<Redemption[]>([])
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState("semua")
   const [pagination, setPagination] = useState<PaginationData>({
@@ -195,6 +199,7 @@ export function RedemptionClient() {
               <TableHead className="hidden md:table-cell">Poin</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden lg:table-cell">Tanggal</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -207,11 +212,12 @@ export function RedemptionClient() {
                       <Skeleton className="h-5 w-full" />
                     </TableCell>
                   ))}
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                 </TableRow>
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center">
+                <TableCell colSpan={tampilCabang ? 8 : 7} className="py-12 text-center">
                   <Ticket className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                   <p className="text-muted-foreground">
                     {search
@@ -245,6 +251,7 @@ export function RedemptionClient() {
                   <TableCell className="hidden lg:table-cell">
                     {formatDate(r.date)}
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(r.branch_name) || "-"}</TableCell>}
                   <TableCell className="text-right">
                     {r.status === 0 && (
                       <Button size="sm" onClick={() => setTarget(r)}>

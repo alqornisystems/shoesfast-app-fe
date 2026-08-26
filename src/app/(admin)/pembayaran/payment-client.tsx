@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
 type Payment = {
   id: number
@@ -71,7 +72,7 @@ type Payment = {
     nominal: number
     note: string | null
   } | null
-  project_name: string | null
+  branch_name: string | null
   created_at: number
 }
 
@@ -131,6 +132,7 @@ export function PaymentClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState("unpaid_partial")
   const [initialized, setInitialized] = useState(false)
@@ -472,6 +474,7 @@ export function PaymentClient() {
               <TableHead className="hidden md:table-cell">Dibayar</TableHead>
               <TableHead className="hidden sm:table-cell">Sisa</TableHead>
               <TableHead className="hidden lg:table-cell">Status</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -486,12 +489,13 @@ export function PaymentClient() {
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden sm:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-5 w-20" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : payments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 9 : 8} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <HandCoins className="h-10 w-10 text-muted-foreground/50" />
                     <p>Tidak ada data pembayaran.</p>
@@ -545,6 +549,7 @@ export function PaymentClient() {
                         {statusConfig.label}
                       </Badge>
                     </TableCell>
+                    {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(payment.branch_name) || "-"}</TableCell>}
                     <TableCell>
                       <div className="flex items-center justify-end gap-2 sm:gap-1">
                         {payment.credit > 0 ? (

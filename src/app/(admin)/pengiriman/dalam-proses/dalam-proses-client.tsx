@@ -5,6 +5,7 @@ import { Search, Loader2, CheckCircle2, Package, MapPin, Phone, Truck, User, Fil
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { formatCurrency, titleCase, waLink } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { bacaKoordinat, posisiSekarang, tautanRute, urutkanTerdekat, MAKS_TITIK, type Titik } from "@/lib/route-utils"
 import { Button } from "@/components/ui/button"
 import { SimplePagination } from "@/components/list-pagination"
@@ -83,7 +84,7 @@ type Send = {
   customer_address: string | null
   customer_maps: string | null
   item_name: string | null
-  project_name: string | null
+  branch_name: string | null
   created_at: number
 }
 
@@ -94,6 +95,7 @@ export function DalamProsesClient() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [memuatDetail, setMemuatDetail] = useState(false)
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [typeFilter, setTypeFilter] = useState<string>("all")
   const [selectedIds, setSelectedIds] = useState<number[]>([])
@@ -388,6 +390,7 @@ export function DalamProsesClient() {
               <TableHead>Customer</TableHead>
               <TableHead className="hidden lg:table-cell">Kurir</TableHead>
               <TableHead className="hidden md:table-cell">Tanggal</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -401,12 +404,13 @@ export function DalamProsesClient() {
                   <TableCell><Skeleton className="h-4 w-40" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : filteredSends.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 8 : 7} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <CheckCircle2 className="h-10 w-10 text-muted-foreground/50" />
                     <p>Tidak ada pengiriman dalam proses.</p>
@@ -493,6 +497,7 @@ export function DalamProsesClient() {
                         {formatDate(send.date)}
                       </div>
                     </TableCell>
+                    {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(send.branch_name) || "-"}</TableCell>}
                     <TableCell className="text-right">
                       <Button
                         size="sm"

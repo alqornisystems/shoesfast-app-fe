@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Plus, Pencil, Trash2, Search, Loader2, Calendar, Package, Truck } from "lucide-react"
 import { api } from "@/lib/api"
 import { waLink, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -62,7 +63,7 @@ type Order = {
     email: string | null
     address: string
   }
-  project_name: string | null
+  branch_name: string | null
   created_at: number
 }
 
@@ -107,6 +108,7 @@ export function OrderClient() {
     to: 0,
   })
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [initialized, setInitialized] = useState(false)
 
@@ -283,6 +285,7 @@ export function OrderClient() {
               <TableHead className="hidden md:table-cell">Tanggal</TableHead>
               <TableHead className="hidden xl:table-cell">Total</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -296,12 +299,13 @@ export function OrderClient() {
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                   <TableCell><Skeleton className="h-4 w-16 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : orders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 8 : 7} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <Package className="h-10 w-10 text-muted-foreground/50" />
                     <p>Belum ada data pesanan.</p>
@@ -378,6 +382,7 @@ export function OrderClient() {
                       {STATUS_LABELS[order.status]?.label || "Unknown"}
                     </span>
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(order.branch_name) || "-"}</TableCell>}
                   <TableCell>
                     <div className="flex items-center justify-end gap-2 sm:gap-1">
                       {order.status === 0 && !order.has_pickup && (

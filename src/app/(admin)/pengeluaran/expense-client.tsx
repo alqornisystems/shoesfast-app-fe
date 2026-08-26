@@ -36,7 +36,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Skeleton } from "@/components/ui/skeleton"
-import { cn } from "@/lib/utils"
+import { cn, titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { api } from "@/lib/api"
 
 type Expense = {
@@ -47,6 +48,8 @@ type Expense = {
   photo: string | null
   created_at: number
   updated_at: number
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type ExpenseItem = {
@@ -79,6 +82,7 @@ export function ExpenseClient() {
     from: 0,
     to: 0,
   })
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [initialized, setInitialized] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -731,6 +735,7 @@ export function ExpenseClient() {
               <TableHead>Bukti</TableHead>
               <TableHead>Catatan</TableHead>
               <TableHead className="text-right">Nominal</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="w-24 text-center">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -744,11 +749,12 @@ export function ExpenseClient() {
                   <TableCell><Skeleton className="h-4 w-48" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
                   <TableCell><Skeleton className="h-8 w-16 mx-auto" /></TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                 </TableRow>
               ))
             ) : expenses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={tampilCabang ? 7 : 6} className="h-32 text-center text-muted-foreground">
                   Tidak ada data pengeluaran
                 </TableCell>
               </TableRow>
@@ -782,6 +788,7 @@ export function ExpenseClient() {
                   <TableCell className="text-right font-semibold">
                     {formatCurrency(expense.nominal)}
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(expense.branch_name) || "-"}</TableCell>}
                   <TableCell>
                     <div className="flex items-center justify-center gap-1">
                       <Button

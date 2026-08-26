@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { titleCase } from "@/lib/utils"
+import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { Gift, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
@@ -56,6 +57,8 @@ type Reward = {
   points_cost: number
   photo: string | null
   is_active: number
+  /** Nama cabang pemilik baris ini; dipakai kolom Cabang saat melihat semua cabang. */
+  branch_name?: string | null
 }
 
 type Service = { id: number; name: string }
@@ -84,6 +87,7 @@ export function RewardClient() {
   const [rewards, setRewards] = useState<Reward[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
+  const tampilCabang = useKolomCabang()
   const [search, setSearch] = useState("")
   const [pagination, setPagination] = useState<PaginationData>({
     current_page: 1,
@@ -277,6 +281,7 @@ export function RewardClient() {
               <TableHead className="hidden md:table-cell">Layanan</TableHead>
               <TableHead>Poin</TableHead>
               <TableHead className="hidden sm:table-cell">Status</TableHead>
+              {tampilCabang && <TableHead className="hidden lg:table-cell">Cabang</TableHead>}
               <TableHead className="text-right">Aksi</TableHead>
             </TableRow>
           </TableHeader>
@@ -289,11 +294,12 @@ export function RewardClient() {
                       <Skeleton className="h-5 w-full" />
                     </TableCell>
                   ))}
+                  {tampilCabang && <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>}
                 </TableRow>
               ))
             ) : rewards.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-12 text-center">
+                <TableCell colSpan={tampilCabang ? 8 : 7} className="py-12 text-center">
                   <Gift className="mx-auto mb-2 h-8 w-8 text-muted-foreground" />
                   <p className="text-muted-foreground">
                     Belum ada hadiah. Tambahkan supaya pelanggan punya alasan
@@ -319,6 +325,7 @@ export function RewardClient() {
                       {r.is_active === 1 ? "Aktif" : "Nonaktif"}
                     </Badge>
                   </TableCell>
+                  {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(r.branch_name) || "-"}</TableCell>}
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
