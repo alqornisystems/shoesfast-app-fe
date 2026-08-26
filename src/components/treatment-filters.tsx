@@ -1,22 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowDownAZ, ArrowUpAZ, Check, ChevronsUpDown, Sparkles } from "lucide-react"
+import { ArrowDownAZ, ArrowUpAZ, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import {
   Select,
   SelectContent,
@@ -24,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { cn, titleCase } from "@/lib/utils"
 
 export type SortOption = {
   /** Nilai `sort` yang dikirim ke /api/treatments — harus ada di daftar putih SORTABLE backend. */
@@ -59,7 +46,6 @@ export function TreatmentFilters({
   sortOptions: SortOption[]
 }) {
   const [services, setServices] = useState<Service[]>([])
-  const [layananTerbuka, setLayananTerbuka] = useState(false)
 
   useEffect(() => {
     let batal = false
@@ -83,67 +69,25 @@ export function TreatmentFilters({
     }
   }, [])
 
-  const terpilih = services.find((service) => String(service.id) === value.servicesId)
 
-  function pilihLayanan(servicesId: string) {
-    setLayananTerbuka(false)
-    onChange({ ...value, servicesId })
-  }
 
   return (
     <>
-      {/* Combobox, bukan Select biasa: daftar layanan tumbuh terus dan menggulir
-          puluhan baris untuk mencari "repaint" lebih lambat daripada mengetiknya. */}
-      <Popover open={layananTerbuka} onOpenChange={setLayananTerbuka}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={layananTerbuka}
-            className="h-9 w-full justify-between font-normal sm:w-[190px]"
-          >
-            <span className="flex min-w-0 items-center gap-2">
-              <Sparkles className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-              <span className="truncate capitalize">{titleCase(terpilih?.name) || "Semua Layanan"}</span>
-            </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[240px] p-0" align="start">
-          <Command>
-            <CommandInput placeholder="Cari layanan..." />
-            <CommandList>
-              <CommandEmpty>Layanan tidak ditemukan.</CommandEmpty>
-              <CommandGroup>
-                <CommandItem value="Semua Layanan" onSelect={() => pilihLayanan("all")}>
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value.servicesId === "all" ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  Semua Layanan
-                </CommandItem>
-                {services.map((service) => (
-                  <CommandItem
-                    key={service.id}
-                    value={service.name}
-                    onSelect={() => pilihLayanan(String(service.id))}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        value.servicesId === String(service.id) ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                    <span className="capitalize">{titleCase(service.name)}</span>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      {/* Daftar layanan tumbuh terus; menggulir puluhan baris untuk mencari "repaint"
+          lebih lambat daripada mengetiknya. */}
+      <ComboboxPilih
+        value={value.servicesId}
+        onChange={(servicesId) => onChange({ ...value, servicesId })}
+        options={[
+          { value: "all", label: "Semua Layanan" },
+          ...services.map((service) => ({ value: String(service.id), label: service.name })),
+        ]}
+        placeholder="Semua Layanan"
+        searchPlaceholder="Cari layanan..."
+        emptyText="Layanan tidak ditemukan."
+        className="h-9 capitalize sm:w-[190px]"
+        icon={<Sparkles className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+      />
 
       <SortPicker
         sort={value.sort}

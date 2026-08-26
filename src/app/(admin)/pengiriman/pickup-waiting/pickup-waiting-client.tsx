@@ -35,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Label } from "@/components/ui/label"
 
@@ -458,38 +459,18 @@ export function PickupWaitingClient() {
               <Label htmlFor="courier" className="text-sm font-semibold">
                 Pilih Kurir <span className="text-destructive">*</span>
               </Label>
-              <Select
+              <ComboboxPilih
                 value={selectedCourierId}
-                onValueChange={setSelectedCourierId}
-                disabled={!isAdmin}
-              >
-                <SelectTrigger className="h-11">
-                  <SelectValue placeholder="-- Pilih Kurir --" />
-                </SelectTrigger>
-                <SelectContent>
-                  {couriers.length === 0 ? (
-                    <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                      Tidak ada kurir tersedia
-                    </div>
-                  ) : (
-                    couriers.map((courier) => (
-                      <SelectItem key={courier.id} value={String(courier.id)}>
-                        <div className="flex items-start gap-2 py-1">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold text-xs">
-                            {courier.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-medium">{titleCase(courier.name)}</div>
-                            {courier.phone && (
-                              <div className="text-xs text-muted-foreground">{courier.phone}</div>
-                            )}
-                          </div>
-                        </div>
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
+                onChange={setSelectedCourierId}
+                options={couriers.map((courier) => ({
+                  value: String(courier.id),
+                  label: titleCase(courier.name),
+                  hint: courier.phone,
+                }))}
+                placeholder="-- Pilih Kurir --"
+                searchPlaceholder="Cari kurir..."
+                emptyText="Tidak ada kurir tersedia."
+              />
             </div>
 
             {/* Date Selection */}

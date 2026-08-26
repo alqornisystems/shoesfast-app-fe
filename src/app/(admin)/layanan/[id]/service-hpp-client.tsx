@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import {
   Table,
   TableBody,
@@ -420,21 +421,13 @@ function HppTable({ items, category, onUpdate, onDelete, isLabor = false }: HppT
                     className="h-9"
                   />
                 ) : (
-                  <Select
-                    value={item.unit}
-                    onValueChange={(value) => onUpdate(category, index, 'unit', value)}
-                  >
-                    <SelectTrigger className="h-9">
-                      <SelectValue placeholder="Pilih satuan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SATUAN_BARANG.map((satuan) => (
-                        <SelectItem key={satuan} value={satuan}>
-                          {satuan}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <ComboboxPilih
+                value={item.unit}
+                onChange={(value) => onUpdate(category, index, 'unit', value)}
+                options={[...SATUAN_BARANG.map((satuan) => ({ value: satuan, label: satuan }))]}
+                placeholder="Pilih satuan"
+                searchPlaceholder="Cari satuan"
+              />
                 )}
               </TableCell>
               <TableCell>

@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TreatmentFilters, type TreatmentFilterValue } from "@/components/treatment-filters"
 import { cn, titleCase, waLink } from "@/lib/utils"
@@ -743,38 +744,18 @@ export function WaitingListClient() {
                 <Label htmlFor="technician" className="text-sm font-semibold">
                   Pilih Teknisi <span className="text-destructive">*</span>
                 </Label>
-                <Select
+                <ComboboxPilih
                   value={selectedTechnicianId}
-                  onValueChange={setSelectedTechnicianId}
-                  disabled={!isAdmin}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="-- Pilih Teknisi --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {technicians.length === 0 ? (
-                      <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                        Tidak ada teknisi tersedia
-                      </div>
-                    ) : (
-                      technicians.map((tech) => (
-                        <SelectItem key={tech.id} value={String(tech.id)}>
-                          <div className="flex items-start gap-2 py-1">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 font-semibold text-xs">
-                              {tech.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-medium">{titleCase(tech.name)}</div>
-                              {tech.phone && (
-                                <div className="text-xs text-muted-foreground">{tech.phone}</div>
-                              )}
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                  onChange={setSelectedTechnicianId}
+                  options={technicians.map((tech) => ({
+                    value: String(tech.id),
+                    label: titleCase(tech.name),
+                    hint: tech.phone,
+                  }))}
+                  placeholder="-- Pilih Teknisi --"
+                  searchPlaceholder="Cari teknisi..."
+                  emptyText="Tidak ada teknisi tersedia."
+                />
               </div>
             )}
 
@@ -784,37 +765,18 @@ export function WaitingListClient() {
                 <Label htmlFor="partner" className="text-sm font-semibold">
                   Pilih Mitra <span className="text-destructive">*</span>
                 </Label>
-                <Select
+                <ComboboxPilih
                   value={selectedPartnerId}
-                  onValueChange={setSelectedPartnerId}
-                >
-                  <SelectTrigger className="h-11">
-                    <SelectValue placeholder="-- Pilih Mitra --" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {partners.length === 0 ? (
-                      <div className="px-2 py-6 text-center text-sm text-muted-foreground">
-                        Tidak ada mitra tersedia
-                      </div>
-                    ) : (
-                      partners.map((partner) => (
-                        <SelectItem key={partner.id} value={String(partner.id)}>
-                          <div className="flex items-start gap-2 py-1">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-orange-600 font-semibold text-xs">
-                              {partner.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                              <div className="font-medium">{titleCase(partner.name)}</div>
-                              {partner.phone && (
-                                <div className="text-xs text-muted-foreground">{partner.phone}</div>
-                              )}
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                  onChange={setSelectedPartnerId}
+                  options={partners.map((partner) => ({
+                    value: String(partner.id),
+                    label: titleCase(partner.name),
+                    hint: partner.phone,
+                  }))}
+                  placeholder="-- Pilih Mitra --"
+                  searchPlaceholder="Cari mitra..."
+                  emptyText="Tidak ada mitra tersedia."
+                />
               </div>
             )}
 

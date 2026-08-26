@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
@@ -192,39 +193,23 @@ export default function LaporanCatatanHarianPage() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <Label>Bulan</Label>
-              <Select
+              <ComboboxPilih
                 value={currentMonth.toString()}
-                onValueChange={(value) => setCurrentMonth(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {months.map((month) => (
-                    <SelectItem key={month.value} value={month.value}>
-                      {month.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => setCurrentMonth(parseInt(value))}
+                options={[...months.map((month) => ({ value: month.value, label: month.label }))]}
+                placeholder="Pilih..."
+                searchPlaceholder="Pilih..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Tahun</Label>
-              <Select
+              <ComboboxPilih
                 value={currentYear.toString()}
-                onValueChange={(value) => setCurrentYear(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => setCurrentYear(parseInt(value))}
+                options={[...years.map((year) => ({ value: year.toString(), label: year.toString() }))]}
+                placeholder="Pilih..."
+                searchPlaceholder="Pilih..."
+              />
             </div>
             <div className="space-y-2">
               <Label className="invisible">Action</Label>

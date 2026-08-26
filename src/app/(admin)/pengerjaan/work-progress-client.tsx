@@ -38,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { cn, titleCase, waLink } from "@/lib/utils"
 import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 
@@ -901,18 +902,13 @@ export function WorkProgressClient() {
               <Label htmlFor="technician" className="text-sm font-semibold">
                 Teknisi
               </Label>
-              <Select value={editTechnicianId} onValueChange={setEditTechnicianId}>
-                <SelectTrigger id="technician">
-                  <SelectValue placeholder="Pilih teknisi..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {technicians.map((tech) => (
-                    <SelectItem key={tech.id} value={String(tech.id)}>
-                      {titleCase(tech.name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ComboboxPilih
+                value={editTechnicianId}
+                onChange={setEditTechnicianId}
+                options={[...technicians.map((tech) => ({ value: String(tech.id), label: titleCase(tech.name) }))]}
+                placeholder="Pilih teknisi..."
+                searchPlaceholder="Cari teknisi..."
+              />
             </div>
 
             {/* Date End Input */}

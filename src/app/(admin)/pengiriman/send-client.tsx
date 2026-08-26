@@ -48,6 +48,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Skeleton } from "@/components/ui/skeleton"
 
 type Send = {
@@ -617,18 +618,13 @@ export function SendClient() {
               <Label htmlFor="courier" className="text-sm font-semibold">
                 Kurir
               </Label>
-              <Select value={editCourierId} onValueChange={setEditCourierId}>
-                <SelectTrigger id="courier">
-                  <SelectValue placeholder="Pilih kurir..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {couriers.map((courier) => (
-                    <SelectItem key={courier.id} value={String(courier.id)}>
-                      {titleCase(courier.name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ComboboxPilih
+                value={editCourierId}
+                onChange={setEditCourierId}
+                options={[...couriers.map((courier) => ({ value: String(courier.id), label: titleCase(courier.name) }))]}
+                placeholder="Pilih kurir..."
+                searchPlaceholder="Cari kurir..."
+              />
             </div>
 
             {/* Status Select */}

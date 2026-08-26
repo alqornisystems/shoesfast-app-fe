@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 
@@ -229,27 +230,18 @@ export default function EditPengirimanPage() {
               <Label htmlFor="users_id">
                 Kurir <span className="text-destructive">*</span>
               </Label>
-              <Select
+              <ComboboxPilih
                 value={formData.users_id}
-                onValueChange={(value) => setFormData({ ...formData, users_id: value })}
-              >
-                <SelectTrigger id="users_id">
-                  <SelectValue placeholder="Pilih kurir" />
-                </SelectTrigger>
-                <SelectContent>
-                  {couriers.map((courier) => (
-                    <SelectItem key={courier.id} value={String(courier.id)}>
-                      <div className="flex items-center gap-2">
-                        <User className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span>{titleCase(courier.name)}</span>
-                        {courier.phone && (
-                          <span className="text-xs text-muted-foreground">({courier.phone})</span>
-                        )}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => setFormData({ ...formData, users_id: value })}
+                options={couriers.map((courier) => ({
+                  value: String(courier.id),
+                  label: titleCase(courier.name),
+                  hint: courier.phone,
+                }))}
+                placeholder="Pilih kurir"
+                searchPlaceholder="Cari kurir..."
+                emptyText="Tidak ada kurir tersedia."
+              />
             </div>
 
             <div className="space-y-2">

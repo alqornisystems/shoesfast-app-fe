@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Calendar, Download, CheckCircle, Clock, XCircle, FileCheck } from "lucide-react"
 import { toast } from "sonner"
 import { format, getDaysInMonth, getDay } from "date-fns"
@@ -405,19 +406,13 @@ export default function LaporanAbsensiPage() {
             </div>
             <div className="space-y-2">
               <Label>Jabatan</Label>
-              <Select value={selectedRole || "all"} onValueChange={(value) => setSelectedRole(value === "all" ? "" : value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Semua Jabatan" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Jabatan</SelectItem>
-                  {roles.map((role) => (
-                    <SelectItem key={role} value={role}>
-                      {role}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ComboboxPilih
+                value={selectedRole || "all"}
+                onChange={(value) => setSelectedRole(value === "all" ? "" : value)}
+                options={[{ value: "all", label: "Semua Jabatan" }, ...roles.map((role) => ({ value: role, label: role }))]}
+                placeholder="Semua Jabatan"
+                searchPlaceholder="Cari Jabatan"
+              />
             </div>
             <div className="space-y-2">
               <Label>Nama Perusahaan</Label>

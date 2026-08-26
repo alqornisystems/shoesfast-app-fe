@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import {
   Command,
   CommandEmpty,
@@ -679,22 +680,14 @@ export function EditOrderClient() {
                               ) : (
                                 <div className="inline-flex items-center gap-2">
                                   <UserCog className="h-3.5 w-3.5 text-green-700" />
-                                  <Select
-                                    value=""
-                                    onValueChange={(value) => handleAssignDelivery(item.id, value)}
-                                    disabled={assigningDelivery === item.id}
-                                  >
-                                    <SelectTrigger className="h-7 text-xs w-40 bg-green-50 border-green-200">
-                                      <SelectValue placeholder="Pilih Kurir" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {couriers.map((courier) => (
-                                        <SelectItem key={courier.id} value={String(courier.id)}>
-                                          {titleCase(courier.name)}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                  <ComboboxPilih
+                value=""
+                onChange={(value) => handleAssignDelivery(item.id, value)}
+                disabled={assigningDelivery === item.id}
+                options={[...couriers.map((courier) => ({ value: String(courier.id), label: titleCase(courier.name) }))]}
+                placeholder="Pilih Kurir"
+                searchPlaceholder="Cari Kurir"
+              />
                                   {assigningDelivery === item.id && (
                                     <Loader2 className="h-3.5 w-3.5 animate-spin text-green-700" />
                                   )}
@@ -741,22 +734,14 @@ export function EditOrderClient() {
                                 {treatment.status === 0 && !treatment.users_id ? (
                                   <div className="flex items-center gap-2">
                                     <UserCog className="h-4 w-4 text-muted-foreground shrink-0" />
-                                    <Select
-                                      value=""
-                                      onValueChange={(value) => handleAssignTechnician(treatment.id, value)}
-                                      disabled={assigningTreatment === treatment.id}
-                                    >
-                                      <SelectTrigger className="h-8 text-xs flex-1">
-                                        <SelectValue placeholder="Pilih Teknisi" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {technicians.map((tech) => (
-                                          <SelectItem key={tech.id} value={String(tech.id)}>
-                                            {titleCase(tech.name)}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    <ComboboxPilih
+                value=""
+                onChange={(value) => handleAssignTechnician(treatment.id, value)}
+                disabled={assigningTreatment === treatment.id}
+                options={[...technicians.map((tech) => ({ value: String(tech.id), label: titleCase(tech.name) }))]}
+                placeholder="Pilih Teknisi"
+                searchPlaceholder="Cari Teknisi"
+              />
                                     {assigningTreatment === treatment.id && (
                                       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
                                     )}

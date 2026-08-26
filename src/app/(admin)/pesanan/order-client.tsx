@@ -45,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
 
@@ -497,21 +498,13 @@ export function OrderClient() {
           <div className="space-y-4 py-4">
             <div className="space-y-1.5">
               <Label htmlFor="pickup-courier">Pilih Kurir</Label>
-              <Select
+              <ComboboxPilih
                 value={selectedCourierId}
-                onValueChange={setSelectedCourierId}
-              >
-                <SelectTrigger id="pickup-courier">
-                  <SelectValue placeholder="Pilih kurir untuk pickup" />
-                </SelectTrigger>
-                <SelectContent>
-                  {couriers.map((courier) => (
-                    <SelectItem key={courier.id} value={String(courier.id)}>
-                      {titleCase(courier.name)} - {courier.phone}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={setSelectedCourierId}
+                options={[...couriers.map((courier) => ({ value: String(courier.id), label: titleCase(courier.name), hint: courier.phone }))]}
+                placeholder="Pilih kurir untuk pickup"
+                searchPlaceholder="Cari kurir untuk pickup"
+              />
             </div>
             <div className="text-sm text-muted-foreground">
               Kurir akan ditugaskan untuk mengambil pesanan dari customer.

@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import {
   Dialog,
   DialogContent,
@@ -937,21 +938,13 @@ export function OrderFormClient() {
                 <div className="space-y-2">
                   {itemForm.services.map((svc, idx) => (
                     <div key={idx} className="flex items-center gap-2">
-                      <Select
-                        value={String(svc.services_id)}
-                        onValueChange={(v) => updateService(idx, Number(v))}
-                      >
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Pilih layanan" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {services.map((service) => (
-                            <SelectItem key={service.id} value={String(service.id)}>
-                              {titleCase(service.name)} - {formatCurrency(service.price)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <ComboboxPilih
+                value={String(svc.services_id)}
+                onChange={(v) => updateService(idx, Number(v))}
+                options={[...services.map((service) => ({ value: String(service.id), label: titleCase(service.name), hint: formatCurrency(service.price) }))]}
+                placeholder="Pilih layanan"
+                searchPlaceholder="Cari layanan"
+              />
                       <Button
                         type="button"
                         size="icon"

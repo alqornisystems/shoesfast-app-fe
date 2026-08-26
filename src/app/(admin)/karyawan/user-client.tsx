@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import {
   Table,
   TableBody,
@@ -573,49 +574,31 @@ export function UserClient() {
 
                 <div className="space-y-1.5">
                   <Label htmlFor="roles_id">Jabatan <span className="text-destructive">*</span></Label>
-                  <Select
-                    value={form.roles_id}
-                    onValueChange={(v) => {
+                  <ComboboxPilih
+                value={form.roles_id}
+                onChange={(v) => {
                       setForm({ ...form, roles_id: v })
                       setErrors({ ...errors, roles_id: undefined })
                     }}
-                  >
-                    <SelectTrigger className={cn(errors.roles_id && "border-destructive")}>
-                      <SelectValue placeholder="Pilih jabatan" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {roles.map((r) => (
-                        <SelectItem key={r.id} value={String(r.id)}>
-                          {titleCase(r.name)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                options={[...roles.map((r) => ({ value: String(r.id), label: titleCase(r.name) }))]}
+                placeholder="Pilih jabatan"
+                searchPlaceholder="Cari jabatan"
+              />
                   {errors.roles_id && <p className="text-xs text-destructive">{errors.roles_id}</p>}
                 </div>
 
                 <div className="space-y-1.5">
                   <Label htmlFor="projects_id">Penempatan Cabang</Label>
-                  <Select
-                    value={form.projects_id || "none"}
-                    onValueChange={(v) => {
+                  <ComboboxPilih
+                value={form.projects_id || "none"}
+                onChange={(v) => {
                       setForm({ ...form, projects_id: v === "none" ? "" : v })
                       setErrors({ ...errors, projects_id: undefined })
                     }}
-                    disabled={branch?.active_id !== null}
-                  >
-                    <SelectTrigger className={cn(errors.projects_id && "border-destructive")}>
-                      <SelectValue placeholder="Pilih cabang" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Tidak ada</SelectItem>
-                      {projects.map((p) => (
-                        <SelectItem key={p.id} value={String(p.id)}>
-                          {titleCase(p.name)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                options={[{ value: "none", label: "Tidak ada" }, ...projects.map((p) => ({ value: String(p.id), label: titleCase(p.name) }))]}
+                placeholder="Pilih cabang"
+                searchPlaceholder="Cari cabang"
+              />
                   {errors.projects_id && <p className="text-xs text-destructive">{errors.projects_id}</p>}
                   {branch && branch.active_id !== null && (
                     <p className="text-xs text-muted-foreground">

@@ -13,6 +13,7 @@ import { toast } from "sonner"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, fromUnixTime, addMonths, subMonths } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { api } from "@/lib/api"
 
 interface Holiday {
@@ -359,22 +360,13 @@ export default function KalenderLiburPage() {
 
               <div className="space-y-2">
                 <Label>Cabang (Kosongkan untuk semua cabang)</Label>
-                <Select
-                  value={formData.branch_id || "all"}
-                  onValueChange={(value) => setFormData({ ...formData, branch_id: value === "all" ? "" : value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih cabang atau kosongkan untuk semua" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Cabang</SelectItem>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id.toString()}>
-                        {titleCase(branch.name)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <ComboboxPilih
+                value={formData.branch_id || "all"}
+                onChange={(value) => setFormData({ ...formData, branch_id: value === "all" ? "" : value })}
+                options={[{ value: "all", label: "Semua Cabang" }, ...branches.map((branch) => ({ value: branch.id.toString(), label: titleCase(branch.name) }))]}
+                placeholder="Pilih cabang atau kosongkan untuk semua"
+                searchPlaceholder="Cari cabang atau kosongkan untuk semua"
+              />
               </div>
             </div>
             <DialogFooter>

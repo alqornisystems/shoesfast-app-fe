@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -432,23 +433,15 @@ export function RewardClient() {
             {form.type === 0 && (
               <div className="flex flex-col gap-1.5">
                 <Label>Layanan yang digratiskan</Label>
-                <Select
-                  value={form.services_id ? String(form.services_id) : ""}
-                  onValueChange={(v) =>
+                <ComboboxPilih
+                value={form.services_id ? String(form.services_id) : ""}
+                onChange={(v) =>
                     setForm({ ...form, services_id: Number(v) })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih layanan" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {services.map((s) => (
-                      <SelectItem key={s.id} value={String(s.id)}>
-                        {titleCase(s.name)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                options={[...services.map((s) => ({ value: String(s.id), label: titleCase(s.name) }))]}
+                placeholder="Pilih layanan"
+                searchPlaceholder="Cari layanan"
+              />
                 {errors.services_id && (
                   <p className="text-sm text-destructive">
                     {errors.services_id}

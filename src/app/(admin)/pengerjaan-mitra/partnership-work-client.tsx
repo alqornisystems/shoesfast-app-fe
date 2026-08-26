@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { ComboboxPilih } from "@/components/combobox-pilih"
 import { cn, titleCase } from "@/lib/utils"
 import { useKolomCabang } from "@/hooks/use-kolom-cabang"
 import { TreatmentFilters, type TreatmentFilterValue } from "@/components/treatment-filters"
@@ -864,18 +865,13 @@ export function PartnershipWorkClient() {
               <Label htmlFor="partnership" className="text-sm font-semibold">
                 Mitra Kerja
               </Label>
-              <Select value={editPartnershipId} onValueChange={setEditPartnershipId}>
-                <SelectTrigger id="partnership">
-                  <SelectValue placeholder="Pilih mitra..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {partnerships.map((partnership) => (
-                    <SelectItem key={partnership.id} value={String(partnership.id)}>
-                      {titleCase(partnership.name)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <ComboboxPilih
+                value={editPartnershipId}
+                onChange={setEditPartnershipId}
+                options={[...partnerships.map((partnership) => ({ value: String(partnership.id), label: titleCase(partnership.name) }))]}
+                placeholder="Pilih mitra..."
+                searchPlaceholder="Cari mitra..."
+              />
             </div>
 
             {/* Date End Input */}
