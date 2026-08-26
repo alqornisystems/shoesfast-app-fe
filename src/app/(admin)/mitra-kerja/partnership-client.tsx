@@ -103,26 +103,25 @@ export function PartnershipClient() {
 
       const res = await api.get<{
         data: Partnership[]
-        pagination: { current_page: number; per_page: number; total: number; last_page: number }
+        current_page: number
+        last_page: number
+        per_page: number
+        total: number
+        from: number | null
+        to: number | null
       }>(`/api/partnerships?${params.toString()}`)
 
-      const p = res.pagination
-      const perPage = p?.per_page ?? 15
-      const currentPage = p?.current_page ?? 1
-      const total = p?.total ?? 0
-      const rows = res.data ?? []
-
-      setPartnerships(rows)
+      setPartnerships(res.data ?? [])
       setPagination({
-        current_page: currentPage,
-        last_page: p?.last_page ?? 1,
-        per_page: perPage,
-        total,
-        from: total === 0 ? 0 : (currentPage - 1) * perPage + 1,
-        to: total === 0 ? 0 : (currentPage - 1) * perPage + rows.length,
+        current_page: res.current_page ?? 1,
+        last_page: res.last_page ?? 1,
+        per_page: res.per_page ?? 15,
+        total: res.total ?? 0,
+        from: res.from ?? 0,
+        to: res.to ?? 0,
       })
 
-      sessionStorage.setItem(STORAGE_KEY_PAGE, String(currentPage))
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(res.current_page ?? 1))
     } catch {
       setPartnerships([])
     } finally {

@@ -68,6 +68,8 @@ type PaginationData = {
   last_page: number
   per_page: number
   total: number
+  from: number
+  to: number
 }
 
 const STORAGE_KEY_SEARCH = "broadcast_template_list_search"
@@ -80,6 +82,8 @@ export function TemplateClient() {
     last_page: 1,
     per_page: 20,
     total: 0,
+    from: 0,
+    to: 0,
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -106,14 +110,15 @@ export function TemplateClient() {
       }
       const json = await api.get<any>(`/api/broadcasts/templates?${params.toString()}`)
       setTemplates(json.data ?? [])
-      const pag: PaginationData = json.pagination ?? {
-        current_page: 1,
-        last_page: 1,
-        per_page: 20,
-        total: 0,
-      }
-      setPagination(pag)
-      sessionStorage.setItem(STORAGE_KEY_PAGE, String(pag.current_page ?? 1))
+      setPagination({
+        current_page: json.current_page ?? 1,
+        last_page: json.last_page ?? 1,
+        per_page: json.per_page ?? 20,
+        total: json.total ?? 0,
+        from: json.from ?? 0,
+        to: json.to ?? 0,
+      })
+      sessionStorage.setItem(STORAGE_KEY_PAGE, String(json.current_page ?? 1))
     } catch {
       setTemplates([])
     } finally {
@@ -370,7 +375,7 @@ export function TemplateClient() {
         {pagination.total > 0 && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t px-4 py-3">
             <div className="text-sm text-muted-foreground text-center sm:text-left">
-              Halaman {pagination.current_page} dari {pagination.last_page} ({pagination.total} template)
+              Menampilkan {pagination.from} - {pagination.to} dari {pagination.total} template
             </div>
             <SimplePagination
               currentPage={pagination.current_page}
