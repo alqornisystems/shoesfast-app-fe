@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Search, Loader2, ChevronLeft, ChevronRight, Package, User, Calendar, CheckCircle2 } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Search, Loader2, ChevronLeft, ChevronRight, Package, User, Calendar, CheckCircle2, Sparkles } from "lucide-react"
 import { api } from "@/lib/api"
 import { titleCase, waLink } from "@/lib/utils"
 
@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TreatmentFilters, type TreatmentFilterValue } from "@/components/treatment-filters"
 
 type Treatment = {
   id: number
@@ -62,6 +63,19 @@ const STATUS_LABELS: Record<number, { label: string; variant: "default" | "secon
 
 const STORAGE_KEY_SEARCH = "work_history_list_search"
 const STORAGE_KEY_PAGE = "work_history_list_page"
+const STORAGE_KEY_FILTERS = "work_history_list_filters"
+
+const SORT_OPTIONS = [
+  { value: "done_at", label: "Tanggal selesai" },
+  { value: "service", label: "Nama treatment" },
+  { value: "item", label: "Nama barang" },
+  { value: "customer", label: "Nama customer" },
+  { value: "technician", label: "Nama teknisi" },
+  { value: "order_code", label: "Kode pesanan" },
+  { value: "price", label: "Harga" },
+]
+
+const FILTER_DEFAULT: TreatmentFilterValue = { servicesId: "all", sort: "default", order: "asc" }
 
 export function WorkHistoryClient() {
   const [treatments, setTreatments] = useState<Treatment[]>([])
@@ -75,6 +89,8 @@ export function WorkHistoryClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<TreatmentFilterValue>(FILTER_DEFAULT)
+  const lewatiSatuPutaran = useRef(false)
   const [initialized, setInitialized] = useState(false)
 
   function getImageUrl(photo: string | null): string | null {
@@ -87,7 +103,10 @@ export function WorkHistoryClient() {
     return `/${photo.startsWith('storage/') ? photo : `storage/${photo}`}`
   }
 
-  async function fetchTreatments(page = 1) {
+  // `filterDipakai` ada supaya pemulihan saat mount tidak menunggu setFilters selesai:
+  // nilai yang baru dibaca dari sessionStorage bisa langsung dikirim ke request pertama.
+  async function fetchTreatments(page = 1, filterDipakai?: TreatmentFilterValue) {
+    const dipakai = filterDipakai ?? filters
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -98,6 +117,15 @@ export function WorkHistoryClient() {
 
       if (search.trim()) {
         params.append('search', search.trim())
+      }
+
+      if (dipakai.servicesId !== "all") {
+        params.append('services_id', dipakai.servicesId)
+      }
+
+      if (dipakai.sort !== "default") {
+        params.append('sort', dipakai.sort)
+        params.append('order', dipakai.order)
       }
 
       const res = await api.get<any>(`/api/treatments?${params.toString()}`)
@@ -121,9 +149,24 @@ export function WorkHistoryClient() {
   useEffect(() => {
     const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ""
     const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || "1", 10)
+    let savedFilters: TreatmentFilterValue | null = null
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_FILTERS)
+      if (raw) savedFilters = { ...FILTER_DEFAULT, ...JSON.parse(raw) }
+    } catch {
+      savedFilters = null
+    }
+
     setSearch(savedSearch)
+    if (savedFilters) {
+      // Pemulihan ini mengubah `filters`, dan effect di bawah akan menyala karenanya.
+      // Penanda ini membuatnya melewati satu putaran, supaya daftarnya tidak diambil
+      // dua kali sekaligus kehilangan halaman yang barusan dipulihkan.
+      lewatiSatuPutaran.current = true
+      setFilters(savedFilters)
+    }
     setInitialized(true)
-    fetchTreatments(savedPage)
+    fetchTreatments(savedPage, savedFilters ?? FILTER_DEFAULT)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -136,6 +179,19 @@ export function WorkHistoryClient() {
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
+
+  useEffect(() => {
+    if (!initialized) return
+
+    if (lewatiSatuPutaran.current) {
+      lewatiSatuPutaran.current = false
+      return
+    }
+
+    sessionStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(filters))
+    fetchTreatments(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters])
 
   function formatDate(timestamp: number): string {
     return new Date(timestamp * 1000).toLocaleDateString('id-ID', {
@@ -198,6 +254,7 @@ export function WorkHistoryClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <TreatmentFilters value={filters} onChange={setFilters} sortOptions={SORT_OPTIONS} />
           <Badge variant="secondary" className="ml-auto">
             {pagination.total} item
           </Badge>
@@ -212,7 +269,6 @@ export function WorkHistoryClient() {
               <TableHead className="hidden xl:table-cell">Teknisi</TableHead>
               <TableHead className="hidden md:table-cell">Selesai</TableHead>
               <TableHead className="hidden lg:table-cell">Durasi</TableHead>
-              <TableHead className="hidden sm:table-cell">Status</TableHead>
               <TableHead className="text-right">Harga</TableHead>
             </TableRow>
           </TableHeader>
@@ -226,13 +282,12 @@ export function WorkHistoryClient() {
                   <TableCell className="hidden xl:table-cell"><Skeleton className="h-4 w-32" /></TableCell>
                   <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-24" /></TableCell>
                   <TableCell className="hidden lg:table-cell"><Skeleton className="h-4 w-20" /></TableCell>
-                  <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-24 ml-auto" /></TableCell>
                 </TableRow>
               ))
             ) : treatments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                   <div className="flex flex-col items-center gap-2">
                     <CheckCircle2 className="h-10 w-10 text-muted-foreground/50" />
                     <p>Belum ada histori pengerjaan.</p>
@@ -246,32 +301,41 @@ export function WorkHistoryClient() {
                     {pagination.from + idx}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start gap-3">
                       {getImageUrl(treatment.orders_items_photo) ? (
                         <img
                           src={getImageUrl(treatment.orders_items_photo)!}
                           alt={treatment.orders_items_name}
-                          className="h-12 w-12 rounded-lg object-cover border"
+                          className="h-14 w-14 rounded-lg object-cover border flex-shrink-0"
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted border">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-muted border flex-shrink-0">
                           <Package className="h-6 w-6 text-muted-foreground" />
                         </div>
                       )}
-                      <div className="min-w-0">
-                        <div className="font-medium text-sm">{treatment.orders_code}</div>
-                        <div className="text-sm text-muted-foreground truncate">
-                          {treatment.orders_items_name}
+                      <div className="min-w-0 space-y-1">
+                        <div className="font-bold text-sm">{titleCase(treatment.orders_items_name)}</div>
+                        <div className="flex items-center gap-1.5 text-sm font-semibold capitalize text-primary">
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{treatment.services_name}</span>
                         </div>
-                        <div className="text-xs text-muted-foreground capitalize">
-                          {treatment.services_name}
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {treatment.orders_code}
+                          </Badge>
+                          <Badge
+                            variant={STATUS_LABELS[treatment.status]?.variant || "outline"}
+                            className="text-xs"
+                          >
+                            {STATUS_LABELS[treatment.status]?.label || "Selesai"}
+                          </Badge>
                         </div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <div className="max-w-[200px]">
+                    <div className="max-w-[160px]">
                       {waLink(treatment.customers_phone) ? (
                         <a href={waLink(treatment.customers_phone, `Halo ${titleCase(treatment.customers_name)}, saya dari kurir Shoesfast mau konfirmasi beberapa hal.`) ?? "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline underline-offset-2 hover:text-green-800 truncate block">{titleCase(treatment.customers_name) || "-"}</a>
                       ) : (
@@ -296,11 +360,6 @@ export function WorkHistoryClient() {
                     <div className="text-sm text-muted-foreground">
                       {calculateDuration(treatment.date_start, treatment.done_at)}
                     </div>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
-                    <Badge variant={STATUS_LABELS[treatment.status]?.variant || "outline"}>
-                      {STATUS_LABELS[treatment.status]?.label || "Selesai"}
-                    </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="font-semibold text-sm">

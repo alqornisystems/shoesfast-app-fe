@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Search, Loader2, ChevronLeft, ChevronRight, Package, CheckCircle2, Clock, AlertCircle, XCircle, Calendar, Timer, CheckSquare, Pencil, Play, User } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Search, Loader2, ChevronLeft, ChevronRight, Package, CheckCircle2, Clock, AlertCircle, XCircle, Calendar, Timer, CheckSquare, Pencil, Play, User, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
@@ -28,6 +28,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TreatmentFilters, type TreatmentFilterValue } from "@/components/treatment-filters"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
@@ -40,6 +41,19 @@ import { cn, titleCase, waLink } from "@/lib/utils"
 
 const STORAGE_KEY_SEARCH = "work_progress_list_search"
 const STORAGE_KEY_PAGE = "work_progress_list_page"
+const STORAGE_KEY_FILTERS = "work_progress_list_filters"
+
+const SORT_OPTIONS = [
+  { value: "date_end", label: "Estimasi selesai" },
+  { value: "date_start", label: "Tanggal mulai" },
+  { value: "service", label: "Nama treatment" },
+  { value: "item", label: "Nama barang" },
+  { value: "customer", label: "Nama customer" },
+  { value: "technician", label: "Nama teknisi" },
+  { value: "order_code", label: "Kode pesanan" },
+]
+
+const FILTER_DEFAULT: TreatmentFilterValue = { servicesId: "all", sort: "default", order: "asc" }
 
 type Treatment = {
   id: number
@@ -88,6 +102,8 @@ export function WorkProgressClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<TreatmentFilterValue>(FILTER_DEFAULT)
+  const lewatiSatuPutaran = useRef(false)
   const [initialized, setInitialized] = useState(false)
 
   function getImageUrl(photo: string | null): string | null {
@@ -118,7 +134,10 @@ export function WorkProgressClient() {
   const [technicians, setTechnicians] = useState<any[]>([])
   const [updating, setUpdating] = useState(false)
 
-  async function fetchTreatments(page = 1) {
+  // `filterDipakai` ada supaya pemulihan saat mount tidak menunggu setFilters selesai:
+  // nilai yang baru dibaca dari sessionStorage bisa langsung dikirim ke request pertama.
+  async function fetchTreatments(page = 1, filterDipakai?: TreatmentFilterValue) {
+    const dipakai = filterDipakai ?? filters
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -129,6 +148,15 @@ export function WorkProgressClient() {
 
       if (search.trim()) {
         params.append('search', search.trim())
+      }
+
+      if (dipakai.servicesId !== "all") {
+        params.append('services_id', dipakai.servicesId)
+      }
+
+      if (dipakai.sort !== "default") {
+        params.append('sort', dipakai.sort)
+        params.append('order', dipakai.order)
       }
 
       const res = await api.get<any>(`/api/treatments?${params.toString()}`)
@@ -152,9 +180,24 @@ export function WorkProgressClient() {
   useEffect(() => {
     const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ""
     const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || "1", 10)
+    let savedFilters: TreatmentFilterValue | null = null
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_FILTERS)
+      if (raw) savedFilters = { ...FILTER_DEFAULT, ...JSON.parse(raw) }
+    } catch {
+      savedFilters = null
+    }
+
     setSearch(savedSearch)
+    if (savedFilters) {
+      // Pemulihan ini mengubah `filters`, dan effect di bawah akan menyala karenanya.
+      // Penanda ini membuatnya melewati satu putaran, supaya daftarnya tidak diambil
+      // dua kali sekaligus kehilangan halaman yang barusan dipulihkan.
+      lewatiSatuPutaran.current = true
+      setFilters(savedFilters)
+    }
     setInitialized(true)
-    fetchTreatments(savedPage)
+    fetchTreatments(savedPage, savedFilters ?? FILTER_DEFAULT)
   }, [])
 
   useEffect(() => {
@@ -165,6 +208,20 @@ export function WorkProgressClient() {
     }, 300)
     return () => clearTimeout(timer)
   }, [search])
+
+  useEffect(() => {
+    if (!initialized) return
+
+    if (lewatiSatuPutaran.current) {
+      lewatiSatuPutaran.current = false
+      return
+    }
+
+    sessionStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(filters))
+    setSelectedIds([])
+    fetchTreatments(1)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters])
 
   function toggleSelection(id: number) {
     setSelectedIds(prev =>
@@ -443,6 +500,7 @@ export function WorkProgressClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <TreatmentFilters value={filters} onChange={setFilters} sortOptions={SORT_OPTIONS} />
         </div>
 
         <Table>
@@ -526,6 +584,12 @@ export function WorkProgressClient() {
                         )}
                         <div className="min-w-0 space-y-1">
                           <div className="font-bold text-sm">{titleCase(treatment.orders_items_name)}</div>
+                          {/* Layanan ditonjolkan: pertanyaan pertama di halaman ini adalah
+                              "barang ini sedang diapakan", bukan nomor pesanannya. */}
+                          <div className="flex items-center gap-1.5 text-sm font-semibold capitalize text-primary">
+                            <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate">{treatment.services_name}</span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {treatment.orders_code}
@@ -536,9 +600,6 @@ export function WorkProgressClient() {
                             >
                               {treatment.status === 1 ? "Siap QC" : "Dikerjakan"}
                             </Badge>
-                          </div>
-                          <div className="text-xs text-muted-foreground capitalize">
-                            {treatment.services_name}
                           </div>
                         </div>
                       </div>

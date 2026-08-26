@@ -132,6 +132,14 @@ export const navGroups: NavGroup[] = [
         icon: Wrench,
         children: [
           {
+            title: "Dashboard Teknisi",
+            url: "/dashboard-teknisi",
+            icon: LayoutDashboard,
+            // Ringkasan antrean per jenis treatment — pintu masuk teknisi sebelum
+            // membuka waiting list.
+            roles: ['Admin Super', 'Admin', 'Teknisi', 'Kurir']
+          },
+          {
             title: "Waiting List",
             url: "/pengerjaan-waiting",
             icon: ClipboardList,

@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Search, Loader2, ChevronLeft, ChevronRight, UserPlus, Package, Clock, CheckCircle2, AlertTriangle, User } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { Search, Loader2, ChevronLeft, ChevronRight, UserPlus, Package, Clock, CheckCircle2, AlertTriangle, User, Calendar, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
@@ -34,6 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
+import { TreatmentFilters, type TreatmentFilterValue } from "@/components/treatment-filters"
 import { cn, titleCase, waLink } from "@/lib/utils"
 
 type Treatment = {
@@ -82,6 +83,18 @@ type PaginationData = {
 
 const STORAGE_KEY_SEARCH = 'waiting_list_search'
 const STORAGE_KEY_PAGE = 'waiting_list_page'
+const STORAGE_KEY_FILTERS = 'waiting_list_filters'
+
+const SORT_OPTIONS = [
+  { value: "created_at", label: "Masuk antrean" },
+  { value: "service", label: "Nama treatment" },
+  { value: "item", label: "Nama barang" },
+  { value: "customer", label: "Nama customer" },
+  { value: "order_code", label: "Kode pesanan" },
+  { value: "price", label: "Harga" },
+]
+
+const FILTER_DEFAULT: TreatmentFilterValue = { servicesId: "all", sort: "default", order: "asc" }
 
 export function WaitingListClient() {
   const [treatments, setTreatments] = useState<Treatment[]>([])
@@ -95,6 +108,8 @@ export function WaitingListClient() {
   })
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [filters, setFilters] = useState<TreatmentFilterValue>(FILTER_DEFAULT)
+  const lewatiSatuPutaran = useRef(false)
   const [initialized, setInitialized] = useState(false)
 
   const [selectedIds, setSelectedIds] = useState<number[]>([])
@@ -112,7 +127,10 @@ export function WaitingListClient() {
   const [partners, setPartners] = useState<any[]>([])
   const [assigning, setAssigning] = useState(false)
 
-  async function fetchTreatments(page = 1) {
+  // `filterDipakai` ada supaya pemulihan saat mount tidak menunggu setFilters selesai:
+  // nilai yang baru dibaca dari sessionStorage bisa langsung dikirim ke request pertama.
+  async function fetchTreatments(page = 1, filterDipakai?: TreatmentFilterValue) {
+    const dipakai = filterDipakai ?? filters
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -123,6 +141,15 @@ export function WaitingListClient() {
 
       if (search.trim()) {
         params.append('search', search.trim())
+      }
+
+      if (dipakai.servicesId !== "all") {
+        params.append('services_id', dipakai.servicesId)
+      }
+
+      if (dipakai.sort !== "default") {
+        params.append('sort', dipakai.sort)
+        params.append('order', dipakai.order)
       }
 
       const res = await api.get<any>(`/api/treatments?${params.toString()}`)
@@ -169,10 +196,38 @@ export function WaitingListClient() {
     const savedSearch = sessionStorage.getItem(STORAGE_KEY_SEARCH) || ''
     const savedPage = parseInt(sessionStorage.getItem(STORAGE_KEY_PAGE) || '1', 10)
 
+    let savedFilters: TreatmentFilterValue | null = null
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY_FILTERS)
+      if (raw) savedFilters = { ...FILTER_DEFAULT, ...JSON.parse(raw) }
+    } catch {
+      savedFilters = null
+    }
+
     setSearch(savedSearch)
+    if (savedFilters) {
+      // Pemulihan ini mengubah `filters`, dan effect di bawah akan menyala karenanya.
+      // Penanda ini membuatnya melewati satu putaran, supaya daftarnya tidak diambil
+      // dua kali sekaligus kehilangan halaman yang barusan dipulihkan.
+      lewatiSatuPutaran.current = true
+      setFilters(savedFilters)
+    }
     setInitialized(true)
-    fetchTreatments(savedPage)
+    fetchTreatments(savedPage, savedFilters ?? FILTER_DEFAULT)
   }, [])
+
+  useEffect(() => {
+    if (!initialized) return
+
+    if (lewatiSatuPutaran.current) {
+      lewatiSatuPutaran.current = false
+      return
+    }
+
+    sessionStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(filters))
+    setSelectedIds([])
+    fetchTreatments(1)
+  }, [filters])
 
   // Save search to sessionStorage and reset to page 1
   useEffect(() => {
@@ -401,6 +456,7 @@ export function WaitingListClient() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+          <TreatmentFilters value={filters} onChange={setFilters} sortOptions={SORT_OPTIONS} />
           {warningCounts.danger > 0 && (
             <Badge variant="destructive" className="gap-1">
               <AlertTriangle className="h-3 w-3" />
@@ -489,32 +545,45 @@ export function WaitingListClient() {
                     {pagination.from + idx}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-start gap-3">
                       {getImageUrl(treatment.orders_items_photo) ? (
                         <img
                           src={getImageUrl(treatment.orders_items_photo)!}
                           alt={treatment.orders_items_name}
-                          className="h-12 w-12 rounded-lg object-cover border"
+                          className="h-14 w-14 rounded-lg object-cover border flex-shrink-0"
                           loading="lazy"
                         />
                       ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted border">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-muted border flex-shrink-0">
                           <Package className="h-6 w-6 text-muted-foreground" />
                         </div>
                       )}
-                      <div className="min-w-0">
-                        <div className="font-bold text-base">{titleCase(treatment.orders_items_name)}</div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {treatment.orders_code}
+                      <div className="min-w-0 space-y-1">
+                        <div className="font-bold text-sm">{titleCase(treatment.orders_items_name)}</div>
+                        {/* Layanan ditonjolkan: pertanyaan pertama di halaman ini adalah
+                            "barang ini mau diapakan", bukan nomor pesanannya. */}
+                        <div className="flex items-center gap-1.5 text-sm font-semibold capitalize text-primary">
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{treatment.services_name}</span>
                         </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {treatment.orders_code}
+                          </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Menunggu
+                          </Badge>
+                        </div>
+                        {/* Kolom Customer disembunyikan di bawah lg, jadi namanya ikut di sini
+                            supaya baris tetap terbaca di layar kecil. */}
                         <div className="text-xs text-muted-foreground lg:hidden truncate">
-                          {treatment.customers_name}
+                          {titleCase(treatment.customers_name)}
                         </div>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <div className="max-w-[200px]">
+                    <div className="max-w-[160px]">
                       {waLink(treatment.customers_phone) ? (
                         <a href={waLink(treatment.customers_phone, `Halo ${titleCase(treatment.customers_name)}, saya dari kurir Shoesfast mau konfirmasi beberapa hal.`) ?? "#"} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-green-700 underline underline-offset-2 hover:text-green-800 truncate block">{titleCase(treatment.customers_name) || "-"}</a>
                       ) : (
@@ -530,10 +599,11 @@ export function WaitingListClient() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <div className="text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" />
                       {formatDate(treatment.created_at)}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-xs text-muted-foreground pl-5">
                       {(() => {
                         const now = Math.floor(Date.now() / 1000)
                         const referenceTime = treatment.is_first_treatment
@@ -545,7 +615,16 @@ export function WaitingListClient() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    {/* Padanan kolom "Estimasi Selesai" di Pengerjaan: di sana tanggal jatuh
+                        tempo, di sini lama pengerjaan — item ini belum ditugaskan, jadi
+                        tanggalnya belum ada. Pewarnaannya mengikuti tingkat keterlambatan
+                        antrean supaya bacanya sama. */}
+                    <div className={cn(
+                      "text-sm font-medium flex items-center gap-1.5",
+                      warningLevel === 'none' && "text-muted-foreground",
+                      warningLevel === 'danger' && "text-red-600",
+                      warningLevel === 'warning' && "text-yellow-600",
+                    )}>
                       <Clock className="h-3.5 w-3.5" />
                       {treatment.services_estimation} hari
                     </div>
