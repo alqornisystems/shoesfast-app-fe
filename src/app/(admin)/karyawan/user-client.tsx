@@ -397,7 +397,7 @@ export function UserClient() {
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
                     <Badge variant="outline" className="text-xs">
-                      {user.role_name || "-"}
+                      {titleCase(user.role_name) || "-"}
                     </Badge>
                   </TableCell>
                   {tampilCabang && <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">{titleCase(user.branch_name) || "-"}</TableCell>}

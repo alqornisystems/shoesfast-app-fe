@@ -685,11 +685,11 @@ export function SendClient() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-muted-foreground">Template</Label>
-                  <p className="font-medium">{detailData.template?.name || "-"}</p>
+                  <p className="font-medium">{titleCase(detailData.template?.name) || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Cabang</Label>
-                  <p className="font-medium">{detailData.branch_name || "-"}</p>
+                  <p className="font-medium">{titleCase(detailData.branch_name) || "-"}</p>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">Jumlah Penerima</Label>

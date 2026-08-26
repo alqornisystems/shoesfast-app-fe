@@ -486,7 +486,7 @@ export function SendFormClient() {
               </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Kurir</div>
-                <div className="font-medium">{selectedCourier?.name || "-"}</div>
+                <div className="font-medium">{titleCase(selectedCourier?.name) || "-"}</div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Tanggal</div>

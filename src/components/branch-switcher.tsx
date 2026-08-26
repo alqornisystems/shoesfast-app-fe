@@ -60,7 +60,7 @@ export function BranchSwitcher() {
           <div className="flex items-center gap-2">
             <Building2 className="h-4 w-4" />
             <span className="text-sm font-medium truncate">
-              {branch?.active_name || "Semua Cabang"}
+              {titleCase(branch?.active_name) || "Semua Cabang"}
             </span>
           </div>
           <ChevronDown className="h-3.5 w-3.5 opacity-50" />

@@ -343,7 +343,7 @@ export function DeliveryWaitingClient() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-sm">{item.customer_name || "-"}</div>
+                      <div className="font-medium text-sm">{titleCase(item.customer_name) || "-"}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         <Phone className="h-3 w-3" />
                         {item.customer_phone || "-"}

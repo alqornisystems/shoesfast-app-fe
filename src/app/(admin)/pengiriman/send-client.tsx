@@ -455,7 +455,7 @@ export function SendClient() {
                         </div>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell">
-                        <div className="text-sm font-medium">{send.user?.name || "-"}</div>
+                        <div className="text-sm font-medium">{titleCase(send.user?.name) || "-"}</div>
                         <div className="text-xs text-muted-foreground">{send.user?.phone || "-"}</div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">

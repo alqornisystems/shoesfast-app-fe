@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { titleCase } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -183,7 +184,7 @@ export default function ProfilePage() {
             {branch?.can_switch && (
               <div>
                 <Label className="text-xs text-muted-foreground">Cabang Aktif</Label>
-                <p className="font-medium">{branch.active_name || "Semua Cabang"}</p>
+                <p className="font-medium">{titleCase(branch.active_name) || "Semua Cabang"}</p>
               </div>
             )}
           </div>

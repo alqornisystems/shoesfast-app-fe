@@ -327,7 +327,7 @@ export function PickupWaitingClient() {
                       <div className="text-xs text-muted-foreground">{titleCase(order.project_name)}</div>
                     </TableCell>
                     <TableCell>
-                      <div className="font-medium text-sm">{order.customer_name || "-"}</div>
+                      <div className="font-medium text-sm">{titleCase(order.customer_name) || "-"}</div>
                       <div className="text-xs text-muted-foreground flex items-center gap-1">
                         <Phone className="h-3 w-3" />
                         {order.customer_phone || "-"}

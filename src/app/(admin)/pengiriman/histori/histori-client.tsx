@@ -306,7 +306,7 @@ export function HistoriClient() {
                     <div className="flex items-center gap-2">
                       <User className="h-3.5 w-3.5 text-muted-foreground" />
                       <div>
-                        <div className="font-medium text-sm">{send.courier_name || "-"}</div>
+                        <div className="font-medium text-sm">{titleCase(send.courier_name) || "-"}</div>
                         {send.courier_phone && (
                           <div className="text-xs text-muted-foreground">{send.courier_phone}</div>
                         )}

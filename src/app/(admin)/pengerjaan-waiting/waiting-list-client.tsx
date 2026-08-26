@@ -611,7 +611,7 @@ export function WaitingListClient() {
                   <TableCell className="hidden xl:table-cell">
                     <div className="flex items-center gap-2">
                       <User className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm">{treatment.users_name || "-"}</span>
+                      <span className="text-sm">{titleCase(treatment.users_name) || "-"}</span>
                     </div>
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">

@@ -597,6 +597,11 @@ export function WorkProgressClient() {
                             <Sparkles className="h-3.5 w-3.5 shrink-0" />
                             <span className="truncate">{titleCase(treatment.services_name)}</span>
                           </div>
+                          {/* Kolom Teknisi baru muncul di xl; di layar yang lebih kecil namanya ikut
+                              di sini supaya tetap terbaca siapa yang mengerjakan. */}
+                          <div className="text-xs text-muted-foreground xl:hidden truncate">
+                            Teknisi: {titleCase(treatment.users_name) || "-"}
+                          </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
                               {treatment.orders_code}
@@ -624,7 +629,7 @@ export function WorkProgressClient() {
                     <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-2">
                         <User className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm">{treatment.users_name || "-"}</span>
+                        <span className="text-sm">{titleCase(treatment.users_name) || "-"}</span>
                       </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">

@@ -571,7 +571,12 @@ export function PartnershipWorkClient() {
                               "barang ini sedang diapakan", bukan nomor pesanannya. */}
                           <div className="flex items-center gap-1.5 text-sm font-semibold capitalize text-primary">
                             <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate">{treatment.services_name}</span>
+                            <span className="truncate">{titleCase(treatment.services_name)}</span>
+                          </div>
+                          {/* Kolom Mitra baru muncul di xl; di layar yang lebih kecil namanya
+                              ikut di sini supaya tetap terbaca siapa yang mengerjakan. */}
+                          <div className="text-xs text-muted-foreground xl:hidden truncate">
+                            Mitra: {titleCase(treatment.partnerships_name) || "-"}
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
@@ -599,7 +604,7 @@ export function PartnershipWorkClient() {
                     <TableCell className="hidden xl:table-cell">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className="text-sm">{treatment.partnerships_name || "-"}</span>
+                        <span className="text-sm">{titleCase(treatment.partnerships_name) || "-"}</span>
                       </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
