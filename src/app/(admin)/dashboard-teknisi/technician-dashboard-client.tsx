@@ -1,12 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { AlertTriangle, ChevronRight, Clock, Loader2, Package, Sparkles, User, Wrench } from "lucide-react"
+import Link from "next/link"
+import { AlertTriangle, ArrowRight, Clock, Package, Search, Sparkles, Wrench } from "lucide-react"
 
 import { api } from "@/lib/api"
 import { cn, titleCase } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
 
 type ServiceSummary = {
@@ -20,23 +21,6 @@ type ServiceSummary = {
   antrean_terlama: number | null
 }
 
-type QueueItem = {
-  id: number
-  orders_code: string | null
-  orders_items_name: string | null
-  orders_items_photo: string | null
-  customers_name: string | null
-  users_name: string | null
-  services_name: string | null
-  created_at: number
-}
-
-function getImageUrl(photo: string | null): string | null {
-  if (!photo) return null
-  if (photo.startsWith("http")) return photo
-  return `/${photo}`
-}
-
 function umurHari(timestamp: number): number {
   return Math.max(0, Math.floor((Date.now() / 1000 - timestamp) / 86400))
 }
@@ -44,10 +28,7 @@ function umurHari(timestamp: number): number {
 export function TechnicianDashboardClient() {
   const [summary, setSummary] = useState<ServiceSummary[]>([])
   const [loadingSummary, setLoadingSummary] = useState(true)
-
-  const [selected, setSelected] = useState<ServiceSummary | null>(null)
-  const [items, setItems] = useState<QueueItem[]>([])
-  const [loadingItems, setLoadingItems] = useState(false)
+  const [cari, setCari] = useState("")
 
   useEffect(() => {
     async function ambil() {
@@ -64,33 +45,15 @@ export function TechnicianDashboardClient() {
     ambil()
   }, [])
 
-  async function bukaTreatment(service: ServiceSummary) {
-    // Klik kartu yang sama menutupnya kembali.
-    if (selected?.services_id === service.services_id) {
-      setSelected(null)
-      setItems([])
-      return
-    }
+  // Seluruh ringkasan sudah ada di sini — satu baris per jenis layanan, bukan ribuan —
+  // jadi pencariannya disaring di tempat, tanpa bolak-balik ke server.
+  const kunci = cari.trim().toLowerCase()
+  const tersaring = kunci
+    ? summary.filter((row) => (row.services_name ?? "").toLowerCase().includes(kunci))
+    : summary
 
-    setSelected(service)
-    setLoadingItems(true)
-    try {
-      const params = new URLSearchParams({
-        page_type: "waiting_list",
-        per_page: "100",
-        services_id: String(service.services_id),
-        sort: "created_at",
-        order: "asc",
-      })
-      const res = await api.get<{ data?: QueueItem[] }>(`/api/treatments?${params.toString()}`)
-      setItems(res.data ?? [])
-    } catch {
-      setItems([])
-    } finally {
-      setLoadingItems(false)
-    }
-  }
-
+  // Angka ringkas di atas tetap menghitung SELURUH antrean, bukan hasil pencarian:
+  // "Terlambat 7" yang menyusut jadi 2 karena sedang mengetik itu menyesatkan.
   const totalMenunggu = summary.reduce((sum, row) => sum + row.menunggu, 0)
   const totalTerlambat = summary.reduce((sum, row) => sum + row.terlambat, 0)
 
@@ -100,7 +63,7 @@ export function TechnicianDashboardClient() {
         <h1 className="text-2xl font-bold tracking-tight">Dashboard Teknisi</h1>
         <p className="text-sm text-muted-foreground">
           Semua jenis treatment yang sedang berjalan beserta jumlahnya. Kartu paling atas yang
-          paling mendesak — buka satu kartu untuk melihat barangnya.
+          paling mendesak — tekan satu kartu untuk membuka daftar barangnya.
         </p>
       </div>
 
@@ -142,47 +105,55 @@ export function TechnicianDashboardClient() {
         </div>
       </div>
 
+      <div className="relative sm:max-w-xs">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Cari treatment..."
+          className="h-9 pl-8"
+          value={cari}
+          onChange={(e) => setCari(e.target.value)}
+        />
+      </div>
+
       {loadingSummary ? (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-xl" />
           ))}
         </div>
-      ) : summary.length === 0 ? (
+      ) : tersaring.length === 0 ? (
         <div className="rounded-xl border bg-card p-12 text-center text-muted-foreground shadow-sm">
           <Package className="mx-auto mb-2 h-10 w-10 text-muted-foreground/50" />
-          <p>Tidak ada pekerjaan yang sedang berjalan.</p>
+          <p>
+            {kunci
+              ? `Tidak ada treatment bernama "${cari.trim()}".`
+              : "Tidak ada pekerjaan yang sedang berjalan."}
+          </p>
         </div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {summary.map((service, idx) => {
-            const terbuka = selected?.services_id === service.services_id
+          {tersaring.map((service, idx) => {
             const mendesak = service.terlambat > 0
 
             return (
-              <button
+              // Menuju daftar barangnya yang sudah tersaring ke jenis ini. Daftar itu
+              // tidak digandakan di sini: di halaman antrean barangnya bisa langsung
+              // dicentang dan diambil, dan itu yang mau dilakukan setelah melihatnya.
+              <Link
                 key={service.services_id}
-                type="button"
-                onClick={() => bukaTreatment(service)}
-                aria-expanded={terbuka}
+                href={`/pengerjaan-waiting?services_id=${service.services_id}`}
                 className={cn(
-                  "rounded-xl border bg-card p-4 text-left shadow-sm transition-colors",
+                  "block rounded-xl border bg-card p-4 text-left shadow-sm transition-colors",
                   "hover:border-primary/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  terbuka && "border-primary bg-primary/[0.04]",
-                  mendesak && !terbuka && "border-red-300",
+                  mendesak && "border-red-300",
                 )}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5 font-semibold capitalize text-primary">
                     <Sparkles className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{service.services_name ?? "Tanpa nama"}</span>
+                    <span className="truncate">{titleCase(service.services_name) || "Tanpa nama"}</span>
                   </div>
-                  <ChevronRight
-                    className={cn(
-                      "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
-                      terbuka && "rotate-90",
-                    )}
-                  />
+                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
 
                 {/* Yang paling mendesak diberi label, bukan cuma diletakkan di atas —
@@ -217,91 +188,9 @@ export function TechnicianDashboardClient() {
                     <span className="font-semibold text-red-600">· {service.terlambat} terlambat</span>
                   )}
                 </div>
-              </button>
+              </Link>
             )
           })}
-        </div>
-      )}
-
-      {selected && (
-        <div className="rounded-xl border bg-card shadow-sm">
-          <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
-            <div className="flex items-center gap-1.5 font-semibold capitalize text-primary">
-              <Sparkles className="h-4 w-4 shrink-0" />
-              {selected.services_name ?? "Tanpa nama"}
-            </div>
-            <Badge variant="secondary">{selected.menunggu} menunggu</Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-auto h-8"
-              onClick={() => {
-                setSelected(null)
-                setItems([])
-              }}
-            >
-              Tutup
-            </Button>
-          </div>
-
-          {loadingItems ? (
-            <div className="flex items-center justify-center gap-2 p-10 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Memuat barang…
-            </div>
-          ) : items.length === 0 ? (
-            <div className="p-10 text-center text-sm text-muted-foreground">
-              Tidak ada barang yang menunggu untuk treatment ini.
-            </div>
-          ) : (
-            <div className="divide-y">
-              {items.map((item, idx) => {
-                const umur = umurHari(item.created_at)
-
-                return (
-                  <div key={item.id} className="flex items-start gap-3 px-4 py-3">
-                    <div className="w-6 shrink-0 pt-1 text-sm text-muted-foreground">{idx + 1}</div>
-                    {getImageUrl(item.orders_items_photo) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={getImageUrl(item.orders_items_photo)!}
-                        alt={item.orders_items_name ?? "Barang"}
-                        className="h-14 w-14 shrink-0 rounded-lg border object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border bg-muted">
-                        <Package className="h-6 w-6 text-muted-foreground" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <div className="text-sm font-bold">
-                        {titleCase(item.orders_items_name ?? "-")}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {item.orders_code ?? "-"}
-                        </Badge>
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <User className="h-3 w-3" />
-                          {titleCase(item.customers_name ?? "-")}
-                        </span>
-                      </div>
-                    </div>
-                    <div
-                      className={cn(
-                        "shrink-0 text-right text-xs",
-                        umur > 21 ? "font-semibold text-red-600" : umur > 14 ? "font-semibold text-yellow-600" : "text-muted-foreground",
-                      )}
-                    >
-                      {umur} hari
-                      <div className="text-muted-foreground">menunggu</div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
         </div>
       )}
     </div>

@@ -205,6 +205,15 @@ export function WaitingListClient() {
       savedFilters = null
     }
 
+    // `?services_id=` menang atas apa pun yang tersimpan: pengguna baru saja menekan
+    // satu jenis treatment di Dashboard Teknisi dan meminta daftar itu, bukan daftar
+    // yang kebetulan ia tinggalkan tadi. Dibaca dari window, bukan useSearchParams,
+    // supaya halaman ini tidak perlu dibungkus Suspense saat di-prerender.
+    const dariTautan = new URLSearchParams(window.location.search).get('services_id')
+    if (dariTautan) {
+      savedFilters = { ...(savedFilters ?? FILTER_DEFAULT), servicesId: dariTautan }
+    }
+
     setSearch(savedSearch)
     if (savedFilters) {
       // Pemulihan ini mengubah `filters`, dan effect di bawah akan menyala karenanya.
@@ -214,7 +223,7 @@ export function WaitingListClient() {
       setFilters(savedFilters)
     }
     setInitialized(true)
-    fetchTreatments(savedPage, savedFilters ?? FILTER_DEFAULT)
+    fetchTreatments(dariTautan ? 1 : savedPage, savedFilters ?? FILTER_DEFAULT)
   }, [])
 
   useEffect(() => {
@@ -565,7 +574,7 @@ export function WaitingListClient() {
                             "barang ini mau diapakan", bukan nomor pesanannya. */}
                         <div className="flex items-center gap-1.5 text-sm font-semibold capitalize text-primary">
                           <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{treatment.services_name}</span>
+                          <span className="truncate">{titleCase(treatment.services_name)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">
@@ -748,7 +757,7 @@ export function WaitingListClient() {
                               {tech.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-medium">{tech.name}</div>
+                              <div className="font-medium">{titleCase(tech.name)}</div>
                               {tech.phone && (
                                 <div className="text-xs text-muted-foreground">{tech.phone}</div>
                               )}
@@ -788,7 +797,7 @@ export function WaitingListClient() {
                               {partner.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-medium">{partner.name}</div>
+                              <div className="font-medium">{titleCase(partner.name)}</div>
                               {partner.phone && (
                                 <div className="text-xs text-muted-foreground">{partner.phone}</div>
                               )}
