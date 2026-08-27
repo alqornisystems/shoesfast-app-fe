@@ -910,7 +910,7 @@ export function WorkProgressClient() {
                   label: titleCase(tech.name),
                   hint: [tech.role, tech.phone].filter(Boolean).join(" · "),
                 }))]}
-                placeholder="Pilih teknisi / admin..."
+                placeholder="Pilih pelaksana..."
                 searchPlaceholder="Cari nama..."
               />
             </div>

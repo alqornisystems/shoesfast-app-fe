@@ -91,7 +91,7 @@ type Technician = {
   name: string
   phone: string
   email: string
-  /** Daftar ini memuat Admin selain Teknisi; perannya ditampilkan supaya tidak tertukar. */
+  /** Daftar ini memuat Kurir dan Admin selain Teknisi; jabatannya ditampilkan supaya tidak tertukar. */
   role?: string | null
 }
 
@@ -745,7 +745,7 @@ export function EditOrderClient() {
                   label: titleCase(tech.name),
                   hint: [tech.role, tech.phone].filter(Boolean).join(" · "),
                 }))]}
-                placeholder="Pilih Teknisi / Admin"
+                placeholder="Pilih Pelaksana"
                 searchPlaceholder="Cari nama..."
               />
                                     {assigningTreatment === treatment.id && (
