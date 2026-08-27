@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { Plus, Pencil, Trash2, Search, Loader2, Camera } from "lucide-react"
 import { api } from "@/lib/api"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -206,6 +207,17 @@ export function ProjectClient() {
       setDialogOpen(false)
       fetchProjects()
     } catch (err: unknown) {
+      const galat = err as { errors?: Record<string, string[]>; message?: string }
+
+      // Galat yang BUKAN validasi — 403, 500, jaringan mati — sebelumnya jatuh ke
+      // sini tanpa jejak: dialognya tetap terbuka, tombolnya berhenti berputar, dan
+      // tidak ada satu pun pesan. Bagi yang memakainya, tombol Simpan sekadar tidak
+      // berfungsi. Apa pun yang gagal harus mengatakan dirinya gagal.
+      if (!galat?.errors) {
+        toast.error(galat?.message || "Gagal menyimpan. Silakan coba lagi.")
+        return
+      }
+
       const e = err as { errors?: Record<string, string[]> }
       if (e?.errors) {
         const apiErrs: ErrorState = {}

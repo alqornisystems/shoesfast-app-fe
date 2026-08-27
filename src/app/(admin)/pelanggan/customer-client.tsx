@@ -308,6 +308,17 @@ export function CustomerClient() {
       setDialogOpen(false)
       fetchCustomers(pagination.current_page)
     } catch (err: unknown) {
+      const galat = err as { errors?: Record<string, string[]>; message?: string }
+
+      // Galat yang BUKAN validasi — 403, 500, jaringan mati — sebelumnya jatuh ke
+      // sini tanpa jejak: dialognya tetap terbuka, tombolnya berhenti berputar, dan
+      // tidak ada satu pun pesan. Bagi yang memakainya, tombol Simpan sekadar tidak
+      // berfungsi. Apa pun yang gagal harus mengatakan dirinya gagal.
+      if (!galat?.errors) {
+        toast.error(galat?.message || "Gagal menyimpan. Silakan coba lagi.")
+        return
+      }
+
       const e = err as { errors?: Record<string, string[]> }
       if (e?.errors) {
         const apiErrs: ErrorState = {}
