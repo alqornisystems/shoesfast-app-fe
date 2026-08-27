@@ -905,9 +905,13 @@ export function WorkProgressClient() {
               <ComboboxPilih
                 value={editTechnicianId}
                 onChange={setEditTechnicianId}
-                options={[...technicians.map((tech) => ({ value: String(tech.id), label: titleCase(tech.name) }))]}
-                placeholder="Pilih teknisi..."
-                searchPlaceholder="Cari teknisi..."
+                options={[...technicians.map((tech) => ({
+                  value: String(tech.id),
+                  label: titleCase(tech.name),
+                  hint: [tech.role, tech.phone].filter(Boolean).join(" · "),
+                }))]}
+                placeholder="Pilih teknisi / admin..."
+                searchPlaceholder="Cari nama..."
               />
             </div>
 

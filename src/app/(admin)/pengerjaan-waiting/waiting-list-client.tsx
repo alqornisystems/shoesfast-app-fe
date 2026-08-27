@@ -75,6 +75,8 @@ type Technician = {
   name: string
   phone: string | null
   email: string
+  /** Daftar ini memuat Admin selain Teknisi; perannya ditampilkan supaya tidak tertukar. */
+  role?: string | null
 }
 
 type PaginationData = {
@@ -750,10 +752,10 @@ export function WaitingListClient() {
                   options={technicians.map((tech) => ({
                     value: String(tech.id),
                     label: titleCase(tech.name),
-                    hint: tech.phone,
+                    hint: [tech.role, tech.phone].filter(Boolean).join(" · "),
                   }))}
-                  placeholder="-- Pilih Teknisi --"
-                  searchPlaceholder="Cari teknisi..."
+                  placeholder="-- Pilih Teknisi / Admin --"
+                  searchPlaceholder="Cari nama..."
                   emptyText="Tidak ada teknisi tersedia."
                 />
               </div>

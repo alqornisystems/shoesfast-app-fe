@@ -91,6 +91,8 @@ type Technician = {
   name: string
   phone: string
   email: string
+  /** Daftar ini memuat Admin selain Teknisi; perannya ditampilkan supaya tidak tertukar. */
+  role?: string | null
 }
 
 type Service = {
@@ -738,9 +740,13 @@ export function EditOrderClient() {
                 value=""
                 onChange={(value) => handleAssignTechnician(treatment.id, value)}
                 disabled={assigningTreatment === treatment.id}
-                options={[...technicians.map((tech) => ({ value: String(tech.id), label: titleCase(tech.name) }))]}
-                placeholder="Pilih Teknisi"
-                searchPlaceholder="Cari Teknisi"
+                options={[...technicians.map((tech) => ({
+                  value: String(tech.id),
+                  label: titleCase(tech.name),
+                  hint: [tech.role, tech.phone].filter(Boolean).join(" · "),
+                }))]}
+                placeholder="Pilih Teknisi / Admin"
+                searchPlaceholder="Cari nama..."
               />
                                     {assigningTreatment === treatment.id && (
                                       <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
